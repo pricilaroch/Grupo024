@@ -23,7 +23,7 @@ export class AuthController {
     const user = await this.userService.authenticate(cpf_cnpj, senha);
 
     const token = (request.server as import('fastify').FastifyInstance).jwt.sign(
-      { id: user.id!, status: user.status },
+      { id: user.id!, status: user.status, role: user.role },
       { expiresIn: config.jwtExpiresIn }
     );
 

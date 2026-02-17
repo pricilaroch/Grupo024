@@ -9,6 +9,7 @@ export interface UserData {
   endereco: string;
   senha: string;
   status?: string;
+  role?: string;
   motivo_reprovacao?: string;
   created_at?: string;
 }
@@ -23,6 +24,7 @@ export interface PublicUser {
   observacao: string;
   endereco: string;
   status: string;
+  role: string;
   motivo_reprovacao: string;
   created_at?: string;
 }
@@ -38,6 +40,7 @@ export class User {
   public endereco: string;
   public senha: string;
   public status: string;
+  public role: string;
   public motivo_reprovacao: string;
   public created_at?: string;
 
@@ -52,6 +55,7 @@ export class User {
     this.endereco = data.endereco;
     this.senha = data.senha;
     this.status = data.status ?? 'pendente';
+    this.role = data.role ?? 'produtor';
     this.motivo_reprovacao = data.motivo_reprovacao ?? '';
     this.created_at = data.created_at;
   }
@@ -67,6 +71,7 @@ export class User {
       observacao: this.observacao,
       endereco: this.endereco,
       status: this.status,
+      role: this.role,
       motivo_reprovacao: this.motivo_reprovacao,
       created_at: this.created_at,
     };

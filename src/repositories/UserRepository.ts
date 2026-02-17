@@ -22,8 +22,8 @@ export class UserRepository {
   public async create(user: User): Promise<User> {
     const db = await getDatabase();
     const result = await db.run(
-      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, observacao, endereco, senha, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, observacao, endereco, senha, status, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         user.nome,
         user.cpf_cnpj,
@@ -34,6 +34,7 @@ export class UserRepository {
         user.endereco,
         user.senha,
         user.status,
+        user.role,
       ]
     );
 

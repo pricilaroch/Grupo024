@@ -2,6 +2,8 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
+import bcrypt from 'bcrypt';
+import { config } from '../config';
 
 let db: Database | null = null;
 
@@ -20,6 +22,7 @@ export async function getDatabase(): Promise<Database> {
   });
 
   await runMigrations(db);
+  await seedAdmin(db);
 
   return db;
 }
@@ -61,4 +64,35 @@ async function runMigrations(database: Database): Promise<void> {
     await database.run('INSERT INTO migrations (name) VALUES (?)', [file]);
     console.log(`Migration aplicada: ${file}`);
   }
+}
+
+/**
+ * Seed: cria o usuário administrador padrão caso a tabela users esteja vazia.
+ */
+async function seedAdmin(database: Database): Promise<void> {
+  const count = await database.get<{ total: number }>(
+    'SELECT COUNT(*) as total FROM users'
+  );
+
+  if (count && count.total > 0) return;
+
+  const hashedPassword = await bcrypt.hash('admin123', config.bcryptSaltRounds);
+
+  await database.run(
+    `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      'Administrador',
+      '000.000.000-00',
+      'admin@sistema.com',
+      '0000000000',
+      '2000-01-01',
+      'Sistema',
+      hashedPassword,
+      'aprovado',
+      'admin',
+    ]
+  );
+
+  console.log('Seed: usuário administrador criado (CPF: 000.000.000-00 / Senha: admin123)');
 }

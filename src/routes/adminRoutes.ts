@@ -13,9 +13,9 @@ async function authenticate(request: FastifyRequest, _reply: FastifyReply): Prom
     throw new UnauthorizedError('Token inválido ou expirado.');
   }
 
-  const payload = request.user as { id: number; status: string };
-  if (payload.status !== 'aprovado') {
-    throw new UnauthorizedError('Acesso restrito a administradores aprovados.');
+  const payload = request.user as { id: number; status: string; role: string };
+  if (payload.role !== 'admin') {
+    throw new UnauthorizedError('Acesso restrito a administradores.');
   }
 }
 
