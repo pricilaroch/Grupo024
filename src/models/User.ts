@@ -13,6 +13,20 @@ export interface UserData {
   created_at?: string;
 }
 
+export interface PublicUser {
+  id?: number;
+  nome: string;
+  cpf_cnpj: string;
+  email: string;
+  telefone: string;
+  data_nascimento: string;
+  observacao: string;
+  endereco: string;
+  status: string;
+  motivo_reprovacao: string;
+  created_at?: string;
+}
+
 export class User {
   public id?: number;
   public nome: string;
@@ -42,7 +56,7 @@ export class User {
     this.created_at = data.created_at;
   }
 
-  public toPublicJSON(): object {
+  public toPublicJSON(): PublicUser {
     return {
       id: this.id,
       nome: this.nome,

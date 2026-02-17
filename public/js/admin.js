@@ -20,12 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadPendingUsers() {
     showLoading(true);
     try {
-      const res = await fetch('/admin/users/pending');
-      const data = await res.json();
+      const { ok, data } = await ApiService.getPendingUsers();
 
       showLoading(false);
 
-      if (!data.users || data.users.length === 0) {
+      if (!ok || !data.users || data.users.length === 0) {
         showEmpty(true);
         return;
       }
@@ -111,18 +110,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.textContent = 'Aprovando...';
 
     try {
-      const res = await fetch(`/admin/users/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'aprovado' }),
-      });
+      const result = await ApiService.updateUserStatus(id, 'aprovado');
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (result.ok) {
         animateRemoveCard(cardEl);
       } else {
-        alert(data.error || 'Erro ao aprovar usuário.');
+        alert(result.data.error || 'Erro ao aprovar usuário.');
         btn.disabled = false;
         btn.textContent = 'Aprovar';
       }
@@ -168,20 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
     modalConfirmBtn.textContent = 'Reprovando...';
 
     try {
-      const res = await fetch(`/admin/users/${currentRejectId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'reprovado', motivo }),
-      });
+      const result = await ApiService.updateUserStatus(currentRejectId, 'reprovado', motivo);
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (result.ok) {
         closeRejectModal();
         const card = document.querySelector(`.user-card[data-id="${currentRejectId}"]`);
         if (card) animateRemoveCard(card);
       } else {
-        showModalError(data.error || 'Erro ao reprovar usuário.');
+        showModalError(result.data.error || 'Erro ao reprovar usuário.');
       }
     } catch (err) {
       showModalError('Erro de conexão com o servidor.');

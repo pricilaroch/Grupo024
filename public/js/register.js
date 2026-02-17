@@ -47,28 +47,21 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Cadastrando...';
 
     try {
-      const response = await fetch('/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome,
-          cpf_cnpj,
-          email,
-          telefone,
-          data_nascimento,
-          endereco,
-          senha,
-          observacao,
-        }),
+      const result = await ApiService.register({
+        nome,
+        cpf_cnpj,
+        email,
+        telefone,
+        data_nascimento,
+        endereco,
+        senha,
+        observacao,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Redirecionar para a página de pendência
+      if (result.ok) {
         window.location.href = '/pending.html';
       } else {
-        showError(data.error || 'Erro ao realizar cadastro. Tente novamente.');
+        showError(result.data.error || 'Erro ao realizar cadastro. Tente novamente.');
       }
     } catch (err) {
       showError('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');

@@ -28,23 +28,18 @@
     </main>
   </div>
 
+  <script src="/js/services/api.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const welcomeMsg = document.getElementById('welcomeMsg');
-      const userData = sessionStorage.getItem('user');
+      const user = ApiService.getUser();
 
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          welcomeMsg.textContent = `Bem-vindo(a), ${user.nome}!`;
-        } catch {
-          // mantém mensagem padrão
-        }
+      if (user) {
+        welcomeMsg.textContent = `Bem-vindo(a), ${user.nome}!`;
       }
 
       document.getElementById('logoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('user');
-        window.location.href = '/login.html';
+        ApiService.logout();
       });
     });
   </script>

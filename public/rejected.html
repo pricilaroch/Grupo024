@@ -33,18 +33,14 @@
     </main>
   </div>
 
+  <script src="/js/services/api.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const motivoEl = document.getElementById('motivoReprovacao');
-      const userData = sessionStorage.getItem('user');
+      const user = ApiService.getUser();
 
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          motivoEl.textContent = user.motivo_reprovacao || 'Motivo não informado.';
-        } catch {
-          motivoEl.textContent = 'Não foi possível carregar o motivo.';
-        }
+      if (user) {
+        motivoEl.textContent = user.motivo_reprovacao || 'Motivo não informado.';
       } else {
         motivoEl.textContent = 'Sessão expirada. Faça login novamente para ver os detalhes.';
       }

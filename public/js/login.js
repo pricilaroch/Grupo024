@@ -19,23 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Entrando...';
 
     try {
-      const response = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf_cnpj, senha }),
-      });
+      const result = await ApiService.login(cpf_cnpj, senha);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        showError(data.error || 'Erro ao realizar login.');
+      if (!result.ok) {
+        showError(result.data.error || 'Erro ao realizar login.');
         return;
       }
 
-      const user = data.user;
-
-      // Salvar dados do usuário no sessionStorage para uso nas páginas seguintes
-      sessionStorage.setItem('user', JSON.stringify(user));
+      const user = result.data.user;
 
       // Redirecionamento baseado no status
       switch (user.status) {
