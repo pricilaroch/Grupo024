@@ -528,3 +528,138 @@ body {
   padding: 0.7rem;
   font-size: 0.9rem;
 }
+
+/* ===========================
+   Status Icon (shared)
+   =========================== */
+.status-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.status-icon-approved {
+  background-color: #d5f5e3;
+  color: #27ae60;
+}
+
+.status-icon-rejected {
+  background-color: #fdecea;
+  color: #e74c3c;
+}
+
+/* ===========================
+   Rejected Page
+   =========================== */
+.rejected-page {
+  text-align: center;
+  padding: 2rem 1rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.rejected-page h2 {
+  font-size: 1.4rem;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+}
+
+.rejected-page p {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 0.75rem;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rejected-reason-box {
+  background-color: #fdecea;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem auto;
+  max-width: 420px;
+  text-align: left;
+}
+
+.rejected-reason-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #c0392b;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rejected-reason-text {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.rejected-help {
+  font-size: 0.85rem;
+  color: #95a5a6;
+  margin-top: 0.5rem;
+}
+
+.rejected-page .btn {
+  margin-top: 1.5rem;
+}
+
+/* ===========================
+   Dashboard Page
+   =========================== */
+.dashboard-page {
+  text-align: center;
+  padding: 2rem 1rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-page h2 {
+  font-size: 1.4rem;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-page p {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 0.75rem;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 600px) {
+  .dashboard-actions {
+    flex-direction: row;
+  }
+
+  .dashboard-actions .btn {
+    flex: 1;
+  }
+}

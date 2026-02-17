@@ -3,6 +3,7 @@ import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { userRoutes } from './routes/userRoutes';
 import { adminRoutes } from './routes/adminRoutes';
+import { authRoutes } from './routes/authRoutes';
 import { getDatabase } from './database/database';
 
 async function main(): Promise<void> {
@@ -17,6 +18,7 @@ async function main(): Promise<void> {
   // Registrar rotas da API
   await fastify.register(userRoutes);
   await fastify.register(adminRoutes);
+  await fastify.register(authRoutes);
 
   // Inicializar o banco de dados (cria tabelas se não existirem)
   await getDatabase();

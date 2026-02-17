@@ -96,4 +96,22 @@ export class UserService {
     user.motivo_reprovacao = motivoReprovacao;
     return user;
   }
+
+  /**
+   * Autentica um usuário pelo CPF/CNPJ e senha.
+   * Retorna o usuário com status e motivo_reprovacao.
+   */
+  public async authenticate(cpfCnpj: string, senha: string): Promise<User> {
+    const user = await this.userRepository.findByCpfCnpj(cpfCnpj);
+    if (!user) {
+      throw new Error('CPF/CNPJ não encontrado.');
+    }
+
+    const hashedPassword = this.hashPassword(senha);
+    if (user.senha !== hashedPassword) {
+      throw new Error('Senha incorreta.');
+    }
+
+    return user;
+  }
 }
