@@ -1,0 +1,23 @@
+{
+  "name": "grupo024",
+  "version": "1.0.0",
+  "description": "Grupo 024 -  Sistema de Gestão de Encomendas e Produção",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/static": "^9.0.0",
+    "fastify": "^5.7.4",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}

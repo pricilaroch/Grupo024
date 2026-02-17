@@ -1,0 +1,11 @@
+/node_modules
+/dist
+/build
+/coverage
+/.vscode
+/.idea
+/.env
+/.env.local
+/.env.development
+/.env.test
+/.env.production   
