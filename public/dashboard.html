@@ -4,43 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <nav id="navbar" class="navbar"></nav>
+
   <div class="container">
     <header class="header">
       <h1>Dashboard</h1>
       <p id="welcomeMsg">Bem-vindo ao sistema!</p>
     </header>
 
-    <main class="main-content dashboard-page">
-      <div class="status-icon status-icon-approved">&#10003;</div>
-      <h2>Conta Aprovada</h2>
-      <p>
-        Sua conta está ativa. Em breve, novas funcionalidades estarão disponíveis
-        nesta área.
-      </p>
-
-      <div class="dashboard-actions">
-        <a href="/index.html" class="btn btn-primary">Página Inicial</a>
-        <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+    <main class="main-content">
+      <div class="status-page">
+        <div class="status-icon status-icon-approved">&#10003;</div>
+        <h2>Conta Aprovada</h2>
+        <p>
+          Sua conta está ativa. Em breve, novas funcionalidades estarão disponíveis
+          nesta área.
+        </p>
       </div>
     </main>
   </div>
 
   <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const welcomeMsg = document.getElementById('welcomeMsg');
+      if (!RouteGuard.requireApproved()) return;
+      RouteGuard.renderNavbar();
+
       const user = ApiService.getUser();
-
       if (user) {
-        welcomeMsg.textContent = `Bem-vindo(a), ${user.nome}!`;
+        document.getElementById('welcomeMsg').textContent = `Bem-vindo(a), ${user.nome}!`;
       }
-
-      document.getElementById('logoutBtn').addEventListener('click', () => {
-        ApiService.logout();
-      });
     });
   </script>
 </body>

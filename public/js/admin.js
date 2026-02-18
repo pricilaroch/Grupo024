@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // ─── Guarda de Rota: só admin autenticado acessa esta página ───
+  if (!RouteGuard.requireAdmin()) return;
+  RouteGuard.renderNavbar();
+
   const usersList = document.getElementById('usersList');
   const loading = document.getElementById('loading');
   const emptyState = document.getElementById('emptyState');
@@ -13,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalConfirmBtn = document.getElementById('modalConfirmBtn');
 
   let currentRejectId = null;
+  let currentRejectCard = null;
 
   // --- Carregar usuários pendentes ---
   loadPendingUsers();
@@ -98,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listeners
     card.querySelector('.btn-approve').addEventListener('click', () => approveUser(user.id, card));
-    card.querySelector('.btn-reject').addEventListener('click', () => openRejectModal(user.id, user.nome));
+    card.querySelector('.btn-reject').addEventListener('click', () => openRejectModal(user.id, user.nome, card));
 
     return card;
   }
@@ -127,7 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Modal de Reprovação ---
-  function openRejectModal(id, name) {
+  function openRejectModal(id, name, cardEl) {
+    currentRejectCard = cardEl;
     currentRejectId = id;
     modalUserName.textContent = name;
     tipoSelect.value = '';
@@ -139,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeRejectModal() {
     modalOverlay.style.display = 'none';
     currentRejectId = null;
+    animateRemoveCard(currentRejectCard);
   }
 
   modalCancelBtn.addEventListener('click', closeRejectModal);
@@ -185,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cardEl.style.transform = 'translateX(30px)';
     setTimeout(() => {
       cardEl.remove();
-      // Check if list is empty
       if (usersList.children.length === 0) {
         showEmpty(true);
       }

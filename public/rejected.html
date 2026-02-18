@@ -4,45 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro Reprovado - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <nav id="navbar" class="navbar"></nav>
+
   <div class="container">
     <header class="header">
       <h1>Cadastro Reprovado</h1>
     </header>
 
-    <main class="main-content rejected-page">
-      <div class="status-icon status-icon-rejected">&#10007;</div>
-      <h2>Sua conta foi reprovada</h2>
-      <p>
-        Infelizmente, seu cadastro não foi aprovado pelo administrador.
-      </p>
+    <main class="main-content">
+      <div class="status-page">
+        <div class="status-icon status-icon-rejected">&#10007;</div>
+        <h2>Sua conta foi reprovada</h2>
+        <p>Infelizmente, seu cadastro não foi aprovado pelo administrador.</p>
 
-      <div class="rejected-reason-box">
-        <span class="rejected-reason-label">Motivo da Reprovação:</span>
-        <p class="rejected-reason-text" id="motivoReprovacao">Carregando...</p>
+        <div class="rejected-reason-box">
+          <span class="rejected-reason-label">Motivo da Reprovação</span>
+          <p class="rejected-reason-text" id="motivoReprovacao">Carregando...</p>
+        </div>
+
+        <p class="rejected-help">
+          Se você acredita que houve um erro, entre em contato com o administrador.
+        </p>
+
+        <button class="btn btn-secondary" onclick="ApiService.logout()">Sair</button>
       </div>
-
-      <p class="rejected-help">
-        Se você acredita que houve um erro, entre em contato com o administrador
-        para mais informações.
-      </p>
-
-      <a href="/login.html" class="btn btn-primary">Voltar ao Login</a>
     </main>
   </div>
 
   <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const motivoEl = document.getElementById('motivoReprovacao');
+      if (!RouteGuard.requireRejected()) return;
+      RouteGuard.renderNavbar();
+
       const user = ApiService.getUser();
+      const motivoEl = document.getElementById('motivoReprovacao');
 
       if (user) {
         motivoEl.textContent = user.motivo_reprovacao || 'Motivo não informado.';
       } else {
-        motivoEl.textContent = 'Sessão expirada. Faça login novamente para ver os detalhes.';
+        motivoEl.textContent = 'Sessão expirada. Faça login novamente.';
       }
     });
   </script>

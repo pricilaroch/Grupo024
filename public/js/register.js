@@ -1,106 +1,80 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('registerForm');
-  const errorDiv = document.getElementById('errorMessage');
+    const registerForm = document.getElementById('registerForm');
+    const inputDoc = document.getElementById('cpf_cnpj');
+    const inputTelefone = document.getElementById('telefone');
+    const errorMessage = document.getElementById('errorMessage');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideError();
-    clearInputErrors();
+    // 1. Máscara e restrição para CPF/CNPJ (Apenas números)
+    inputDoc.addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, ''); 
+        const isCnpj = document.querySelector('input[name="docType"]:checked').value === 'cnpj';
 
-    const nome = getValue('nome');
-    const cpf_cnpj = getValue('cpf_cnpj');
-    const email = getValue('email');
-    const telefone = getValue('telefone');
-    const data_nascimento = getValue('data_nascimento');
-    const endereco = getValue('endereco');
-    const senha = getValue('senha');
-    const confirmar_senha = getValue('confirmar_senha');
-    const observacao = getValue('observacao');
-
-    // Validações no frontend
-    if (!nome || !cpf_cnpj || !email || !telefone || !data_nascimento || !endereco || !senha) {
-      showError('Por favor, preencha todos os campos obrigatórios.');
-      return;
-    }
-
-    if (senha.length < 6) {
-      showError('A senha deve ter pelo menos 6 caracteres.');
-      markError('senha');
-      return;
-    }
-
-    if (senha !== confirmar_senha) {
-      showError('As senhas não coincidem.');
-      markError('confirmar_senha');
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      showError('Por favor, insira um e-mail válido.');
-      markError('email');
-      return;
-    }
-
-    // Desabilitar botão durante o envio
-    const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Cadastrando...';
-
-    try {
-      const result = await ApiService.register({
-        nome,
-        cpf_cnpj,
-        email,
-        telefone,
-        data_nascimento,
-        endereco,
-        senha,
-        observacao,
-      });
-
-      if (result.ok) {
-        window.location.href = '/pending.html';
-      } else {
-        showError(result.data.error || 'Erro ao realizar cadastro. Tente novamente.');
-      }
-    } catch (err) {
-      showError('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Cadastrar';
-    }
-  });
-
-  // --- Funções auxiliares ---
-
-  function getValue(id) {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : '';
-  }
-
-  function showError(msg) {
-    errorDiv.textContent = msg;
-    errorDiv.style.display = 'block';
-    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  function hideError() {
-    errorDiv.textContent = '';
-    errorDiv.style.display = 'none';
-  }
-
-  function markError(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('input-error');
-  }
-
-  function clearInputErrors() {
-    document.querySelectorAll('.input-error').forEach((el) => {
-      el.classList.remove('input-error');
+        if (isCnpj) {
+            v = v.slice(0, 14);
+            v = v.replace(/^(\d{2})(\d)/, '$1.$2')
+                 .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                 .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                 .replace(/(\d{4})(\d)/, '$1-$2');
+        } else {
+            v = v.slice(0, 11);
+            v = v.replace(/(\d{3})(\d)/, '$1.$2')
+                 .replace(/(\d{3})(\d)/, '$1.$2')
+                 .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        }
+        e.target.value = v;
     });
-  }
 
-  function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
+    // 2. Máscara para Telefone: (00) 00000-0000
+    if (inputTelefone) {
+        inputTelefone.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, ''); 
+            v = v.slice(0, 11); // Limita a 11 dígitos
+            if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+            if (v.length > 7) v = v.replace(/(\d{5})(\d)/g, '$1-$2');
+            e.target.value = v;
+        });
+    }
+
+    // 3. Lógica de Envio
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorMessage.style.display = 'none';
+
+            // Captura todos os campos do formulário (incluindo data e endereço)
+            const formData = new FormData(registerForm);
+            const userData = Object.fromEntries(formData.entries());
+
+            // LIMPEZA: Remove máscaras para o banco de dados (Zod espera números puros)
+            userData.cpf_cnpj = userData.cpf_cnpj.replace(/\D/g, '');
+            if (userData.telefone) {
+                userData.telefone = userData.telefone.replace(/\D/g, '');
+            }
+
+            try {
+                const submitBtn = registerForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Processando...';
+
+                // Envia para o endereço correto descoberto no userRoutes.ts
+                const result = await ApiService.register(userData);
+
+                if (result.ok) {
+                    // Sucesso! Usuário vai para a fila de aprovação
+                    window.location.href = '/pending.html';
+                } else {
+                    // Trata erros vindos do Zod (ex: "O campo telefone é obrigatório")
+                    throw new Error(result.data.error || 'Erro no cadastro');
+                }
+            } catch (error) {
+                // Se o erro vier em formato de lista (vários campos), tratamos aqui
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+                
+                const submitBtn = registerForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Criar Conta';
+            }
+        });
+    }
 });

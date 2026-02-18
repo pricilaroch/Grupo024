@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Admin - Aprovar Produtores</title>
+  <title>Painel Admin - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <nav id="navbar" class="navbar"></nav>
+
   <div class="container container-wide">
     <header class="header">
       <h1>Painel do Administrador</h1>
@@ -16,7 +21,7 @@
     <main class="main-content">
       <div id="loading" class="admin-loading">Carregando usuários pendentes...</div>
       <div id="emptyState" class="admin-empty" style="display: none;">
-        <div class="pending-icon">&#10004;</div>
+        <div class="status-icon status-icon-approved">&#10004;</div>
         <h2>Nenhum cadastro pendente</h2>
         <p>Todos os cadastros foram analisados. Volte mais tarde.</p>
       </div>
@@ -57,6 +62,7 @@
   </div>
 
   <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

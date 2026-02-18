@@ -83,7 +83,7 @@ async function seedAdmin(database: Database): Promise<void> {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       'Administrador',
-      '000.000.000-00',
+      '00000000000',
       'admin@sistema.com',
       '0000000000',
       '2000-01-01',
@@ -94,5 +94,58 @@ async function seedAdmin(database: Database): Promise<void> {
     ]
   );
 
-  console.log('Seed: usuário administrador criado (CPF: 000.000.000-00 / Senha: admin123)');
+  const hashedPasswordp = await bcrypt.hash('senha123', config.bcryptSaltRounds);
+
+  // Inserção 1
+  await database.run(
+      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        'João Produtor',
+        '11122233344',
+        'joao@email.com',
+        '34999991111',
+        '1985-05-10',
+        'Rua das Flores, 123',
+        hashedPasswordp,
+        'pendente',
+        'produtor',
+      ]
+  );
+
+  // Inserção 2
+  await database.run(
+      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        'Maria Silva',
+        '22233344455',
+        'maria@email.com',
+        '34999992222',
+        '1992-08-20',
+        'Av. Central, 456',
+        hashedPasswordp,
+        'pendente',
+        'produtor',
+      ]
+  );
+
+  // Inserção 3
+  await database.run(
+      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        'José Santos',
+        '33344455566',
+        'jose@email.com',
+        '34999993333',
+        '1978-12-15',
+        'Rua do Comércio, 789',
+        hashedPasswordp,
+        'pendente',
+        'produtor',
+      ]
+  );
+
+  console.log('Seed: usuário administrador criado (CPF: 00000000000 / Senha: admin123)');
 }
