@@ -8,14 +8,32 @@ export const registerSchema = z.object({
     .string({ error: 'O campo "nome" é obrigatório.' })
     .min(3, 'O nome deve ter pelo menos 3 caracteres.'),
 
-  cpf_cnpj: z
-    .string({ error: 'O campo "cpf_cnpj" é obrigatório.' })
-    .min(11, 'CPF/CNPJ deve ter pelo menos 11 caracteres.')
-    .max(18, 'CPF/CNPJ deve ter no máximo 18 caracteres.')
+  cpf: z
+    .string({ error: 'O campo "cpf" é obrigatório.' })
+    .min(11, 'CPF deve ter pelo menos 11 caracteres.')
+    .max(14, 'CPF deve ter no máximo 14 caracteres.')
     .regex(
-      /^[\d.\-/]+$/,
-      'CPF/CNPJ deve conter apenas números, pontos, hífens ou barras.'
+      /^[\d.\-]+$/,
+      'CPF deve conter apenas números, pontos ou hífens.'
     ),
+
+  cnpj: z
+    .string()
+    .max(18, 'CNPJ deve ter no máximo 18 caracteres.')
+    .regex(
+      /^[\d.\-/]*$/,
+      'CNPJ deve conter apenas números, pontos, hífens ou barras.'
+    )
+    .optional()
+    .default(''),
+
+  nome_fantasia: z
+    .string({ error: 'O campo "nome_fantasia" é obrigatório.' })
+    .min(2, 'O nome fantasia deve ter pelo menos 2 caracteres.'),
+
+  categoria_producao: z
+    .string({ error: 'O campo "categoria_producao" é obrigatório.' })
+    .min(1, 'A categoria de produção é obrigatória.'),
 
   email: z
     .string({ error: 'O campo "email" é obrigatório.' })
@@ -44,9 +62,9 @@ export const registerSchema = z.object({
  * Schema de validação para login.
  */
 export const loginSchema = z.object({
-  cpf_cnpj: z
-    .string({ error: 'O campo "cpf_cnpj" é obrigatório.' })
-    .min(1, 'O CPF/CNPJ é obrigatório.'),
+  cpf: z
+    .string({ error: 'O campo "cpf" é obrigatório.' })
+    .min(1, 'O CPF é obrigatório.'),
 
   senha: z
     .string({ error: 'O campo "senha" é obrigatório.' })

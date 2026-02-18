@@ -66,8 +66,21 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="user-card-body">
         <div class="user-card-field">
-          <span class="field-label">CPF/CNPJ:</span>
-          <span class="field-value">${escapeHtml(user.cpf_cnpj)}</span>
+          <span class="field-label">CPF:</span>
+          <span class="field-value">${escapeHtml(user.cpf)}</span>
+        </div>
+        ${user.cnpj ? `
+        <div class="user-card-field">
+          <span class="field-label">CNPJ:</span>
+          <span class="field-value">${escapeHtml(user.cnpj)}</span>
+        </div>` : ''}
+        <div class="user-card-field">
+          <span class="field-label">Nome Fantasia:</span>
+          <span class="field-value">${escapeHtml(user.nome_fantasia)}</span>
+        </div>
+        <div class="user-card-field">
+          <span class="field-label">Categoria:</span>
+          <span class="field-value">${escapeHtml(user.categoria_producao)}</span>
         </div>
         <div class="user-card-field">
           <span class="field-label">E-mail:</span>

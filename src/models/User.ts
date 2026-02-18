@@ -1,7 +1,10 @@
 export interface UserData {
   id?: number;
   nome: string;
-  cpf_cnpj: string;
+  cpf: string;
+  cnpj?: string;
+  nome_fantasia: string;
+  categoria_producao: string;
   email: string;
   telefone: string;
   data_nascimento: string;
@@ -17,7 +20,10 @@ export interface UserData {
 export interface PublicUser {
   id?: number;
   nome: string;
-  cpf_cnpj: string;
+  cpf: string;
+  cnpj: string;
+  nome_fantasia: string;
+  categoria_producao: string;
   email: string;
   telefone: string;
   data_nascimento: string;
@@ -32,7 +38,10 @@ export interface PublicUser {
 export class User {
   public id?: number;
   public nome: string;
-  public cpf_cnpj: string;
+  public cpf: string;
+  public cnpj: string;
+  public nome_fantasia: string;
+  public categoria_producao: string;
   public email: string;
   public telefone: string;
   public data_nascimento: string;
@@ -47,7 +56,10 @@ export class User {
   constructor(data: UserData) {
     this.id = data.id;
     this.nome = data.nome;
-    this.cpf_cnpj = data.cpf_cnpj;
+    this.cpf = data.cpf;
+    this.cnpj = data.cnpj ?? '';
+    this.nome_fantasia = data.nome_fantasia;
+    this.categoria_producao = data.categoria_producao;
     this.email = data.email;
     this.telefone = data.telefone;
     this.data_nascimento = data.data_nascimento;
@@ -64,7 +76,10 @@ export class User {
     return {
       id: this.id,
       nome: this.nome,
-      cpf_cnpj: this.cpf_cnpj,
+      cpf: this.cpf,
+      cnpj: this.cnpj,
+      nome_fantasia: this.nome_fantasia,
+      categoria_producao: this.categoria_producao,
       email: this.email,
       telefone: this.telefone,
       data_nascimento: this.data_nascimento,

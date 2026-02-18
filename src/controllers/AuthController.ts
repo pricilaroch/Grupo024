@@ -18,9 +18,9 @@ export class AuthController {
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<void> {
-    const { cpf_cnpj, senha } = loginSchema.parse(request.body);
+    const { cpf, senha } = loginSchema.parse(request.body);
 
-    const user = await this.userService.authenticate(cpf_cnpj, senha);
+    const user = await this.userService.authenticate(cpf, senha);
 
     const token = (request.server as import('fastify').FastifyInstance).jwt.sign(
       { id: user.id!, status: user.status, role: user.role },

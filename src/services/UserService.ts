@@ -11,7 +11,10 @@ import {
 
 export interface RegisterDTO {
   nome: string;
-  cpf_cnpj: string;
+  cpf: string;
+  cnpj?: string;
+  nome_fantasia: string;
+  categoria_producao: string;
   email: string;
   telefone: string;
   data_nascimento: string;
@@ -46,14 +49,17 @@ export class UserService {
    * Valida se o CPF/CNPJ já existe e salva com status "pendente".
    */
   public async register(data: RegisterDTO): Promise<User> {
-    const existing = await this.userRepository.findByCpfCnpj(data.cpf_cnpj);
+    const existing = await this.userRepository.findByCpf(data.cpf);
     if (existing) {
-      throw new ConflictError('CPF/CNPJ já cadastrado no sistema.');
+      throw new ConflictError('CPF já cadastrado no sistema.');
     }
 
     const user = new User({
       nome: data.nome,
-      cpf_cnpj: data.cpf_cnpj,
+      cpf: data.cpf,
+      cnpj: data.cnpj,
+      nome_fantasia: data.nome_fantasia,
+      categoria_producao: data.categoria_producao,
       email: data.email,
       telefone: data.telefone,
       data_nascimento: data.data_nascimento,
@@ -105,15 +111,15 @@ export class UserService {
   /**
    * Autentica um usuário pelo CPF/CNPJ e senha (bcrypt).
    */
-  public async authenticate(cpfCnpj: string, senha: string): Promise<User> {
-    const user = await this.userRepository.findByCpfCnpj(cpfCnpj);
+  public async authenticate(cpf: string, senha: string): Promise<User> {
+    const user = await this.userRepository.findByCpf(cpf);
     if (!user) {
-      throw new UnauthorizedError('CPF/CNPJ ou senha inválidos.');
+      throw new UnauthorizedError('CPF ou senha inválidos.');
     }
 
     const isValid = await this.comparePassword(senha, user.senha);
     if (!isValid) {
-      throw new UnauthorizedError('CPF/CNPJ ou senha inválidos.');
+      throw new UnauthorizedError('CPF ou senha inválidos.');
     }
 
     return user;

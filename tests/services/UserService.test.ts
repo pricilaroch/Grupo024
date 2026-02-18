@@ -15,7 +15,7 @@ jest.mock('../../src/repositories/UserRepository');
 
 function createMockRepo(): jest.Mocked<UserRepository> {
   return {
-    findByCpfCnpj: jest.fn(),
+    findByCpf: jest.fn(),
     create: jest.fn(),
     findPending: jest.fn(),
     findById: jest.fn(),
@@ -28,7 +28,9 @@ function createMockRepo(): jest.Mocked<UserRepository> {
 function makeDTO(overrides: Partial<RegisterDTO> = {}): RegisterDTO {
   return {
     nome: 'Maria Souza',
-    cpf_cnpj: '123.456.789-00',
+    cpf: '12345678900',
+    nome_fantasia: 'Fazenda da Maria',
+    categoria_producao: 'Frutas',
     email: 'maria@example.com',
     telefone: '(34) 99999-0000',
     data_nascimento: '1995-06-15',
@@ -42,7 +44,9 @@ function makeUser(overrides: Partial<User> = {}): User {
   return new User({
     id: 1,
     nome: 'Maria Souza',
-    cpf_cnpj: '123.456.789-00',
+    cpf: '12345678900',
+    nome_fantasia: 'Fazenda da Maria',
+    categoria_producao: 'Frutas',
     email: 'maria@example.com',
     telefone: '(34) 99999-0000',
     data_nascimento: '1995-06-15',
@@ -71,7 +75,7 @@ describe('UserService', () => {
 
   describe('register', () => {
     it('deve registrar um novo usuário com sucesso', async () => {
-      repo.findByCpfCnpj.mockResolvedValue(null);
+      repo.findByCpf.mockResolvedValue(null);
       repo.create.mockImplementation(async (user: User) => {
         user.id = 1;
         return user;
@@ -80,7 +84,7 @@ describe('UserService', () => {
       const dto = makeDTO();
       const result = await service.register(dto);
 
-      expect(repo.findByCpfCnpj).toHaveBeenCalledWith(dto.cpf_cnpj);
+      expect(repo.findByCpf).toHaveBeenCalledWith(dto.cpf);
       expect(repo.create).toHaveBeenCalledTimes(1);
 
       // O usuário salvo deve ter status 'pendente' e senha hash (não texto plano)
@@ -91,7 +95,7 @@ describe('UserService', () => {
     });
 
     it('deve gerar hash bcrypt para a senha', async () => {
-      repo.findByCpfCnpj.mockResolvedValue(null);
+      repo.findByCpf.mockResolvedValue(null);
       repo.create.mockImplementation(async (user: User) => user);
 
       await service.register(makeDTO({ senha: 'minhasenha' }));
@@ -101,12 +105,12 @@ describe('UserService', () => {
       expect(isValid).toBe(true);
     });
 
-    it('deve lançar ConflictError se CPF/CNPJ já existe', async () => {
-      repo.findByCpfCnpj.mockResolvedValue(makeUser());
+    it('deve lançar ConflictError se CPF já existe', async () => {
+      repo.findByCpf.mockResolvedValue(makeUser());
 
       await expect(service.register(makeDTO())).rejects.toThrow(ConflictError);
       await expect(service.register(makeDTO())).rejects.toThrow(
-        'CPF/CNPJ já cadastrado no sistema.'
+        'CPF já cadastrado no sistema.'
       );
       expect(repo.create).not.toHaveBeenCalled();
     });
@@ -118,16 +122,16 @@ describe('UserService', () => {
     it('deve autenticar com sucesso quando credenciais estão corretas', async () => {
       const hashedPwd = await bcrypt.hash('senha123', 4); // salt 4 para rapidez nos testes
       const user = makeUser({ senha: hashedPwd });
-      repo.findByCpfCnpj.mockResolvedValue(user);
+      repo.findByCpf.mockResolvedValue(user);
 
-      const result = await service.authenticate('123.456.789-00', 'senha123');
+      const result = await service.authenticate('12345678900', 'senha123');
 
       expect(result).toEqual(user);
-      expect(repo.findByCpfCnpj).toHaveBeenCalledWith('123.456.789-00');
+      expect(repo.findByCpf).toHaveBeenCalledWith('12345678900');
     });
 
-    it('deve lançar UnauthorizedError se CPF/CNPJ não encontrado', async () => {
-      repo.findByCpfCnpj.mockResolvedValue(null);
+    it('deve lançar UnauthorizedError se CPF não encontrado', async () => {
+      repo.findByCpf.mockResolvedValue(null);
 
       await expect(
         service.authenticate('000.000.000-00', 'senha123')
@@ -136,7 +140,7 @@ describe('UserService', () => {
 
     it('deve lançar UnauthorizedError se senha está incorreta', async () => {
       const hashedPwd = await bcrypt.hash('senha123', 4);
-      repo.findByCpfCnpj.mockResolvedValue(makeUser({ senha: hashedPwd }));
+      repo.findByCpf.mockResolvedValue(makeUser({ senha: hashedPwd }));
 
       await expect(
         service.authenticate('123.456.789-00', 'senhaerrada')

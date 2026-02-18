@@ -21,8 +21,8 @@ const ApiService = {
         return await this.post('/users/register', userData);
     },
 
-    async login(cpf_cnpj, senha) {
-        const result = await this.post('/login', { cpf_cnpj, senha });
+    async login(cpf, senha) {
+        const result = await this.post('/login', { cpf, senha });
         if (result.ok && result.data.token) {
             sessionStorage.setItem('token', result.data.token);
             sessionStorage.setItem('user', JSON.stringify(result.data.user));

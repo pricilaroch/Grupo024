@@ -3,13 +3,13 @@ import { User, UserData } from '../models/User';
 
 export class UserRepository {
   /**
-   * Busca um usuário pelo CPF ou CNPJ.
+   * Busca um usuário pelo CPF.
    */
-  public async findByCpfCnpj(cpfCnpj: string): Promise<User | null> {
+  public async findByCpf(cpf: string): Promise<User | null> {
     const db = await getDatabase();
     const row = await db.get<UserData>(
-      'SELECT * FROM users WHERE cpf_cnpj = ?',
-      [cpfCnpj]
+      'SELECT * FROM users WHERE cpf = ?',
+      [cpf]
     );
 
     if (!row) return null;
@@ -22,11 +22,14 @@ export class UserRepository {
   public async create(user: User): Promise<User> {
     const db = await getDatabase();
     const result = await db.run(
-      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, observacao, endereco, senha, status, role)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (nome, cpf, cnpj, nome_fantasia, categoria_producao, email, telefone, data_nascimento, observacao, endereco, senha, status, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         user.nome,
-        user.cpf_cnpj,
+        user.cpf,
+        user.cnpj,
+        user.nome_fantasia,
+        user.categoria_producao,
         user.email,
         user.telefone,
         user.data_nascimento,

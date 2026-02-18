@@ -79,11 +79,14 @@ async function seedAdmin(database: Database): Promise<void> {
   const hashedPassword = await bcrypt.hash('admin123', config.bcryptSaltRounds);
 
   await database.run(
-    `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO users (nome, cpf, cnpj, nome_fantasia, categoria_producao, email, telefone, data_nascimento, endereco, senha, status, role)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       'Administrador',
       '00000000000',
+      '',
+      'Sistema',
+      'Administração',
       'admin@sistema.com',
       '0000000000',
       '2000-01-01',
@@ -98,11 +101,14 @@ async function seedAdmin(database: Database): Promise<void> {
 
   // Inserção 1
   await database.run(
-      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (nome, cpf, cnpj, nome_fantasia, categoria_producao, email, telefone, data_nascimento, endereco, senha, status, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'João Produtor',
         '11122233344',
+        '',
+        'Fazenda do João',
+        'Frutas',
         'joao@email.com',
         '34999991111',
         '1985-05-10',
@@ -115,11 +121,14 @@ async function seedAdmin(database: Database): Promise<void> {
 
   // Inserção 2
   await database.run(
-      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (nome, cpf, cnpj, nome_fantasia, categoria_producao, email, telefone, data_nascimento, endereco, senha, status, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'Maria Silva',
         '22233344455',
+        '12345678000100',
+        'Laticínios da Maria',
+        'Laticínios',
         'maria@email.com',
         '34999992222',
         '1992-08-20',
@@ -132,11 +141,14 @@ async function seedAdmin(database: Database): Promise<void> {
 
   // Inserção 3
   await database.run(
-      `INSERT INTO users (nome, cpf_cnpj, email, telefone, data_nascimento, endereco, senha, status, role)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (nome, cpf, cnpj, nome_fantasia, categoria_producao, email, telefone, data_nascimento, endereco, senha, status, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'José Santos',
         '33344455566',
+        '',
+        'Horta do Zé',
+        'Hortaliças',
         'jose@email.com',
         '34999993333',
         '1978-12-15',
