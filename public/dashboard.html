@@ -12,21 +12,63 @@
 <body>
   <nav id="navbar" class="navbar"></nav>
 
-  <div class="container">
-    <header class="header">
-      <h1>Dashboard</h1>
-      <p id="welcomeMsg">Bem-vindo ao sistema!</p>
-    </header>
-
+  <div class="container container-wide">
     <main class="main-content">
-      <div class="status-page">
-        <div class="status-icon status-icon-approved">&#10003;</div>
-        <h2>Conta Aprovada</h2>
-        <p>
-          Sua conta está ativa. Em breve, novas funcionalidades estarão disponíveis
-          nesta área.
-        </p>
+
+      <!-- Welcome banner -->
+      <div class="dashboard-welcome">
+        <h1 id="welcomeMsg">Bem-vindo ao sistema!</h1>
+        <p>Aqui você controla tudo sem precisar do caderninho.</p>
+        <span class="badge">Conta Ativa</span>
       </div>
+
+      <!-- Summary cards -->
+      <h2 class="section-title">Resumo do dia</h2>
+      <div class="dashboard-grid">
+        <div class="summary-card">
+          <div class="summary-card-icon summary-card-icon--deliveries" aria-hidden="true">📦</div>
+          <div class="summary-card-body">
+            <span class="summary-card-label">Entregas hoje</span>
+            <span class="summary-card-value summary-card-value--xl">0</span>
+            <span class="summary-card-hint">Nenhuma entrega pendente</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-card-icon summary-card-icon--money" aria-hidden="true">💰</div>
+          <div class="summary-card-body">
+            <span class="summary-card-label">Total a receber</span>
+            <span class="summary-card-value summary-card-value--xl">R$ 0,00</span>
+            <span class="summary-card-hint">Valores em aberto</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-card-icon summary-card-icon--pending" aria-hidden="true">⏳</div>
+          <div class="summary-card-body">
+            <span class="summary-card-label">Encomendas pendentes</span>
+            <span class="summary-card-value">0</span>
+            <span class="summary-card-hint">Aguardando confirmação</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-card-icon summary-card-icon--profile" aria-hidden="true">🌿</div>
+          <div class="summary-card-body">
+            <span class="summary-card-label">Meu perfil</span>
+            <span class="summary-card-value" id="userFantasyName">—</span>
+            <span class="summary-card-hint" id="userCategory">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placeholder para encomendas futuras -->
+      <h2 class="section-title">Próximas entregas</h2>
+      <div class="empty-placeholder">
+        <span class="empty-placeholder-icon" aria-hidden="true">📋</span>
+        <p>Nenhuma encomenda registrada ainda.<br>Em breve você poderá gerenciar seus pedidos aqui.</p>
+      </div>
+
     </main>
   </div>
 
@@ -39,7 +81,11 @@
 
       const user = ApiService.getUser();
       if (user) {
-        document.getElementById('welcomeMsg').textContent = `Bem-vindo(a), ${user.nome}!`;
+        document.getElementById('welcomeMsg').textContent = `Olá, ${user.nome.split(' ')[0]}!`;
+        const fantasyEl = document.getElementById('userFantasyName');
+        const categoryEl = document.getElementById('userCategory');
+        if (fantasyEl && user.nome_fantasia) fantasyEl.textContent = user.nome_fantasia;
+        if (categoryEl && user.categoria_producao) categoryEl.textContent = user.categoria_producao;
       }
     });
   </script>
