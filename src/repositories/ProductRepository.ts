@@ -1,5 +1,5 @@
 import { getDatabase } from '../database/database';
-import { IProductRepository, ProductData, ProductDTO } from "../models/Product";
+import { IProductRepository, ProductData, ProductDTO, PublicProduct } from "../models/Product";
 import { Database } from 'sqlite';
 
 
@@ -9,7 +9,7 @@ export class ProductRepository implements  IProductRepository{
     constructor(db: Database) {
         this.db = db;
     }
-    
+
     // Implementação dos métodos do IProductRepository aqui
     async create(product: ProductDTO, user_id: number): Promise<ProductData> {
         const result = await this.db.run(
@@ -93,27 +93,12 @@ export class ProductRepository implements  IProductRepository{
         }));
     }
 
-    async findAll(): Promise<ProductData[]> {
-        const products: ProductData[] = await this.db.all(
-            `SELECT * FROM products`
+    async findAll(): Promise<PublicProduct[]> {
+        const products: PublicProduct[] = await this.db.all(
+            `SELECT id, user_id, nome, descricao, preco_venda, unidade_medida, quantidade_estoque, tempo_producao_minutos, imagem_url, categoria FROM products WHERE ativo = 1`
         );
 
-        return products.map(product => ({
-            id: product.id,
-            user_id: product.user_id,
-            nome: product.nome,
-            descricao: product.descricao,
-            preco_venda: product.preco_venda,
-            preco_custo: product.preco_custo,
-            unidade_medida: product.unidade_medida,
-            quantidade_estoque: product.quantidade_estoque,
-            tempo_producao_minutos: product.tempo_producao_minutos,
-            imagem_url: product.imagem_url,
-            categoria: product.categoria,
-            ativo: Boolean(product.ativo),
-            created_at: product.created_at,
-            updated_at: product.updated_at
-        }));
+        return products;
     }
 
     async update(id: number, product: ProductDTO): Promise<ProductData | null> {

@@ -10,19 +10,23 @@ import { getDatabase } from './database/database';
 
 // Repositories
 import { UserRepository } from './repositories/UserRepository';
+import { ProductRepository } from './repositories/ProductRepository';
 
 // Services
 import { UserService } from './services/UserService';
+import { ProductService } from './services/ProductService'; 
 
 // Controllers
 import { UserController } from './controllers/UserController';
 import { AuthController } from './controllers/AuthController';
 import { AdminController } from './controllers/AdminController';
+import { ProductController } from './controllers/ProductController';
 
 // Route builders
 import { buildUserRoutes } from './routes/userRoutes';
 import { buildAuthRoutes } from './routes/authRoutes';
 import { buildAdminRoutes } from './routes/adminRoutes';
+import { buildProductRoutes } from './routes/productRouts';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
@@ -57,21 +61,26 @@ async function main(): Promise<void> {
     reply.status(500).send({ error: 'Erro interno do servidor.' });
   });
 
+  // ─── Banco de Dados (Migrations) ──────────────────────
+  const db = await getDatabase();
+
   // ─── Injeção de Dependências (DI manual) ───────────────
   const userRepository = new UserRepository();
+  const productRepository = new ProductRepository(db);
+
   const userService = new UserService(userRepository);
+  const productService = new ProductService(productRepository);
 
   const userController = new UserController(userService);
   const authController = new AuthController(userService);
   const adminController = new AdminController(userService);
+  const productController = new ProductController(productService);
 
   // ─── Rotas ─────────────────────────────────────────────
   await fastify.register(buildUserRoutes(userController));
   await fastify.register(buildAuthRoutes(authController));
   await fastify.register(buildAdminRoutes(adminController));
-
-  // ─── Banco de Dados (Migrations) ──────────────────────
-  await getDatabase();
+  await fastify.register(buildProductRoutes(productController), { prefix: '/products' });
 
   // ─── Start ─────────────────────────────────────────────
   await fastify.listen({ port: config.port, host: '0.0.0.0' });
