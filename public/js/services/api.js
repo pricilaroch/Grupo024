@@ -1,6 +1,7 @@
 // ATENÇÃO: Este arquivo define o objeto que os outros arquivos usam.
 const ApiService = {
     BASE_URL: 'http://localhost:3000',
+    //BASE_URL: 'http://192.168.100.167:3000',
 
     async post(endpoint, data) {
         try {

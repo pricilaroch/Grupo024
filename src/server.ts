@@ -26,7 +26,7 @@ import { ProductController } from './controllers/ProductController';
 import { buildUserRoutes } from './routes/userRoutes';
 import { buildAuthRoutes } from './routes/authRoutes';
 import { buildAdminRoutes } from './routes/adminRoutes';
-import { buildProductRoutes } from './routes/productRouts';
+import { buildProductRoutes } from './routes/productRoutes';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });

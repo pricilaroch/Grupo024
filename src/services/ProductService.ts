@@ -8,7 +8,7 @@ export class ProductService implements IProductService {
         this.productRepository = productRepository;
     }
 
-    async createProduct(product: ProductData, user_id: number): Promise<ProductData> {
+    async createProduct(product: ProductDTO, user_id: number): Promise<ProductData> {
         return await this.productRepository.create(product, user_id);
     }
 
