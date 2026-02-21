@@ -22,31 +22,30 @@ async function authenticate(request: FastifyRequest, _reply: FastifyReply): Prom
 
 export function buildProductRoutes(controller: ProductController) {
     return async function productRoutes(fastify: FastifyInstance): Promise<void> {
-        // Aplica o decorator de autenticação em todas as rotas do prefix
-        fastify.addHook('onRequest', authenticate);
-
-        fastify.post('/', (request, reply) =>
+        // Rotas protegidas
+        fastify.post('/', { preHandler: authenticate }, (request, reply) =>
             controller.create(request, reply)
         );
 
-        fastify.get('/:id', (request, reply) =>
+        fastify.get('/:id', { preHandler: authenticate }, (request, reply) =>
             controller.getById(request as FastifyRequest<{ Params: { id: string } }>, reply)
         );
 
-        fastify.get('/user', (request, reply) =>
+        fastify.get('/user', { preHandler: authenticate }, (request, reply) =>
             controller.getByUserId(request, reply)
         );
 
-        fastify.get('/', (request, reply) =>
-            controller.getAll(request, reply)
-        );
-
-        fastify.patch('/:id', (request, reply) =>
+        fastify.patch('/:id', { preHandler: authenticate }, (request, reply) =>
             controller.update(request as FastifyRequest<{ Params: { id: string } }>, reply)
         );
 
-        fastify.delete('/:id', (request, reply) =>
+        fastify.delete('/:id', { preHandler: authenticate }, (request, reply) =>
             controller.delete(request as FastifyRequest<{ Params: { id: string } }>, reply)
+        );
+
+        // Rota pública
+        fastify.get('/', (request, reply) =>
+            controller.getAll(request, reply)
         );
     }
 }
