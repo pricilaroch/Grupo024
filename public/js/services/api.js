@@ -64,6 +64,79 @@ const ApiService = {
     },
 
 
+    // ─── Products ────────────────────────────────────
+
+    async getProducts() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/products/user`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar produtos:', error);
+            throw error;
+        }
+    },
+
+    async createProduct(productData) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/products`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(productData)
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao criar produto:', error);
+            throw error;
+        }
+    },
+
+    async updateProduct(id, productData) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/products/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(productData)
+            });
+            // PATCH may return 204 with no body
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar produto:', error);
+            throw error;
+        }
+    },
+
+    async deleteProduct(id) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/products/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            // DELETE returns 204 with no body
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao excluir produto:', error);
+            throw error;
+        }
+    },
+
     getUser() {
         const user = sessionStorage.getItem('user');
         return user ? JSON.parse(user) : null;

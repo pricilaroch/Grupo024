@@ -1160,3 +1160,435 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
+
+/* ===========================
+   Products Page
+   =========================== */
+
+/* ── Header ── */
+.products-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.products-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--foreground);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-snug);
+}
+
+.products-subtitle {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-top: 0.125rem;
+}
+
+/* ── Filter bar ── */
+.products-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+.products-filter-tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--muted);
+  border-radius: var(--radius-md);
+  padding: 0.1875rem;
+}
+
+.filter-tab {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+  min-height: 32px;
+}
+
+.filter-tab:hover {
+  color: var(--foreground);
+}
+
+.filter-tab.active {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: var(--shadow-xs);
+}
+
+.products-count {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+/* ── Grid ── */
+.products-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* ── Product Card ── */
+.product-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: box-shadow 0.15s, opacity 0.15s;
+}
+
+.product-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.product-card--inactive {
+  opacity: 0.65;
+}
+
+.product-card-img {
+  width: 100%;
+  height: 140px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--muted);
+}
+
+.product-card-body {
+  padding: 1.25rem;
+}
+
+.product-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.product-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.product-card-category {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Prices ── */
+.product-card-prices {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.product-card-price-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-price-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.product-card-price-value {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--foreground);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+}
+
+.product-card-unit {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+/* ── Profit ── */
+.product-card-profit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.product-card-profit-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.product-card-profit--ok .product-card-profit-label {
+  color: var(--success);
+}
+
+.product-card-profit--low .product-card-profit-label {
+  color: var(--warning);
+}
+
+.product-card-profit-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.product-card-profit--ok .product-card-profit-value {
+  color: var(--success);
+}
+
+.product-card-profit--low .product-card-profit-value {
+  color: var(--warning);
+}
+
+.margin-badge--ok {
+  display: inline-flex;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--success);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--radius-full);
+  margin-top: 0.125rem;
+}
+
+.margin-badge--low {
+  display: inline-flex;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--radius-full);
+  margin-top: 0.125rem;
+}
+
+/* ── Margin alert ── */
+.product-card-alert {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-md);
+  padding: 0.375rem 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Meta ── */
+.product-card-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.25rem;
+}
+
+.product-card-meta strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+/* ── Card actions ── */
+.product-card-actions {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.product-card-actions .btn {
+  flex: 1;
+  border-radius: 0;
+  font-size: 0.75rem;
+  min-height: 40px;
+  gap: 0.25rem;
+}
+
+.product-card-actions .btn + .btn {
+  border-left: 1px solid var(--border);
+}
+
+.btn-sm {
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.75rem;
+  min-height: 36px;
+}
+
+.btn-ghost-danger {
+  color: var(--destructive);
+}
+
+.btn-ghost-danger:hover {
+  background-color: #fef2f2;
+  color: var(--destructive);
+}
+
+/* ── Empty state (products) ── */
+.products-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--card);
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--border);
+  width: 100%;
+}
+
+.products-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.products-empty h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.375rem;
+}
+
+.products-empty p {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  max-width: 360px;
+  margin-bottom: 1.25rem;
+  line-height: var(--leading-relaxed);
+}
+
+.products-empty-filter {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+/* ── Modal (product form) ── */
+.modal-product {
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ── Form row (side by side) ── */
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group-half {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Field error text ── */
+.field-error {
+  display: none;
+  font-size: 0.75rem;
+  color: var(--destructive);
+  margin-top: 0.25rem;
+}
+
+/* ── Profit preview in form ── */
+.profit-preview {
+  display: flex;
+  gap: 1.5rem;
+  background: var(--muted);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+}
+
+.profit-preview-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.profit-preview-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.profit-preview-value {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.profit-preview-value--ok {
+  color: var(--success);
+}
+
+.profit-preview-value--low {
+  color: var(--warning);
+}
+
+.profit-preview-margin {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.profit-preview-margin--ok {
+  color: var(--success);
+}
+
+.profit-preview-margin--low {
+  color: var(--warning);
+}
+
+/* ── Products responsive ── */
+@media (min-width: 640px) {
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .products-header .btn {
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 1024px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
