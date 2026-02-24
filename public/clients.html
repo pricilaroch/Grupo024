@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Clientes - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav id="navbar" class="navbar"></nav>
+
+  <div class="container container-wide">
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="products-header">
+        <div>
+          <h1 class="products-title">Meus Clientes</h1>
+          <p class="products-subtitle">Sua agenda de contatos inteligente.</p>
+        </div>
+        <button id="btnNewClient" class="btn btn-primary">+ Novo Cliente</button>
+      </div>
+
+      <!-- Search bar -->
+      <div class="products-filter-bar">
+        <input type="text" id="searchInput" class="client-search-input" placeholder="Buscar por nome, telefone ou e-mail…">
+        <span id="clientCount" class="products-count"></span>
+      </div>
+
+      <!-- Client cards grid -->
+      <div id="clientsGrid" class="products-grid">
+        <!-- Cards rendered by JS -->
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="products-empty" style="display:none;">
+        <div class="products-empty-icon" aria-hidden="true">&#128222;</div>
+        <h2>Ainda não há clientes?</h2>
+        <p>Comece sua agenda agora! Cadastre seu primeiro cliente e tenha acesso rápido ao WhatsApp e localização.</p>
+        <button id="btnEmptyNew" class="btn btn-primary">+ Cadastrar primeiro cliente</button>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loadingState" class="admin-loading">Carregando clientes…</div>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Criar / Editar Cliente
+       ═══════════════════════════════════════════════════ -->
+  <div id="clientModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-product">
+      <h3 id="modalTitle">Novo Cliente</h3>
+      <p id="modalSubtitle" class="modal-user-name">Preencha os dados do cliente.</p>
+
+      <form id="clientForm" novalidate>
+        <div id="formAlert" class="alert alert-error" style="display:none;"></div>
+
+        <!-- Nome -->
+        <div class="form-group">
+          <label for="f-nome">Nome *</label>
+          <input type="text" id="f-nome" name="nome" placeholder="Ex: Maria Silva" autocomplete="off">
+          <span class="field-error" data-for="nome"></span>
+        </div>
+
+        <!-- Telefone -->
+        <div class="form-group">
+          <label for="f-telefone">Telefone *</label>
+          <input type="tel" id="f-telefone" name="telefone" placeholder="(00) 90000-0000" autocomplete="off">
+          <span class="field-error" data-for="telefone"></span>
+        </div>
+
+        <!-- E-mail -->
+        <div class="form-group">
+          <label for="f-email">E-mail</label>
+          <input type="email" id="f-email" name="email" placeholder="cliente@email.com" autocomplete="off">
+          <span class="field-error" data-for="email"></span>
+        </div>
+
+        <!-- Endereço -->
+        <div class="form-group">
+          <label for="f-endereco">Endereço *</label>
+          <textarea id="f-endereco" name="endereco" placeholder="Rua, número, bairro, cidade" rows="2"></textarea>
+          <span class="field-error" data-for="endereco"></span>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button type="button" id="btnCancelModal" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btnSubmit" class="btn btn-primary">Salvar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Confirmar Exclusão
+       ═══════════════════════════════════════════════════ -->
+  <div id="deleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <h3>Excluir Cliente</h3>
+      <p class="modal-user-name">Tem certeza que deseja excluir <strong id="deleteClientName"></strong>? Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button type="button" id="btnCancelDelete" class="btn btn-secondary">Cancelar</button>
+        <button type="button" id="btnConfirmDelete" class="btn btn-danger">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
+  <script src="/js/clients.js"></script>
+</body>
+</html>
