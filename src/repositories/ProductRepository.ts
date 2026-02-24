@@ -1,4 +1,3 @@
-import { getDatabase } from '../database/database';
 import { IProductRepository, ProductData, ProductDTO, PublicProduct } from "../models/Product";
 import { Database } from 'sqlite';
 

@@ -27,6 +27,10 @@ import { buildUserRoutes } from './routes/userRoutes';
 import { buildAuthRoutes } from './routes/authRoutes';
 import { buildAdminRoutes } from './routes/adminRoutes';
 import { buildProductRoutes } from './routes/productRoutes';
+import { ClientRepository } from './repositories/ClientRepository';
+import { ClientService } from './services/ClientService';
+import { ClientController } from './controllers/ClientController';
+import { buildClientRoutes } from './routes/clientRoutes';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
@@ -67,20 +71,24 @@ async function main(): Promise<void> {
   // ─── Injeção de Dependências (DI manual) ───────────────
   const userRepository = new UserRepository();
   const productRepository = new ProductRepository(db);
+  const clientRepository = new ClientRepository(db);
 
   const userService = new UserService(userRepository);
   const productService = new ProductService(productRepository);
+  const clientService = new ClientService(clientRepository);
 
   const userController = new UserController(userService);
   const authController = new AuthController(userService);
   const adminController = new AdminController(userService);
   const productController = new ProductController(productService);
+  const clientController = new ClientController(clientService);
 
   // ─── Rotas ─────────────────────────────────────────────
   await fastify.register(buildUserRoutes(userController));
   await fastify.register(buildAuthRoutes(authController));
   await fastify.register(buildAdminRoutes(adminController));
   await fastify.register(buildProductRoutes(productController), { prefix: '/products' });
+  await fastify.register(buildClientRoutes(clientController),  { prefix: '/clients' });
 
   // ─── Start ─────────────────────────────────────────────
   await fastify.listen({ port: config.port, host: '0.0.0.0' });
