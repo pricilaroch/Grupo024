@@ -60,6 +60,7 @@ export interface UpdateOrderDTO {
   desconto?: number;
   data_entrega?: string;
   observacoes?: string;
+  items?: CreateOrderItemDTO[];
 }
 
 // ─── Interfaces de contrato ──────────────────────────────
@@ -70,6 +71,7 @@ export interface IOrderRepository {
   findByUserId(user_id: number): Promise<OrderData[]>;
   findByUserIdAndStatus(user_id: number, status: string[]): Promise<OrderData[]>;
   update(id: number, order: UpdateOrderDTO): Promise<OrderData | null>;
+  replaceItems(orderId: number, items: OrderItemData[]): Promise<void>;
   updateStatus(id: number, status: string): Promise<OrderData | null>;
   updatePaymentStatus(id: number, status_pagamento: string): Promise<OrderData | null>;
   delete(id: number): Promise<boolean>;

@@ -13,6 +13,7 @@ function createMockOrderRepo(): jest.Mocked<IOrderRepository> {
     findByUserId: jest.fn(),
     findByUserIdAndStatus: jest.fn(),
     update: jest.fn(),
+    replaceItems: jest.fn(),
     updateStatus: jest.fn(),
     updatePaymentStatus: jest.fn(),
     delete: jest.fn(),

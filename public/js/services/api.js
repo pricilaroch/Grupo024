@@ -70,7 +70,7 @@ const ApiService = {
     async getProducts() {
         const token = sessionStorage.getItem('token');
         try {
-            const response = await fetch(`${this.BASE_URL}/products/user`, {
+            const response = await fetch(`${this.BASE_URL}/products`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await response.json();
@@ -177,7 +177,7 @@ const ApiService = {
         const token = sessionStorage.getItem('token');
         try {
             const response = await fetch(`${this.BASE_URL}/clients/${id}`, {
-                method: 'PUT',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

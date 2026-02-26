@@ -182,33 +182,103 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════
-       Modal: Editar Encomenda
+       Modal: Editar Encomenda (PDV completo)
        ═══════════════════════════════════════════════════ -->
   <div id="editModal" class="modal-overlay" style="display:none;" role="dialog">
-    <div class="modal modal-edit">
+    <div class="modal modal-order-create">
       <div class="modal-detail-header">
         <h3 id="editTitle">Editar Encomenda</h3>
         <button id="btnCloseEdit" class="btn-icon" aria-label="Fechar">&times;</button>
       </div>
-      <form id="editForm" class="edit-form">
-        <div class="form-group">
-          <label for="editDataEntrega">Data de Entrega</label>
-          <input type="date" id="editDataEntrega" class="form-input">
+
+      <div id="editFeedback" class="pdv-feedback"></div>
+
+      <div class="pdv-modal-grid">
+        <!-- LEFT: Dados + Itens -->
+        <div class="pdv-modal-left">
+          <div class="pdv-section">
+            <h4 class="pdv-section-title">Dados do Pedido</h4>
+            <div class="header-fields">
+              <div>
+                <label for="editSelectClient">Cliente *</label>
+                <select id="editSelectClient" disabled><option value="">Selecione um cliente</option></select>
+              </div>
+              <div>
+                <label for="editInputDataEntrega">Data de Entrega</label>
+                <input type="datetime-local" id="editInputDataEntrega">
+              </div>
+              <div>
+                <label for="editSelectTipoEntrega">Tipo de Entrega</label>
+                <select id="editSelectTipoEntrega">
+                  <option value="retirada">Retirada</option>
+                  <option value="entrega">Entrega</option>
+                </select>
+              </div>
+              <div>
+                <label for="editSelectPagamento">Forma de Pagamento</label>
+                <select id="editSelectPagamento">
+                  <option value="">Definir depois</option>
+                  <option value="pix">PIX</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="cartao_credito">Cartão Crédito</option>
+                  <option value="cartao_debito">Cartão Débito</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:.75rem;">
+              <label for="editInputObservacoes" style="font-size:.75rem;">Observações</label>
+              <textarea id="editInputObservacoes" rows="2" placeholder="Observações opcionais…" class="pdv-textarea"></textarea>
+            </div>
+          </div>
+
+          <div class="pdv-section">
+            <h4 class="pdv-section-title">Adicionar Produto</h4>
+            <div class="item-adder">
+              <div class="form-group" style="flex:2;">
+                <label for="editSelectProduct">Produto</label>
+                <select id="editSelectProduct"><option value="">Selecione um produto</option></select>
+              </div>
+              <div class="form-group" style="flex:0 0 90px;">
+                <label for="editInputQtd">Qtd</label>
+                <input type="number" id="editInputQtd" min="1" value="1" class="pdv-input">
+              </div>
+              <button id="btnEditAddItem" class="btn btn-primary btn-sm" style="align-self:end;height:38px;">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="pdv-section">
+            <h4 class="pdv-section-title">Itens do Pedido</h4>
+            <div id="editCartEmpty" class="cart-empty">Nenhum item adicionado.</div>
+            <table id="editCartTable" class="cart-table" style="display:none;">
+              <thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th class="td-right">Subtotal</th><th></th></tr></thead>
+              <tbody id="editCartBody"></tbody>
+            </table>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="editDesconto">Desconto (R$)</label>
-          <input type="number" id="editDesconto" class="form-input" min="0" step="0.01">
+
+        <!-- RIGHT: Resumo Financeiro -->
+        <div class="pdv-modal-right">
+          <div class="pdv-summary-sticky">
+            <h4 class="pdv-section-title">Resumo Financeiro</h4>
+            <div class="summary-inputs">
+              <div>
+                <label for="editInputTaxaEntrega">Taxa de Entrega (R$)</label>
+                <input type="number" id="editInputTaxaEntrega" min="0" step="0.01" value="0" class="pdv-input">
+              </div>
+              <div>
+                <label for="editInputDesconto">Desconto (R$)</label>
+                <input type="number" id="editInputDesconto" min="0" step="0.01" value="0" class="pdv-input">
+              </div>
+            </div>
+            <div class="summary-row"><span class="label">Subtotal</span><span id="editSumSubtotal">R$ 0,00</span></div>
+            <div class="summary-row"><span class="label">Taxa de Entrega</span><span id="editSumTaxa">R$ 0,00</span></div>
+            <div class="summary-row"><span class="label">Desconto</span><span id="editSumDesconto">- R$ 0,00</span></div>
+            <div class="summary-row total"><span class="label">Total</span><span id="editSumTotal">R$ 0,00</span></div>
+            <div class="summary-row lucro"><span class="label">Lucro Estimado</span><span id="editSumLucro">R$ 0,00</span></div>
+            <button id="btnSaveEdit" class="btn btn-primary btn-submit-order">Salvar Alterações</button>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="editObservacoes">Observações</label>
-          <textarea id="editObservacoes" class="form-input" rows="3"></textarea>
-        </div>
-        <div id="editFeedback" class="pdv-feedback"></div>
-        <div class="modal-actions">
-          <button type="button" id="btnCancelEdit" class="btn btn-secondary">Cancelar</button>
-          <button type="submit" id="btnSaveEdit" class="btn btn-primary">Salvar</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 

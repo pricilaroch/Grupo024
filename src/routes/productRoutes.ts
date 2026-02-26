@@ -31,7 +31,7 @@ export function buildProductRoutes(controller: ProductController) {
             controller.getById(request as FastifyRequest<{ Params: { id: string } }>, reply)
         );
 
-        fastify.get('/user', { preHandler: authenticate }, (request, reply) =>
+        fastify.get('/', { preHandler: authenticate }, (request, reply) =>
             controller.getByUserId(request, reply)
         );
 
@@ -41,11 +41,6 @@ export function buildProductRoutes(controller: ProductController) {
 
         fastify.delete('/:id', { preHandler: authenticate }, (request, reply) =>
             controller.delete(request as FastifyRequest<{ Params: { id: string } }>, reply)
-        );
-
-        // Rota pública
-        fastify.get('/', (request, reply) =>
-            controller.getAll(request, reply)
         );
     }
 }

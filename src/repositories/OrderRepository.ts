@@ -170,7 +170,7 @@ export class OrderRepository implements IOrderRepository {
         return result;
     }
 
-    async update(id: number, order: UpdateOrderDTO): Promise<OrderData | null> {
+    async update(id: number, order: UpdateOrderDTO & { valor_subtotal?: number; valor_total?: number; valor_lucro_total?: number }): Promise<OrderData | null> {
         const existing = await this.findById(id);
         if (!existing) {
             return null;
@@ -185,7 +185,10 @@ export class OrderRepository implements IOrderRepository {
                 taxa_entrega = ?,
                 desconto = ?,
                 data_entrega = ?,
-                observacoes = ?
+                observacoes = ?,
+                valor_subtotal = ?,
+                valor_total = ?,
+                valor_lucro_total = ?
             WHERE id = ?`,
             order.status ?? existing.status,
             order.forma_pagamento ?? existing.forma_pagamento,
@@ -195,26 +198,41 @@ export class OrderRepository implements IOrderRepository {
             order.desconto ?? existing.desconto,
             order.data_entrega ?? existing.data_entrega,
             order.observacoes ?? existing.observacoes,
+            order.valor_subtotal ?? existing.valor_subtotal,
+            order.valor_total ?? existing.valor_total,
+            order.valor_lucro_total ?? existing.valor_lucro_total,
             id
         );
 
-        // Recalcula valor_total se desconto ou taxa foram alterados
-        if (order.desconto !== undefined || order.taxa_entrega !== undefined) {
-            const updated = await this.findById(id);
-            if (updated) {
-                const desconto = order.desconto ?? updated.desconto;
-                const taxa = order.taxa_entrega ?? updated.taxa_entrega;
-                const valorTotal = (updated.valor_subtotal + taxa) - desconto;
+        return this.findById(id);
+    }
 
+    /**
+     * Substitui todos os itens de uma encomenda dentro de uma transação.
+     */
+    async replaceItems(orderId: number, items: OrderItemData[]): Promise<void> {
+        try {
+            await this.db.run('BEGIN TRANSACTION');
+
+            await this.db.run(`DELETE FROM order_items WHERE order_id = ?`, orderId);
+
+            for (const item of items) {
                 await this.db.run(
-                    `UPDATE orders SET valor_total = ? WHERE id = ?`,
-                    Math.max(valorTotal, 0),
-                    id
+                    `INSERT INTO order_items (order_id, product_id, quantidade, preco_venda_unitario, preco_custo_unitario)
+                     VALUES (?, ?, ?, ?, ?)`,
+                    orderId,
+                    item.product_id,
+                    item.quantidade,
+                    item.preco_venda_unitario,
+                    item.preco_custo_unitario
                 );
             }
-        }
 
-        return this.findById(id);
+            await this.db.run('COMMIT');
+        } catch (error) {
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
     }
 
     async updateStatus(id: number, status: string): Promise<OrderData | null> {

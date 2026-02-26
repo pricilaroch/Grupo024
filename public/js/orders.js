@@ -53,14 +53,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const sumLucro         = document.getElementById('sumLucro');
   const btnSubmitOrder   = document.getElementById('btnSubmitOrder');
 
-  // ── DOM refs: Edit Modal ───────────────────────────────
-  const editModal       = document.getElementById('editModal');
-  const editTitle       = document.getElementById('editTitle');
-  const editForm        = document.getElementById('editForm');
-  const editDataEntrega = document.getElementById('editDataEntrega');
-  const editDesconto    = document.getElementById('editDesconto');
-  const editObservacoes = document.getElementById('editObservacoes');
-  const editFeedback    = document.getElementById('editFeedback');
+  // ── DOM refs: Edit Modal (PDV) ──────────────────────────
+  const editModal          = document.getElementById('editModal');
+  const editTitle          = document.getElementById('editTitle');
+  const editFeedback       = document.getElementById('editFeedback');
+  const editSelectClient   = document.getElementById('editSelectClient');
+  const editInputDataEntrega  = document.getElementById('editInputDataEntrega');
+  const editSelectTipoEntrega = document.getElementById('editSelectTipoEntrega');
+  const editSelectPagamento   = document.getElementById('editSelectPagamento');
+  const editInputObservacoes  = document.getElementById('editInputObservacoes');
+  const editSelectProduct  = document.getElementById('editSelectProduct');
+  const editInputQtd       = document.getElementById('editInputQtd');
+  const editCartEmpty      = document.getElementById('editCartEmpty');
+  const editCartTable      = document.getElementById('editCartTable');
+  const editCartBody       = document.getElementById('editCartBody');
+  const editInputTaxaEntrega = document.getElementById('editInputTaxaEntrega');
+  const editInputDesconto  = document.getElementById('editInputDesconto');
+  const editSumSubtotal    = document.getElementById('editSumSubtotal');
+  const editSumTaxa        = document.getElementById('editSumTaxa');
+  const editSumDesconto    = document.getElementById('editSumDesconto');
+  const editSumTotal       = document.getElementById('editSumTotal');
+  const editSumLucro       = document.getElementById('editSumLucro');
+  const btnSaveEdit        = document.getElementById('btnSaveEdit');
+  let editCart = [];
 
   // ── DOM refs: Detail Modal ─────────────────────────────
   const detailModal   = document.getElementById('detailModal');
@@ -157,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>
           <div class="row-actions">
             <button class="btn-row btn-row--detail" title="Detalhes" data-action="detail" data-id="${order.id}">&#128065;</button>
-            ${!isFinal && order.status_pagamento !== 'pago' ? `<button class="btn-row btn-row--pay" title="Marcar como Pago" data-action="pay" data-id="${order.id}">&#128176;</button>` : ''}
+            ${order.status !== 'cancelado' && order.status_pagamento !== 'pago' ? `<button class="btn-row btn-row--pay" title="Marcar como Pago" data-action="pay" data-id="${order.id}">&#128176;</button>` : ''}
             ${!isFinal ? `<button class="btn-row btn-row--edit" title="Editar" data-action="edit" data-id="${order.id}">&#9998;</button>` : ''}
             <button class="btn-row btn-row--delete" title="Excluir" data-action="delete" data-id="${order.id}">&#128465;</button>
           </div>
@@ -360,19 +375,66 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ══════════════════════════════════════════════════════
-  //  EDIT MODAL
+  //  EDIT MODAL (PDV)
   // ══════════════════════════════════════════════════════
 
-  function openEdit(orderId) {
+  async function openEdit(orderId) {
     const order = allOrders.find(o => o.id === orderId);
     if (!order) return;
     editingOrderId = orderId;
+    editCart = [];
+
     editTitle.textContent = `Editar Encomenda #${order.id}`;
-    editDataEntrega.value = order.data_entrega ? order.data_entrega.split('T')[0] : '';
-    editDesconto.value = order.desconto || 0;
-    editObservacoes.value = order.observacoes || '';
     editFeedback.className = 'pdv-feedback';
     editFeedback.textContent = '';
+
+    // Populate client select (disabled – can't change client)
+    editSelectClient.innerHTML = '';
+    const client = clientsMap[order.client_id];
+    const opt = document.createElement('option');
+    opt.value = order.client_id;
+    opt.textContent = client ? client.nome : `Cliente #${order.client_id}`;
+    editSelectClient.appendChild(opt);
+
+    // Populate product select
+    editSelectProduct.innerHTML = '<option value="">Selecione um produto</option>';
+    products.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = `${p.nome} — R$ ${fmt(p.preco_venda)}`;
+      editSelectProduct.appendChild(o);
+    });
+
+    // Set form values
+    editInputDataEntrega.value = order.data_entrega ? order.data_entrega.split('T')[0] + 'T' + (order.data_entrega.split('T')[1] || '00:00').substring(0, 5) : '';
+    editSelectTipoEntrega.value = order.tipo_entrega || 'retirada';
+    editSelectPagamento.value = order.forma_pagamento || '';
+    editInputObservacoes.value = order.observacoes || '';
+    editInputTaxaEntrega.value = order.taxa_entrega || 0;
+    editInputDesconto.value = order.desconto || 0;
+    editInputQtd.value = 1;
+
+    // Load existing items
+    try {
+      const itemsRes = await ApiService.getOrderItems(orderId);
+      if (itemsRes.ok && itemsRes.data) {
+        itemsRes.data.forEach(item => {
+          const prod = productsMap[item.product_id];
+          editCart.push({
+            product_id: item.product_id,
+            nome: item.produto_nome || (prod ? prod.nome : `#${item.product_id}`),
+            quantidade: item.quantidade,
+            preco_venda: item.preco_venda_unitario,
+            preco_custo: item.preco_custo_unitario || 0,
+          });
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao carregar itens para edição:', err);
+    }
+
+    renderEditCart();
+    recalcEdit();
     closeDetail();
     editModal.style.display = '';
   }
@@ -380,43 +442,139 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeEdit() {
     editModal.style.display = 'none';
     editingOrderId = null;
+    editCart = [];
   }
 
-  async function saveEdit(e) {
-    e.preventDefault();
+  function addEditItemToCart() {
+    const productId = Number(editSelectProduct.value);
+    const quantidade = parseInt(editInputQtd.value, 10);
+    if (!productId) { showEditFeedback('Selecione um produto.', 'error'); return; }
+    if (!quantidade || quantidade < 1) { showEditFeedback('Quantidade inválida.', 'error'); return; }
+
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const existing = editCart.find(i => i.product_id === productId);
+    if (existing) {
+      existing.quantidade += quantidade;
+    } else {
+      editCart.push({
+        product_id: productId,
+        nome: product.nome,
+        quantidade,
+        preco_venda: product.preco_venda,
+        preco_custo: product.preco_custo || 0,
+      });
+    }
+
+    editSelectProduct.value = '';
+    editInputQtd.value = 1;
+    hideEditFeedback();
+    renderEditCart();
+    recalcEdit();
+  }
+
+  function removeEditFromCart(index) {
+    editCart.splice(index, 1);
+    renderEditCart();
+    recalcEdit();
+  }
+
+  function renderEditCart() {
+    if (editCart.length === 0) {
+      editCartEmpty.style.display = '';
+      editCartTable.style.display = 'none';
+      btnSaveEdit.disabled = true;
+      return;
+    }
+    editCartEmpty.style.display = 'none';
+    editCartTable.style.display = '';
+    btnSaveEdit.disabled = false;
+
+    editCartBody.innerHTML = editCart.map((item, idx) => `
+      <tr>
+        <td>${esc(item.nome)}</td>
+        <td>${item.quantidade}</td>
+        <td>R$ ${fmt(item.preco_venda)}</td>
+        <td class="td-right">R$ ${fmt(item.preco_venda * item.quantidade)}</td>
+        <td><button class="btn-remove" data-idx="${idx}" title="Remover">&times;</button></td>
+      </tr>`).join('');
+
+    editCartBody.querySelectorAll('.btn-remove').forEach(btn => {
+      btn.addEventListener('click', () => removeEditFromCart(Number(btn.dataset.idx)));
+    });
+  }
+
+  function recalcEdit() {
+    const subtotal = editCart.reduce((s, i) => s + (i.preco_venda * i.quantidade), 0);
+    const custoTotal = editCart.reduce((s, i) => s + (i.preco_custo * i.quantidade), 0);
+    const taxa = parseFloat(editInputTaxaEntrega.value) || 0;
+    const desconto = parseFloat(editInputDesconto.value) || 0;
+    const total = Math.max((subtotal + taxa) - desconto, 0);
+    const lucro = (subtotal - custoTotal) - desconto;
+
+    editSumSubtotal.textContent = `R$ ${fmt(subtotal)}`;
+    editSumTaxa.textContent     = `R$ ${fmt(taxa)}`;
+    editSumDesconto.textContent = `- R$ ${fmt(desconto)}`;
+    editSumTotal.textContent    = `R$ ${fmt(total)}`;
+    editSumLucro.textContent    = `R$ ${fmt(lucro)}`;
+    editSumLucro.style.color    = lucro >= 0 ? 'var(--success)' : 'var(--destructive)';
+  }
+
+  async function saveEdit() {
     if (!editingOrderId) return;
+    hideEditFeedback();
 
-    const data = {};
-    const newDate = editDataEntrega.value;
-    const newDesconto = parseFloat(editDesconto.value);
-    const newObs = editObservacoes.value.trim();
+    if (editCart.length === 0) {
+      showEditFeedback('Adicione pelo menos um item.', 'error');
+      return;
+    }
 
-    if (newDate) data.data_entrega = newDate;
-    if (!isNaN(newDesconto) && newDesconto >= 0) data.desconto = newDesconto;
-    data.observacoes = newObs;
+    const payload = {
+      tipo_entrega: editSelectTipoEntrega.value,
+      taxa_entrega: parseFloat(editInputTaxaEntrega.value) || 0,
+      desconto: parseFloat(editInputDesconto.value) || 0,
+      items: editCart.map(i => ({ product_id: i.product_id, quantidade: i.quantidade })),
+    };
+    if (editInputDataEntrega.value) payload.data_entrega = editInputDataEntrega.value;
+    if (editSelectPagamento.value) payload.forma_pagamento = editSelectPagamento.value;
+    const obs = editInputObservacoes.value.trim();
+    payload.observacoes = obs;
 
-    const btnSave = document.getElementById('btnSaveEdit');
-    btnSave.disabled = true;
-    btnSave.textContent = 'Salvando...';
+    btnSaveEdit.disabled = true;
+    btnSaveEdit.textContent = 'Salvando…';
 
     try {
-      const res = await ApiService.updateOrder(editingOrderId, data);
+      const res = await ApiService.updateOrder(editingOrderId, payload);
       if (res.ok) {
         const idx = allOrders.findIndex(o => o.id === editingOrderId);
-        if (idx !== -1) Object.assign(allOrders[idx], res.data || data);
+        if (idx !== -1 && res.data && res.data.id) {
+          allOrders[idx] = res.data;
+        } else if (idx !== -1) {
+          Object.assign(allOrders[idx], payload);
+        }
         render();
         closeEdit();
       } else {
-        editFeedback.className = 'pdv-feedback error';
-        editFeedback.textContent = res.data?.error || 'Erro ao salvar.';
+        showEditFeedback(res.data?.error || 'Erro ao salvar.', 'error');
       }
     } catch {
-      editFeedback.className = 'pdv-feedback error';
-      editFeedback.textContent = 'Erro de conexão.';
+      showEditFeedback('Erro de conexão.', 'error');
     } finally {
-      btnSave.disabled = false;
-      btnSave.textContent = 'Salvar';
+      btnSaveEdit.disabled = false;
+      btnSaveEdit.textContent = 'Salvar Alterações';
     }
+  }
+
+  function showEditFeedback(msg, type) {
+    editFeedback.className = `pdv-feedback ${type}`;
+    editFeedback.textContent = msg;
+    editFeedback.style.display = 'block';
+  }
+
+  function hideEditFeedback() {
+    editFeedback.style.display = 'none';
+    editFeedback.className = 'pdv-feedback';
   }
 
   // ══════════════════════════════════════════════════════
@@ -572,10 +730,12 @@ document.addEventListener('DOMContentLoaded', () => {
     inputDesconto.addEventListener('input', recalc);
     btnSubmitOrder.addEventListener('click', submitOrder);
 
-    // Edit modal
-    editForm.addEventListener('submit', saveEdit);
-    document.getElementById('btnCancelEdit').addEventListener('click', closeEdit);
+    // Edit modal (PDV)
     document.getElementById('btnCloseEdit').addEventListener('click', closeEdit);
+    document.getElementById('btnEditAddItem').addEventListener('click', addEditItemToCart);
+    editInputTaxaEntrega.addEventListener('input', recalcEdit);
+    editInputDesconto.addEventListener('input', recalcEdit);
+    btnSaveEdit.addEventListener('click', saveEdit);
 
     // Delete modal
     document.getElementById('btnCancelDelete').addEventListener('click', closeDelete);

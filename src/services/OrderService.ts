@@ -126,12 +126,43 @@ export class OrderService implements IOrderService {
             throw new ValidationError('Pedido finalizado ou cancelado não pode ser alterado.');
         }
 
-        // preparar valores base para cálculo
-        let orderItems: OrderItemData[] | undefined;
+        // preparar valores base
         let subtotal = existingOrder.valor_subtotal ?? 0;
         const descontoExistente = existingOrder.desconto ?? 0;
-        // custoTotal = subtotal - (valor_lucro_total + desconto)  (inversão da fórmula usada na criação)
         let custoTotal = subtotal - ((existingOrder.valor_lucro_total ?? 0) + descontoExistente);
+
+        // Se itens foram enviados, recalcular tudo com snapshot de preços
+        let orderItems: OrderItemData[] | undefined;
+        if (dto.items && dto.items.length > 0) {
+            orderItems = [];
+            subtotal = 0;
+            custoTotal = 0;
+
+            for (const item of dto.items) {
+                const product = await this.productRepository.findById(item.product_id);
+
+                if (!product || product.user_id !== user_id) {
+                    throw new NotFoundError(`Produto com ID ${item.product_id} não encontrado ou não pertence ao usuário.`);
+                }
+
+                if (!product.ativo) {
+                    throw new ValidationError(`Produto "${product.nome}" está inativo.`);
+                }
+
+                const precoVenda = product.preco_venda;
+                const precoCusto = product.preco_custo || 0;
+
+                subtotal += precoVenda * item.quantidade;
+                custoTotal += precoCusto * item.quantidade;
+
+                orderItems.push({
+                    product_id: item.product_id,
+                    quantidade: item.quantidade,
+                    preco_venda_unitario: precoVenda,
+                    preco_custo_unitario: precoCusto,
+                });
+            }
+        }
 
         // taxa_entrega e desconto (prioriza dto, senão usa existente)
         const taxaEntrega = dto.taxa_entrega !== undefined ? dto.taxa_entrega : (existingOrder.taxa_entrega ?? 0);
@@ -144,8 +175,13 @@ export class OrderService implements IOrderService {
         const valorTotal = (subtotal + taxaEntrega) - desconto;
         const valorLucroTotal = (subtotal - custoTotal) - desconto;
 
-        // construir objeto de atualização (inclui snapshot de itens quando aplicável)
-        const updatedDto: Partial<OrderData> & Partial<UpdateOrderDTO> = {
+        // Substituir itens se foram enviados
+        if (orderItems) {
+            await this.orderRepository.replaceItems(id, orderItems);
+        }
+
+        // construir objeto de atualização
+        const updatedDto: any = {
             ...dto,
             valor_subtotal: subtotal,
             taxa_entrega: taxaEntrega,
@@ -153,10 +189,8 @@ export class OrderService implements IOrderService {
             valor_total: Math.max(valorTotal, 0),
             valor_lucro_total: valorLucroTotal,
         };
-
-        if (orderItems) {
-            (updatedDto as any).items = orderItems;
-        }
+        // Remove items from the DTO going to repository.update (items are handled separately)
+        delete updatedDto.items;
 
         return await this.orderRepository.update(id, updatedDto);
     }

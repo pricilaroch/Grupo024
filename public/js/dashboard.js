@@ -133,10 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Financial Cards ────────────────────────────────────
 
   function renderFinancialCards(orders) {
-    // Previsão = all delivered, Realizado = delivered AND paid
+    // Previsão = all delivered, Realizado = paid (any status)
     let baseOrders;
     if (financeMode === 'realizado') {
-      baseOrders = orders.filter(o => o.status === 'entregue' && o.status_pagamento === 'pago');
+      baseOrders = orders.filter(o => o.status_pagamento === 'pago');
     } else {
       baseOrders = orders.filter(o => o.status === 'entregue');
     }
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const avgTicket = baseOrders.length ? totalRevenue / baseOrders.length : 0;
     const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
-    const modeLabel = financeMode === 'realizado' ? 'pagos e entregues' : 'entregues';
+    const modeLabel = financeMode === 'realizado' ? 'pagos' : 'entregues';
 
     const paidCount = orders.filter(o => o.status_pagamento === 'pago').length;
     const totalCount = orders.filter(o => o.status !== 'cancelado').length;

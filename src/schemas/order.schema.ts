@@ -106,4 +106,9 @@ export const updateOrderSchema = z.object({
   observacoes: z
     .string()
     .optional(),
+
+  items: z
+    .array(orderItemSchema)
+    .min(1, 'A encomenda deve ter pelo menos 1 item.')
+    .optional(),
 });
