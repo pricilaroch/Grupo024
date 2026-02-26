@@ -23,7 +23,7 @@ export function buildClientRoutes(clientController: IClientController) {
         fastify.post('/', clientController.create.bind(clientController));
         fastify.get('/:id', clientController.getById.bind(clientController));
         fastify.get('/', clientController.getByUserId.bind(clientController));
-        fastify.put('/:id', clientController.update.bind(clientController));
+        fastify.patch('/:id', clientController.update.bind(clientController));
         fastify.delete('/:id', clientController.delete.bind(clientController));
     }
 }

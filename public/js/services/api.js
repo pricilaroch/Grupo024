@@ -70,7 +70,7 @@ const ApiService = {
     async getProducts() {
         const token = sessionStorage.getItem('token');
         try {
-            const response = await fetch(`${this.BASE_URL}/products/user`, {
+            const response = await fetch(`${this.BASE_URL}/products`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await response.json();
@@ -177,7 +177,7 @@ const ApiService = {
         const token = sessionStorage.getItem('token');
         try {
             const response = await fetch(`${this.BASE_URL}/clients/${id}`, {
-                method: 'PUT',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -205,6 +205,146 @@ const ApiService = {
             return { ok: response.ok, data: result };
         } catch (error) {
             console.error('Erro ao excluir cliente:', error);
+            throw error;
+        }
+    },
+
+    // ─── Orders ──────────────────────────────────────
+
+    async getOrders() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar encomendas:', error);
+            throw error;
+        }
+    },
+
+    async createOrder(orderData) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(orderData)
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao criar encomenda:', error);
+            throw error;
+        }
+    },
+
+    async updateOrder(id, orderData) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(orderData)
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar encomenda:', error);
+            throw error;
+        }
+    },
+
+    async getOrdersByStatus(statuses = []) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const params = statuses.map(s => `status=${encodeURIComponent(s)}`).join('&');
+            const response = await fetch(`${this.BASE_URL}/orders/status?${params}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar encomendas por status:', error);
+            throw error;
+        }
+    },
+
+    async getOrderItems(orderId) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${orderId}/items`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar itens da encomenda:', error);
+            throw error;
+        }
+    },
+
+    async updateOrderStatus(id, status) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${id}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar status da encomenda:', error);
+            throw error;
+        }
+    },
+
+    async updatePaymentStatus(id, status_pagamento) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${id}/payment`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status_pagamento })
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar pagamento da encomenda:', error);
+            throw error;
+        }
+    },
+
+    async deleteOrder(id) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao excluir encomenda:', error);
             throw error;
         }
     },

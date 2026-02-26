@@ -3,91 +3,251 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Sistema de Gestão de Encomendas</title>
+  <title>Painel de Controle - Sistema de Gestão de Encomendas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
   <nav id="navbar" class="navbar"></nav>
 
-  <div class="container container-wide">
+  <div class="container container-dashboard">
     <main class="main-content">
 
-      <!-- Welcome banner -->
+      <!-- ═══════════ Welcome Banner ═══════════ -->
       <div class="dashboard-welcome">
         <h1 id="welcomeMsg">Bem-vindo de volta!</h1>
         <p>Acompanhe seus pedidos e resultados em tempo real.</p>
         <span class="badge">Conta Ativa</span>
       </div>
 
-      <!-- Summary cards -->
-      <h2 class="section-title">Resumo do dia</h2>
-      <div class="dashboard-grid">
-        <div class="summary-card">
-          <div class="summary-card-icon summary-card-icon--deliveries" aria-hidden="true">&#9744;</div>
-          <div class="summary-card-body">
-            <span class="summary-card-label">Entregas hoje</span>
-            <span class="summary-card-value summary-card-value--xl">0</span>
-            <span class="summary-card-hint">Nenhuma entrega pendente</span>
+      <!-- ═══════════ Financial Intelligence ═══════════ -->
+      <div class="finance-header">
+        <h2 class="section-title">Inteligência financeira</h2>
+        <div class="finance-mode-toggle">
+          <button class="finance-mode-btn active" data-finance-mode="previsao" title="Todos os pedidos entregues">Previsão</button>
+          <button class="finance-mode-btn" data-finance-mode="realizado" title="Apenas pedidos entregues E pagos">Realizado</button>
+        </div>
+      </div>
+      <div class="finance-grid">
+        <div class="finance-card">
+          <div class="finance-card-icon finance-icon--revenue" aria-hidden="true">$</div>
+          <div class="finance-card-body">
+            <span class="finance-card-label">Faturamento Total</span>
+            <span class="finance-card-value" id="metricRevenue">R$ 0,00</span>
+            <span class="finance-card-hint" id="metricRevenueHint">0 pedidos entregues</span>
           </div>
         </div>
 
-        <div class="summary-card">
-          <div class="summary-card-icon summary-card-icon--money" aria-hidden="true">&#36;</div>
-          <div class="summary-card-body">
-            <span class="summary-card-label">Total a receber</span>
-            <span class="summary-card-value summary-card-value--xl">R$ 0,00</span>
-            <span class="summary-card-hint">Valores em aberto</span>
+        <div class="finance-card">
+          <div class="finance-card-icon finance-icon--profit" aria-hidden="true">&#9650;</div>
+          <div class="finance-card-body">
+            <span class="finance-card-label">Lucro Líquido</span>
+            <span class="finance-card-value finance-value--success" id="metricProfit">R$ 0,00</span>
+            <span class="finance-card-hint" id="metricProfitMargin">Margem: 0%</span>
           </div>
         </div>
 
-        <div class="summary-card">
-          <div class="summary-card-icon summary-card-icon--pending" aria-hidden="true">&#9201;</div>
-          <div class="summary-card-body">
-            <span class="summary-card-label">Encomendas pendentes</span>
-            <span class="summary-card-value">0</span>
-            <span class="summary-card-hint">Aguardando confirmação</span>
+        <div class="finance-card">
+          <div class="finance-card-icon finance-icon--ticket" aria-hidden="true">&#9733;</div>
+          <div class="finance-card-body">
+            <span class="finance-card-label">Ticket Médio</span>
+            <span class="finance-card-value" id="metricTicket">R$ 0,00</span>
+            <span class="finance-card-hint" id="metricTicketHint">por pedido</span>
           </div>
         </div>
 
-        <div class="summary-card">
-          <div class="summary-card-icon summary-card-icon--profile" aria-hidden="true">&#9679;</div>
-          <div class="summary-card-body">
-            <span class="summary-card-label">Meu perfil</span>
-            <span class="summary-card-value" id="userFantasyName">—</span>
-            <span class="summary-card-hint" id="userCategory">—</span>
+        <div class="finance-card">
+          <div class="finance-card-icon finance-icon--payment" aria-hidden="true">&#9679;</div>
+          <div class="finance-card-body">
+            <span class="finance-card-label">Pagamentos</span>
+            <span class="finance-card-value" id="metricPaid">0 / 0</span>
+            <span class="finance-card-hint" id="metricPaidHint">pagos / total</span>
           </div>
         </div>
       </div>
 
-      <!-- Placeholder para encomendas futuras -->
-      <h2 class="section-title">Próximas entregas</h2>
-      <div class="empty-placeholder">
-        <span class="empty-placeholder-icon" aria-hidden="true">&#8212;</span>
-        <p>Nenhuma encomenda registrada ainda.<br>Em breve você poderá gerenciar seus pedidos aqui.</p>
+      <!-- ═══════════ Pending Payments Section ═══════════ -->
+      <div id="pendingPayments" class="pending-payments-section" style="display:none;">
+        <div class="pending-payments-header">
+          <h3 class="pending-payments-title">&#128176; Pagamentos Pendentes</h3>
+          <span class="pending-payments-total" id="pendingPaymentTotal">R$ 0,00</span>
+        </div>
+        <div id="pendingPaymentsList" class="pending-payments-list"></div>
+      </div>
+
+      <!-- ═══════════ Materials Summary ═══════════ -->
+      <div id="materialsSummary" class="materials-summary" style="display:none;">
+        <div class="materials-header">
+          <h2 class="section-title" style="margin:0;">Resumo de materiais — Hoje</h2>
+        </div>
+        <div id="materialsList" class="materials-list"></div>
+      </div>
+
+      <!-- ═══════════ Dashboard Tabs: Produção | Histórico ═══════════ -->
+      <div class="dashboard-tabs">
+        <button class="dashboard-tab active" data-tab="production">&#9881; Produção</button>
+        <button class="dashboard-tab" data-tab="history">&#128218; Histórico</button>
+      </div>
+
+      <!-- ╌╌╌╌╌ TAB: Produção (Kanban) ╌╌╌╌╌ -->
+      <div id="tabProduction" class="tab-panel">
+        <div class="kanban-header">
+          <div>
+            <h2 class="kanban-title">Painel de Produção</h2>
+            <p class="kanban-subtitle">Gerencie suas encomendas com um clique.</p>
+          </div>
+          <div class="kanban-actions">
+            <a href="/orders.html" class="btn btn-primary btn-sm">+ Nova Encomenda</a>
+          </div>
+        </div>
+
+        <!-- Temporal Filters -->
+        <div class="temporal-filters">
+          <div class="products-filter-tabs">
+            <button class="filter-tab active" data-filter="all">Todos</button>
+            <button class="filter-tab" data-filter="today">Hoje</button>
+            <button class="filter-tab" data-filter="tomorrow">Amanhã</button>
+            <button class="filter-tab" data-filter="overdue">Atrasados</button>
+          </div>
+          <span class="kanban-count" id="kanbanCount">0 encomendas</span>
+        </div>
+
+        <div id="loadingState" class="kanban-loading">Carregando encomendas...</div>
+
+        <div id="kanbanBoard" class="kanban-board" style="display:none;">
+          <!-- Pendentes -->
+          <div class="kanban-column">
+            <div class="kanban-column-header kanban-col--pending">
+              <span class="kanban-column-dot kanban-dot--pending"></span>
+              <span class="kanban-column-name">Pendentes</span>
+              <span class="kanban-column-badge" id="countPending">0</span>
+            </div>
+            <div class="kanban-column-body" id="colPending"></div>
+          </div>
+
+          <!-- Em Produção -->
+          <div class="kanban-column">
+            <div class="kanban-column-header kanban-col--production">
+              <span class="kanban-column-dot kanban-dot--production"></span>
+              <span class="kanban-column-name">Em Produção</span>
+              <span class="kanban-column-badge" id="countProduction">0</span>
+            </div>
+            <div class="kanban-column-body" id="colProduction"></div>
+          </div>
+
+          <!-- Prontos -->
+          <div class="kanban-column">
+            <div class="kanban-column-header kanban-col--ready">
+              <span class="kanban-column-dot kanban-dot--ready"></span>
+              <span class="kanban-column-name">Prontos</span>
+              <span class="kanban-column-badge" id="countReady">0</span>
+            </div>
+            <div class="kanban-column-body" id="colReady"></div>
+          </div>
+        </div>
+
+        <!-- Empty states -->
+        <div id="emptyState" class="kanban-empty" style="display:none;">
+          <div class="kanban-empty-icon">&#128640;</div>
+          <h2>Nenhuma encomenda encontrada</h2>
+          <p>Comece criando sua primeira encomenda e veja seu painel ganhar vida!</p>
+          <a href="/orders.html" class="btn btn-primary">Criar Encomenda</a>
+        </div>
+        <div id="emptyFilter" class="kanban-empty" style="display:none;">
+          <div class="kanban-empty-icon">&#128269;</div>
+          <h2>Nenhum resultado para este filtro</h2>
+          <p>Tente outro período ou crie novas encomendas.</p>
+        </div>
+      </div>
+
+      <!-- ╌╌╌╌╌ TAB: Histórico ╌╌╌╌╌ -->
+      <div id="tabHistory" class="tab-panel" style="display:none;">
+        <div class="kanban-header">
+          <div>
+            <h2 class="kanban-title">Histórico de Encomendas</h2>
+            <p class="kanban-subtitle">Pedidos entregues e cancelados.</p>
+          </div>
+          <span class="kanban-count" id="historyCount">0 pedidos</span>
+        </div>
+        <div id="historyContent" class="history-content"></div>
+        <div id="historyEmpty" class="kanban-empty" style="display:none;">
+          <div class="kanban-empty-icon">&#128218;</div>
+          <h2>Nenhum pedido finalizado</h2>
+          <p>Quando você entregar ou cancelar pedidos, eles aparecerão aqui.</p>
+        </div>
       </div>
 
     </main>
   </div>
 
+  <!-- ═══════════ Order Detail Modal ═══════════ -->
+  <div id="detailModal" class="modal-overlay" style="display:none;" role="dialog">
+    <div class="modal modal-detail">
+      <div class="modal-detail-header">
+        <h3 id="detailTitle">Detalhes da Encomenda</h3>
+        <button id="btnCloseDetail" class="btn-icon" aria-label="Fechar">&times;</button>
+      </div>
+      <div id="detailContent" class="modal-detail-body"></div>
+      <div class="modal-detail-footer">
+        <button id="detailBtnEdit" class="btn btn-sm btn-secondary">&#9998; Editar</button>
+        <a id="detailWhatsApp" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-whatsapp">&#128172; WhatsApp</a>
+        <button id="detailBtnClose" class="btn btn-sm btn-secondary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Edit Order Modal ═══════════ -->
+  <div id="editModal" class="modal-overlay" style="display:none;" role="dialog">
+    <div class="modal modal-edit">
+      <div class="modal-detail-header">
+        <h3 id="editTitle">Editar Encomenda</h3>
+        <button id="btnCloseEdit" class="btn-icon" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="editForm" class="edit-form">
+        <div class="form-group">
+          <label for="editDataEntrega">Data de Entrega</label>
+          <input type="date" id="editDataEntrega" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="editDesconto">Desconto (R$)</label>
+          <input type="number" id="editDesconto" class="form-input" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label for="editObservacoes">Observações</label>
+          <textarea id="editObservacoes" class="form-input" rows="3"></textarea>
+        </div>
+        <div id="editFeedback" class="pdv-feedback"></div>
+        <div class="modal-actions">
+          <button type="button" id="btnCancelEdit" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btnSaveEdit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════ WhatsApp Message Modal ═══════════ -->
+  <div id="whatsappModal" class="modal-overlay" style="display:none;" role="dialog">
+    <div class="modal modal-whatsapp">
+      <div class="modal-detail-header">
+        <h3>Mensagem WhatsApp</h3>
+        <button id="btnCloseWA" class="btn-icon" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-whatsapp-body">
+        <p class="modal-whatsapp-hint">Mensagem gerada automaticamente. Edite se desejar:</p>
+        <textarea id="waMessage" class="wa-textarea" rows="8"></textarea>
+        <div class="modal-whatsapp-actions">
+          <button id="btnCopyWA" class="btn btn-sm btn-secondary">&#128203; Copiar</button>
+          <a id="btnSendWA" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-whatsapp">&#128172; Enviar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/services/api.js"></script>
   <script src="/js/services/guard.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!RouteGuard.requireApproved()) return;
-      RouteGuard.renderNavbar();
-
-      const user = ApiService.getUser();
-      if (user) {
-        document.getElementById('welcomeMsg').textContent = `Olá, ${user.nome.split(' ')[0]}!`;
-        const fantasyEl = document.getElementById('userFantasyName');
-        const categoryEl = document.getElementById('userCategory');
-        if (fantasyEl && user.nome_fantasia) fantasyEl.textContent = user.nome_fantasia;
-        if (categoryEl && user.categoria_producao) categoryEl.textContent = user.categoria_producao;
-      }
-    });
-  </script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>

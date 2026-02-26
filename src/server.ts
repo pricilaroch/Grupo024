@@ -11,16 +11,19 @@ import { getDatabase } from './database/database';
 // Repositories
 import { UserRepository } from './repositories/UserRepository';
 import { ProductRepository } from './repositories/ProductRepository';
+import { OrderRepository } from './repositories/OrderRepository';
 
 // Services
 import { UserService } from './services/UserService';
-import { ProductService } from './services/ProductService'; 
+import { ProductService } from './services/ProductService';
+import { OrderService } from './services/OrderService'; 
 
 // Controllers
 import { UserController } from './controllers/UserController';
 import { AuthController } from './controllers/AuthController';
 import { AdminController } from './controllers/AdminController';
 import { ProductController } from './controllers/ProductController';
+import { OrderController } from './controllers/OrderController';
 
 // Route builders
 import { buildUserRoutes } from './routes/userRoutes';
@@ -31,6 +34,7 @@ import { ClientRepository } from './repositories/ClientRepository';
 import { ClientService } from './services/ClientService';
 import { ClientController } from './controllers/ClientController';
 import { buildClientRoutes } from './routes/clientRoutes';
+import { buildOrderRoutes } from './routes/orderRoutes';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
@@ -72,16 +76,19 @@ async function main(): Promise<void> {
   const userRepository = new UserRepository();
   const productRepository = new ProductRepository(db);
   const clientRepository = new ClientRepository(db);
+  const orderRepository = new OrderRepository(db);
 
   const userService = new UserService(userRepository);
   const productService = new ProductService(productRepository);
   const clientService = new ClientService(clientRepository);
+  const orderService = new OrderService(orderRepository, productRepository, clientRepository);
 
   const userController = new UserController(userService);
   const authController = new AuthController(userService);
   const adminController = new AdminController(userService);
   const productController = new ProductController(productService);
   const clientController = new ClientController(clientService);
+  const orderController = new OrderController(orderService);
 
   // ─── Rotas ─────────────────────────────────────────────
   await fastify.register(buildUserRoutes(userController));
@@ -89,6 +96,7 @@ async function main(): Promise<void> {
   await fastify.register(buildAdminRoutes(adminController));
   await fastify.register(buildProductRoutes(productController), { prefix: '/products' });
   await fastify.register(buildClientRoutes(clientController),  { prefix: '/clients' });
+  await fastify.register(buildOrderRoutes(orderController),    { prefix: '/orders' });
 
   // ─── Start ─────────────────────────────────────────────
   await fastify.listen({ port: config.port, host: '0.0.0.0' });
