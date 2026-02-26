@@ -72,17 +72,22 @@ export class ClientRepository implements IClientRepository {
     }
 
     async update(id: number, client: CreateClientDTO): Promise<ClientData | null> {
+        const existingClient = await this.findById(id);
+        if (!existingClient) {
+            return null;
+        }
+        
         const result = await this.db.run(
             `UPDATE clients SET nome = ?, telefone = ?, email = ?, endereco = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            client.nome,
-            client.telefone,
-            client.email || null,
-            client.endereco,
+            client.nome || existingClient.nome,
+            client.telefone || existingClient.telefone,
+            client.email || existingClient.email,
+            client.endereco || existingClient.endereco,
             id
         );
-
+        
         if (result.changes === 0) {
-            return null;
+            throw new Error('Erro ao atualizar cliente');
         }
 
         return this.findById(id);

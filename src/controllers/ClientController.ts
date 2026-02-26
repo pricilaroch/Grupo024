@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { CreateClientDTO, IclientController, IClientService } from "../models/Client";
+import { CreateClientDTO, IClientController, IClientService } from "../models/Client";
 import { clientSchema, updateClientSchema } from "../schemas/client.schema";
 
-export class ClientController implements IclientController {
+export class ClientController implements IClientController {
     private clientService: IClientService;
 
     constructor(clientService: IClientService) {
@@ -52,6 +52,10 @@ export class ClientController implements IclientController {
             return;
         }
         const clientDTO = updateClientSchema.parse(request.body);
+        if (!clientDTO || Object.keys(clientDTO).length === 0) {
+            reply.status(400).send({ error: 'Nenhum campo para atualizar' });
+            return;
+        }
         const updatedClient = await this.clientService.updateClient(id, clientDTO, user_id);
         if (!updatedClient) {
             reply.status(404).send({ error: 'Cliente não encontrado ou acesso negado.' });

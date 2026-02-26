@@ -1,4 +1,3 @@
-import { th } from "zod/v4/locales";
 import { ClientData, CreateClientDTO, IClientRepository, IClientService, UpdateClientDTO } from "../models/Client";
 
 
@@ -12,7 +11,7 @@ export class ClientService implements IClientService {
     async createClient(client: CreateClientDTO, user_id: number): Promise<ClientData> {
 
         const telefoneLimpo = client.telefone.replace(/\D/g, '');
-        if (telefoneLimpo.length < 9 || telefoneLimpo.length > 12) {
+        if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
             throw new Error('Telefone inválido');
         }
         
@@ -25,7 +24,7 @@ export class ClientService implements IClientService {
             return client;
         }
         
-        throw new Error('Cliente não encontrado ou acesso negado');
+        return null;
     }
 
     async getClientsByUserId(user_id: number): Promise<ClientData[]> {
@@ -35,15 +34,26 @@ export class ClientService implements IClientService {
     async updateClient(id: number, client: UpdateClientDTO, user_id: number): Promise<ClientData | null> {
         const existingClient = await this.clientRepository.findById(id);
         if (!existingClient || existingClient.user_id !== user_id) {
-            throw new Error('Cliente não encontrado ou acesso negado');
+            return null;
         }
-        return await this.clientRepository.update(id, client);
+
+        let updatedClient: UpdateClientDTO = client;
+
+        if (client.telefone !== undefined && client.telefone !== null) {
+            const telefoneLimpo = client.telefone.replace(/\D/g, '');
+            if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+                return null; 
+            }
+            updatedClient = { ...client, telefone: telefoneLimpo };
+        }
+
+        return await this.clientRepository.update(id, updatedClient);
     }
 
     async deleteClient(id: number, user_id: number): Promise<boolean> {
         const existingClient = await this.clientRepository.findById(id);
         if (!existingClient || existingClient.user_id !== user_id) {
-            throw new Error('Cliente não encontrado ou acesso negado');
+            return false;
         }
         return await this.clientRepository.delete(id);
     }

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS clients (
 -- Trigger para manter o updated_at em dia
 CREATE TRIGGER IF NOT EXISTS update_clients_timestamp 
 AFTER UPDATE ON clients
+when NEW.updated_at = OLD.updated_at
 BEGIN
   UPDATE clients SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;

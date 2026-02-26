@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { IclientController } from "../models/Client";
+import { IClientController } from "../models/Client";
 import { UnauthorizedError } from "../errors/AppError";
 
 async function authenticate(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
@@ -16,7 +16,7 @@ async function authenticate(request: FastifyRequest, _reply: FastifyReply): Prom
 }
 
 
-export function buildClientRoutes(clientController: IclientController) {
+export function buildClientRoutes(clientController: IClientController) {
     return async function (fastify: FastifyInstance): Promise<void> {
         fastify.addHook('onRequest', authenticate);
 

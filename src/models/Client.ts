@@ -37,7 +37,7 @@ export interface IClientService {
     deleteClient(id: number, user_id: number): Promise<boolean>;
 }
 
-export interface IclientController {
+export interface IClientController {
     create(request: FastifyRequest, reply: FastifyReply): Promise<void>;
     getById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void>;
     getByUserId(request: FastifyRequest, reply: FastifyReply): Promise<void>;
