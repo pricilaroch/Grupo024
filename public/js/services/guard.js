@@ -90,7 +90,8 @@ const RouteGuard = (() => {
     nav.innerHTML = `
       <div class="navbar-inner">
         <a href="${isAdmin ? '/admin.html' : '/dashboard.html'}" class="navbar-brand">Gestão de Encomendas</a>
-        <div class="navbar-links">
+        <button class="navbar-toggle" id="navToggle" aria-label="Menu">&#9776;</button>
+        <div class="navbar-links" id="navLinks">
           ${!isAdmin ? '<a href="/dashboard.html" class="navbar-link">Painel</a>' : ''}
           ${!isAdmin ? '<a href="/orders.html" class="navbar-link">Encomendas</a>' : ''}
           ${!isAdmin ? '<a href="/products.html" class="navbar-link">Produtos</a>' : ''}
@@ -102,6 +103,10 @@ const RouteGuard = (() => {
 
     document.getElementById('navLogoutBtn').addEventListener('click', () => {
       ApiService.logout();
+    });
+
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('navbar-links--open');
     });
   }
 

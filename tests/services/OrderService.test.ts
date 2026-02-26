@@ -14,6 +14,7 @@ function createMockOrderRepo(): jest.Mocked<IOrderRepository> {
     findByUserIdAndStatus: jest.fn(),
     update: jest.fn(),
     updateStatus: jest.fn(),
+    updatePaymentStatus: jest.fn(),
     delete: jest.fn(),
     findItemsByOrderId: jest.fn(),
   };
@@ -429,6 +430,75 @@ describe('OrderService', () => {
       const result = await service.deleteOrder(1, 1);
 
       expect(result).toBe(false);
+    });
+  });
+
+  // ==========================================================
+  //  updatePaymentStatus
+  // ==========================================================
+
+  describe('updatePaymentStatus', () => {
+    it('deve atualizar status_pagamento para "pago"', async () => {
+      const existing = makeOrder({ id: 1, user_id: 1, status_pagamento: 'pendente' });
+      const updated = { ...existing, status_pagamento: 'pago' };
+      orderRepo.findById.mockResolvedValue(existing);
+      orderRepo.updatePaymentStatus.mockResolvedValue(updated);
+
+      const result = await service.updatePaymentStatus(1, 'pago', 1);
+
+      expect(result?.status_pagamento).toBe('pago');
+      expect(orderRepo.updatePaymentStatus).toHaveBeenCalledWith(1, 'pago');
+    });
+
+    it('deve retornar null quando o pedido pertence a outro usuário', async () => {
+      orderRepo.findById.mockResolvedValue(makeOrder({ id: 1, user_id: 99 }));
+
+      const result = await service.updatePaymentStatus(1, 'pago', 1);
+
+      expect(result).toBeNull();
+      expect(orderRepo.updatePaymentStatus).not.toHaveBeenCalled();
+    });
+
+    it('deve retornar null quando o pedido não existe', async () => {
+      orderRepo.findById.mockResolvedValue(null);
+
+      const result = await service.updatePaymentStatus(999, 'pago', 1);
+
+      expect(result).toBeNull();
+      expect(orderRepo.updatePaymentStatus).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir alterar pagamento mesmo em pedido entregue', async () => {
+      const existing = makeOrder({ id: 1, user_id: 1, status: 'entregue', status_pagamento: 'pendente' });
+      const updated = { ...existing, status_pagamento: 'pago' };
+      orderRepo.findById.mockResolvedValue(existing);
+      orderRepo.updatePaymentStatus.mockResolvedValue(updated);
+
+      const result = await service.updatePaymentStatus(1, 'pago', 1);
+
+      expect(result?.status_pagamento).toBe('pago');
+    });
+  });
+
+  // ==========================================================
+  //  updateOrder — bloqueio de pedidos finalizados
+  // ==========================================================
+
+  describe('updateOrder — bloqueio de status finalizado', () => {
+    it('deve bloquear alteração em pedido entregue', async () => {
+      orderRepo.findById.mockResolvedValue(makeOrder({ id: 1, user_id: 1, status: 'entregue' }));
+
+      await expect(service.updateOrder(1, { observacoes: 'teste' }, 1)).rejects.toThrow(
+        'Pedido finalizado ou cancelado não pode ser alterado.'
+      );
+    });
+
+    it('deve bloquear alteração em pedido cancelado', async () => {
+      orderRepo.findById.mockResolvedValue(makeOrder({ id: 1, user_id: 1, status: 'cancelado' }));
+
+      await expect(service.updateOrder(1, { observacoes: 'teste' }, 1)).rejects.toThrow(
+        'Pedido finalizado ou cancelado não pode ser alterado.'
+      );
     });
   });
 });

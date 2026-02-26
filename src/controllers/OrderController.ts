@@ -114,12 +114,38 @@ export class OrderController implements IOrderController {
             reply.status(400).send({ error: 'ID inválido' });
             return;
         }
-        if (!status || !['pendente', 'concluida', 'cancelada'].includes(status)) {
+        if (!status || !['pendente', 'em_producao', 'pronto', 'entregue', 'cancelado'].includes(status)) {
             reply.status(400).send({ error: 'Status inválido' });
             return;
         }
 
         const updatedOrder = await this.orderService.updateOrderStatus(id, status, user_id);
+        if (!updatedOrder) {
+            reply.status(404).send({ error: 'Encomenda não encontrada ou acesso negado.' });
+            return;
+        }
+        reply.status(200).send(updatedOrder);
+    }
+
+    async updatePaymentStatus(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply
+    ): Promise<void> {
+        const user_id = request.user.id;
+        const id = Number(request.params.id);
+        if (isNaN(id)) {
+            reply.status(400).send({ error: 'ID inválido' });
+            return;
+        }
+
+        const body = updateOrderSchema.parse(request.body);
+        const status_pagamento = body.status_pagamento as string | undefined;
+        if (!status_pagamento || !['pendente', 'pago', 'parcial'].includes(status_pagamento)) {
+            reply.status(400).send({ error: 'Status de pagamento inválido' });
+            return;
+        }
+
+        const updatedOrder = await this.orderService.updatePaymentStatus(id, status_pagamento, user_id);
         if (!updatedOrder) {
             reply.status(404).send({ error: 'Encomenda não encontrada ou acesso negado.' });
             return;

@@ -313,6 +313,26 @@ const ApiService = {
         }
     },
 
+    async updatePaymentStatus(id, status_pagamento) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${id}/payment`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status_pagamento })
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar pagamento da encomenda:', error);
+            throw error;
+        }
+    },
+
     async deleteOrder(id) {
         const token = sessionStorage.getItem('token');
         try {

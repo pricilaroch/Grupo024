@@ -240,9 +240,26 @@ export class OrderRepository implements IOrderRepository {
         return result.changes ? result.changes > 0 : false;
     }
 
+    async updatePaymentStatus(id: number, status_pagamento: string): Promise<OrderData | null> {
+        const result = await this.db.run(
+            `UPDATE orders SET status_pagamento = ? WHERE id = ?`,
+            status_pagamento,
+            id
+        );
+
+        if (result.changes === 0) {
+            return null;
+        }
+
+        return this.findById(id);
+    }
+
     async findItemsByOrderId(order_id: number): Promise<OrderItemData[]> {
-        const items: OrderItemData[] = await this.db.all(
-            `SELECT * FROM order_items WHERE order_id = ?`,
+        const items: any[] = await this.db.all(
+            `SELECT oi.*, p.nome AS produto_nome
+             FROM order_items oi
+             LEFT JOIN products p ON p.id = oi.product_id
+             WHERE oi.order_id = ?`,
             order_id
         );
 
@@ -250,6 +267,7 @@ export class OrderRepository implements IOrderRepository {
             id: item.id,
             order_id: item.order_id,
             product_id: item.product_id,
+            produto_nome: item.produto_nome || null,
             quantidade: item.quantidade,
             preco_venda_unitario: item.preco_venda_unitario,
             preco_custo_unitario: item.preco_custo_unitario,

@@ -122,7 +122,7 @@ export class OrderService implements IOrderService {
         }
 
         // validações de status e regras de negócio para atualização
-        if (existingOrder.status === 'concluida' || existingOrder.status === 'cancelada') {
+        if (existingOrder.status === 'entregue' || existingOrder.status === 'cancelado') {
             throw new ValidationError('Pedido finalizado ou cancelado não pode ser alterado.');
         }
 
@@ -176,11 +176,20 @@ export class OrderService implements IOrderService {
             return null;
         }
 
-        if (existingOrder.status === 'concluida' || existingOrder.status === 'cancelada') {
+        if (existingOrder.status === 'entregue' || existingOrder.status === 'cancelado') {
             throw new ValidationError('Pedido finalizado ou cancelado não pode ser alterado.');
         }
 
         return await this.orderRepository.updateStatus(id, status);
+    }
+
+    async updatePaymentStatus(id: number, status_pagamento: string, user_id: number): Promise<OrderData | null> {
+        const existingOrder = await this.orderRepository.findById(id);
+        if (!existingOrder || existingOrder.user_id !== user_id) {
+            return null;
+        }
+
+        return await this.orderRepository.updatePaymentStatus(id, status_pagamento);
     }
 
     async getItemsByOrderId(order_id: number, user_id: number): Promise<OrderItemData[] | null> {

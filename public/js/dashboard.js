@@ -1,5 +1,6 @@
 /**
  * dashboard.js — Painel de Controle (Kanban + Inteligência Financeira)
+ * Fluxo: pendente → em_producao → pronto → entregue (ou cancelado)
  * Depende de: api.js, guard.js
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,9 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── State ──────────────────────────────────────────────
   let allOrders = [];
-  let clients = [];          // { id → client } map built after load
+  let clients = [];
   let clientsMap = {};
-  let activeFilter = 'all';  // all | today | tomorrow | overdue
+  let productsMap = {};   // id → product (for materials summary)
+  let activeFilter = 'all';
+  let currentDetailOrderId = null;
 
   // ── DOM refs ───────────────────────────────────────────
   const welcomeMsg     = document.getElementById('welcomeMsg');
@@ -22,12 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const colPending     = document.getElementById('colPending');
   const colProduction  = document.getElementById('colProduction');
+  const colReady       = document.getElementById('colReady');
   const colDone        = document.getElementById('colDone');
 
-  const countPending   = document.getElementById('countPending');
+  const countPending    = document.getElementById('countPending');
   const countProduction = document.getElementById('countProduction');
-  const countDone      = document.getElementById('countDone');
-  const kanbanCount    = document.getElementById('kanbanCount');
+  const countReady      = document.getElementById('countReady');
+  const countDone       = document.getElementById('countDone');
+  const kanbanCount     = document.getElementById('kanbanCount');
 
   // Financial
   const metricRevenue      = document.getElementById('metricRevenue');
@@ -39,6 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricPaid         = document.getElementById('metricPaid');
   const metricPaidHint     = document.getElementById('metricPaidHint');
 
+  // Materials
+  const materialsSummary = document.getElementById('materialsSummary');
+  const materialsList    = document.getElementById('materialsList');
+
   // Modals
   const detailModal    = document.getElementById('detailModal');
   const detailTitle    = document.getElementById('detailTitle');
@@ -47,6 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const whatsappModal  = document.getElementById('whatsappModal');
   const waMessage      = document.getElementById('waMessage');
   const btnSendWA      = document.getElementById('btnSendWA');
+
+  // Edit modal
+  const editModal       = document.getElementById('editModal');
+  const editTitle       = document.getElementById('editTitle');
+  const editForm        = document.getElementById('editForm');
+  const editDataEntrega = document.getElementById('editDataEntrega');
+  const editDesconto    = document.getElementById('editDesconto');
+  const editObservacoes = document.getElementById('editObservacoes');
+  const editFeedback    = document.getElementById('editFeedback');
+
+  let editingOrderId = null;
 
   // ── Init ───────────────────────────────────────────────
   setWelcomeMessage();
@@ -60,9 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadData() {
     showLoading(true);
     try {
-      const [ordersRes, clientsRes] = await Promise.all([
+      const [ordersRes, clientsRes, productsRes] = await Promise.all([
         ApiService.getOrders(),
-        ApiService.getClients()
+        ApiService.getClients(),
+        ApiService.getProducts()
       ]);
 
       if (ordersRes.ok) allOrders = ordersRes.data || [];
@@ -70,6 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
         clients = clientsRes.data || [];
         clientsMap = {};
         clients.forEach(c => { clientsMap[c.id] = c; });
+      }
+      if (productsRes.ok) {
+        const prods = productsRes.data || [];
+        productsMap = {};
+        prods.forEach(p => { productsMap[p.id] = p; });
       }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -85,72 +111,127 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderAll() {
     const filtered = applyTemporalFilter(allOrders);
-    renderFinancialCards(allOrders); // financials always use ALL orders
+    renderFinancialCards(allOrders);
+    renderMaterialsSummary(allOrders);
     renderKanban(filtered);
   }
 
   // ── Financial Cards ────────────────────────────────────
 
   function renderFinancialCards(orders) {
-    const concluded = orders.filter(o => o.status === 'concluida');
-    const totalRevenue = concluded.reduce((s, o) => s + (o.valor_total || 0), 0);
-    const totalProfit = concluded.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
-    const avgTicket = concluded.length ? totalRevenue / concluded.length : 0;
+    const delivered = orders.filter(o => o.status === 'entregue');
+    const totalRevenue = delivered.reduce((s, o) => s + (o.valor_total || 0), 0);
+    const totalProfit = delivered.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
+    const avgTicket = delivered.length ? totalRevenue / delivered.length : 0;
     const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
     const paidCount = orders.filter(o => o.status_pagamento === 'pago').length;
-    const totalCount = orders.length;
+    const totalCount = orders.filter(o => o.status !== 'cancelado').length;
 
     metricRevenue.textContent = formatCurrency(totalRevenue);
-    metricRevenueHint.textContent = `${concluded.length} pedido${concluded.length !== 1 ? 's' : ''} finalizado${concluded.length !== 1 ? 's' : ''}`;
+    metricRevenueHint.textContent = `${delivered.length} pedido${delivered.length !== 1 ? 's' : ''} entregue${delivered.length !== 1 ? 's' : ''}`;
 
     metricProfit.textContent = formatCurrency(totalProfit);
     metricProfitMargin.textContent = `Margem: ${margin.toFixed(1)}%`;
-
-    // Color profit based on value
     metricProfit.classList.toggle('finance-value--success', totalProfit >= 0);
     metricProfit.classList.toggle('finance-value--danger', totalProfit < 0);
 
     metricTicket.textContent = formatCurrency(avgTicket);
-    metricTicketHint.textContent = concluded.length ? 'por pedido finalizado' : 'sem dados';
+    metricTicketHint.textContent = delivered.length ? 'por pedido entregue' : 'sem dados';
 
     metricPaid.textContent = `${paidCount} / ${totalCount}`;
+    const pendingPayment = totalCount - paidCount;
     metricPaidHint.textContent = paidCount === totalCount && totalCount > 0
       ? '✓ Todos pagos!'
-      : `${totalCount - paidCount} pendente${(totalCount - paidCount) !== 1 ? 's' : ''}`;
+      : `${pendingPayment} pendente${pendingPayment !== 1 ? 's' : ''}`;
+  }
+
+  // ── Materials Summary ──────────────────────────────────
+
+  function renderMaterialsSummary(orders) {
+    const today = startOfDay(new Date());
+
+    // Orders that are pendente or em_producao with today's delivery date
+    const todayActive = orders.filter(o => {
+      if (o.status !== 'pendente' && o.status !== 'em_producao') return false;
+      if (!o.data_entrega) return false;
+      const delivery = startOfDay(parseDate(o.data_entrega));
+      return delivery && delivery.getTime() === today.getTime();
+    });
+
+    if (todayActive.length === 0) {
+      materialsSummary.style.display = 'none';
+      return;
+    }
+
+    // Aggregate product quantities from the items embedded in orders
+    const productTotals = {};
+    for (const order of todayActive) {
+      const items = order.items || [];
+      for (const item of items) {
+        const pid = item.product_id;
+        if (!productTotals[pid]) {
+          const prod = productsMap[pid];
+          productTotals[pid] = {
+            nome: item.produto_nome || (prod ? prod.nome : `Produto #${pid}`),
+            unidade: prod ? (prod.unidade_medida || 'un') : 'un',
+            quantidade: 0,
+          };
+        }
+        productTotals[pid].quantidade += item.quantidade;
+      }
+    }
+
+    const entries = Object.values(productTotals);
+    if (entries.length === 0) {
+      materialsSummary.style.display = 'none';
+      return;
+    }
+
+    materialsSummary.style.display = '';
+    materialsList.innerHTML = entries.map(e => `
+      <div class="material-item">
+        <span class="material-name">${escapeHtml(e.nome)}</span>
+        <span class="material-qty">${e.quantidade} ${escapeHtml(e.unidade)}</span>
+      </div>`).join('');
   }
 
   // ── Kanban Board ───────────────────────────────────────
 
   function renderKanban(orders) {
-    const pending = orders.filter(o => o.status === 'pendente');
-    const production = orders.filter(o => o.status === 'concluida');
-    const done = orders.filter(o => o.status === 'cancelada');
+    const pending    = orders.filter(o => o.status === 'pendente');
+    const production = orders.filter(o => o.status === 'em_producao');
+    const ready      = orders.filter(o => o.status === 'pronto');
+    const done       = orders.filter(o => o.status === 'entregue' || o.status === 'cancelado');
 
-    countPending.textContent = pending.length;
+    countPending.textContent    = pending.length;
     countProduction.textContent = production.length;
-    countDone.textContent = done.length;
-    kanbanCount.textContent = `${orders.length} encomenda${orders.length !== 1 ? 's' : ''}`;
+    countReady.textContent      = ready.length;
+    countDone.textContent       = done.length;
+    kanbanCount.textContent     = `${orders.length} encomenda${orders.length !== 1 ? 's' : ''}`;
 
     colPending.innerHTML = pending.length
       ? pending.map(o => renderOrderCard(o)).join('')
-      : columnEmpty('Nenhum pedido pendente', '&#9996;');
+      : columnEmpty('Nenhum pedido pendente', '&#128203;');
 
     colProduction.innerHTML = production.length
       ? production.map(o => renderOrderCard(o)).join('')
-      : columnEmpty('Nenhum pedido concluído', '&#10003;');
+      : columnEmpty('Nenhum pedido em produção', '&#9881;');
+
+    colReady.innerHTML = ready.length
+      ? ready.map(o => renderOrderCard(o)).join('')
+      : columnEmpty('Nenhum pedido pronto', '&#10003;');
 
     colDone.innerHTML = done.length
       ? done.map(o => renderOrderCard(o)).join('')
-      : columnEmpty('Nenhum pedido cancelado', '&#128161;');
+      : columnEmpty('Sem finalizados', '&#128161;');
 
-    // Show/hide states
     const hasOrders = orders.length > 0;
     const hasAnyOrders = allOrders.length > 0;
 
-    kanbanBoard.style.display = hasAnyOrders ? '' : 'none';
-    emptyState.style.display = !hasAnyOrders ? '' : 'none';
-    emptyFilter.style.display = hasAnyOrders && !hasOrders ? '' : 'none';
+    kanbanBoard.style.display   = hasAnyOrders ? '' : 'none';
+    emptyState.style.display    = !hasAnyOrders ? '' : 'none';
+    emptyFilter.style.display   = hasAnyOrders && !hasOrders ? '' : 'none';
   }
 
   function renderOrderCard(order) {
@@ -168,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : 'Sem data';
 
     const actionButtons = getActionButtons(order);
+    const paymentButton = getPaymentButton(order);
 
     return `
       <div class="kanban-card" data-order-id="${order.id}">
@@ -193,26 +275,42 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="kanban-card-actions">
             ${clientPhone ? `<button class="btn-card btn-card--wa" title="WhatsApp" data-order-id="${order.id}">&#128172;</button>` : ''}
             <button class="btn-card btn-card--detail" title="Detalhes" data-order-id="${order.id}">&#128065;</button>
+            ${paymentButton}
             ${actionButtons}
           </div>
         </div>
       </div>`;
   }
 
+  // Status flow: pendente → em_producao → pronto → entregue (or cancelado at any stage)
   function getActionButtons(order) {
-    if (order.status === 'pendente') {
-      return `
-        <button class="btn-card btn-card--advance" title="Concluir" data-order-id="${order.id}" data-next-status="concluida">&#10003;</button>
-        <button class="btn-card btn-card--cancel" title="Cancelar" data-order-id="${order.id}" data-next-status="cancelada">&times;</button>`;
+    const id = order.id;
+    switch (order.status) {
+      case 'pendente':
+        return `
+          <button class="btn-card btn-card--advance" title="Iniciar Produção" data-order-id="${id}" data-next-status="em_producao">&#9654;</button>
+          <button class="btn-card btn-card--cancel" title="Cancelar" data-order-id="${id}" data-next-status="cancelado">&times;</button>`;
+      case 'em_producao':
+        return `
+          <button class="btn-card btn-card--advance" title="Marcar como Pronto" data-order-id="${id}" data-next-status="pronto">&#10003;</button>
+          <button class="btn-card btn-card--cancel" title="Cancelar" data-order-id="${id}" data-next-status="cancelado">&times;</button>`;
+      case 'pronto':
+        return `
+          <button class="btn-card btn-card--advance" title="Marcar como Entregue" data-order-id="${id}" data-next-status="entregue">&#128666;</button>
+          <button class="btn-card btn-card--cancel" title="Cancelar" data-order-id="${id}" data-next-status="cancelado">&times;</button>`;
+      default:
+        return ''; // entregue or cancelado — final states
     }
-    if (order.status === 'concluida') {
-      return ''; // Final state – no action
-    }
-    return ''; // cancelada – no action
+  }
+
+  function getPaymentButton(order) {
+    if (order.status === 'cancelado') return '';
+    if (order.status_pagamento === 'pago') return '';
+    return `<button class="btn-card btn-card--pay" title="Confirmar Pagamento" data-order-id="${order.id}">&#128176;</button>`;
   }
 
   function getUrgencyBadge(deliveryDate, status) {
-    if (!deliveryDate || status === 'concluida' || status === 'cancelada') return '';
+    if (!deliveryDate || status === 'entregue' || status === 'cancelado') return '';
 
     const today = startOfDay(new Date());
     const delivery = startOfDay(deliveryDate);
@@ -226,9 +324,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getStatusBadge(status) {
     const map = {
-      pendente:  '<span class="badge badge-pending">Pendente</span>',
-      concluida: '<span class="badge badge-approved">Concluída</span>',
-      cancelada: '<span class="badge badge-rejected">Cancelada</span>',
+      pendente:     '<span class="badge badge-pending">Pendente</span>',
+      em_producao:  '<span class="badge badge-production">Em Produção</span>',
+      pronto:       '<span class="badge badge-delivered">Pronto</span>',
+      entregue:     '<span class="badge badge-approved">Entregue</span>',
+      cancelado:    '<span class="badge badge-rejected">Cancelado</span>',
     };
     return map[status] || `<span class="badge">${status}</span>`;
   }
@@ -236,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getPaymentBadge(status) {
     if (status === 'pago') return '<span class="badge badge-approved">Pago</span>';
     if (status === 'pendente') return '<span class="badge badge-pending">A pagar</span>';
+    if (status === 'parcial') return '<span class="badge badge-pending">Parcial</span>';
     return '';
   }
 
@@ -264,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       switch (activeFilter) {
         case 'today':    return diffDays === 0;
         case 'tomorrow': return diffDays === 1;
-        case 'overdue':  return diffDays < 0 && order.status === 'pendente';
+        case 'overdue':  return diffDays < 0 && order.status !== 'entregue' && order.status !== 'cancelado';
         default:         return true;
       }
     });
@@ -275,7 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════════════════
 
   async function updateOrderStatus(orderId, newStatus) {
-    // Optimistic update
     const order = allOrders.find(o => o.id === orderId);
     if (!order) return;
 
@@ -286,16 +386,40 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await ApiService.updateOrderStatus(orderId, newStatus);
       if (!res.ok) {
-        // Rollback
         order.status = prevStatus;
         renderAll();
         console.error('Falha ao atualizar status:', res.data);
       }
     } catch (err) {
-      // Rollback
       order.status = prevStatus;
       renderAll();
       console.error('Erro na atualização de status:', err);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  PAYMENT UPDATE (Optimistic)
+  // ══════════════════════════════════════════════════════
+
+  async function confirmPayment(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const prevPayment = order.status_pagamento;
+    order.status_pagamento = 'pago';
+    renderAll();
+
+    try {
+      const res = await ApiService.updatePaymentStatus(orderId, 'pago');
+      if (!res.ok) {
+        order.status_pagamento = prevPayment;
+        renderAll();
+        console.error('Falha ao confirmar pagamento:', res.data);
+      }
+    } catch (err) {
+      order.status_pagamento = prevPayment;
+      renderAll();
+      console.error('Erro ao confirmar pagamento:', err);
     }
   }
 
@@ -307,6 +431,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const order = allOrders.find(o => o.id === orderId);
     if (!order) return;
 
+    currentDetailOrderId = orderId;
+
     const client = clientsMap[order.client_id];
     const clientName = client ? client.nome : `Cliente #${order.client_id}`;
     const clientPhone = client ? client.telefone : '';
@@ -314,12 +440,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     detailTitle.textContent = `Encomenda #${order.id}`;
 
-    // Fetch items
     let itemsHtml = '<p class="detail-loading">Carregando itens...</p>';
     detailContent.innerHTML = buildDetailHtml(order, clientName, clientAddr, itemsHtml);
-
-    // Show modal
     detailModal.style.display = '';
+
+    // Show/hide edit button based on status
+    const btnEdit = document.getElementById('detailBtnEdit');
+    btnEdit.style.display = (order.status === 'entregue' || order.status === 'cancelado') ? 'none' : '';
 
     try {
       const itemsRes = await ApiService.getOrderItems(orderId);
@@ -334,9 +461,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     detailContent.innerHTML = buildDetailHtml(order, clientName, clientAddr, itemsHtml);
 
-    // WhatsApp link
     if (clientPhone) {
-      const waUrl = buildWhatsAppUrl(clientPhone, order, clientName);
+      const waUrl = buildWhatsAppUrl(clientPhone, order);
       detailWhatsApp.href = waUrl;
       detailWhatsApp.style.display = '';
     } else {
@@ -442,19 +568,98 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>
         </thead>
         <tbody>
-          ${items.map(item => `
+          ${items.map(item => {
+            const prod = productsMap[item.product_id];
+            const nome = item.produto_nome || (prod ? prod.nome : `#${item.product_id}`);
+            return `
             <tr>
-              <td>#${item.product_id}</td>
+              <td>${escapeHtml(nome)}</td>
               <td>${item.quantidade}</td>
               <td>${formatCurrency(item.preco_venda_unitario)}</td>
               <td>${formatCurrency(item.preco_venda_unitario * item.quantidade)}</td>
-            </tr>`).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>`;
   }
 
   function closeDetail() {
     detailModal.style.display = 'none';
+    currentDetailOrderId = null;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  EDIT ORDER MODAL
+  // ══════════════════════════════════════════════════════
+
+  function openEdit(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+
+    editingOrderId = orderId;
+    editTitle.textContent = `Editar Encomenda #${order.id}`;
+
+    // Pre-fill fields
+    editDataEntrega.value = order.data_entrega ? order.data_entrega.split('T')[0] : '';
+    editDesconto.value = order.desconto || 0;
+    editObservacoes.value = order.observacoes || '';
+
+    editFeedback.className = 'pdv-feedback';
+    editFeedback.textContent = '';
+
+    closeDetail();
+    editModal.style.display = '';
+  }
+
+  function closeEdit() {
+    editModal.style.display = 'none';
+    editingOrderId = null;
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault();
+    if (!editingOrderId) return;
+
+    const data = {};
+    const newDate = editDataEntrega.value;
+    const newDesconto = parseFloat(editDesconto.value);
+    const newObs = editObservacoes.value.trim();
+
+    if (newDate) data.data_entrega = newDate;
+    if (!isNaN(newDesconto) && newDesconto >= 0) data.desconto = newDesconto;
+    data.observacoes = newObs;
+
+    if (Object.keys(data).length === 0) {
+      editFeedback.className = 'pdv-feedback error';
+      editFeedback.textContent = 'Nenhum campo alterado.';
+      return;
+    }
+
+    const btnSave = document.getElementById('btnSaveEdit');
+    btnSave.disabled = true;
+    btnSave.textContent = 'Salvando...';
+
+    try {
+      const res = await ApiService.updateOrder(editingOrderId, data);
+      if (res.ok) {
+        // Update local state
+        const idx = allOrders.findIndex(o => o.id === editingOrderId);
+        if (idx !== -1) {
+          Object.assign(allOrders[idx], res.data || data);
+        }
+        renderAll();
+        closeEdit();
+      } else {
+        editFeedback.className = 'pdv-feedback error';
+        editFeedback.textContent = res.data?.error || 'Erro ao salvar alterações.';
+      }
+    } catch (err) {
+      editFeedback.className = 'pdv-feedback error';
+      editFeedback.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      btnSave.disabled = false;
+      btnSave.textContent = 'Salvar';
+    }
   }
 
   // ══════════════════════════════════════════════════════
@@ -486,9 +691,11 @@ document.addEventListener('DOMContentLoaded', () => {
       : 'a combinar';
 
     const statusMap = {
-      pendente: 'Em preparo',
-      concluida: 'Pronto para entrega/retirada',
-      cancelada: 'Cancelado',
+      pendente:    'Recebido e aguardando produção',
+      em_producao: 'Em produção',
+      pronto:      'Pronto para entrega/retirada',
+      entregue:    'Entregue',
+      cancelado:   'Cancelado',
     };
 
     const lines = [
@@ -510,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return lines.join('\n');
   }
 
-  function buildWhatsAppUrl(phone, order, clientName) {
+  function buildWhatsAppUrl(phone, order) {
     const client = clientsMap[order.client_id];
     const message = client ? buildWhatsAppMessage(order, client) : '';
     const cleanNum = cleanPhone(phone);
@@ -536,7 +743,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Kanban card action delegation
+    // Edit form
+    editForm.addEventListener('submit', saveEdit);
+    document.getElementById('btnCancelEdit').addEventListener('click', closeEdit);
+    document.getElementById('btnCloseEdit').addEventListener('click', closeEdit);
+
+    // Detail modal edit button
+    document.getElementById('detailBtnEdit').addEventListener('click', () => {
+      if (currentDetailOrderId) openEdit(currentDetailOrderId);
+    });
+
+    // Global delegation for card buttons
     document.addEventListener('click', (e) => {
       const target = e.target;
 
@@ -548,6 +765,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (orderId && nextStatus) {
           updateOrderStatus(orderId, nextStatus);
         }
+        return;
+      }
+
+      // Payment confirmation
+      if (target.closest('.btn-card--pay')) {
+        const btn = target.closest('.btn-card--pay');
+        const orderId = Number(btn.dataset.orderId);
+        if (orderId) confirmPayment(orderId);
         return;
       }
 
@@ -567,14 +792,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Close detail modal
-      if (target.id === 'btnCloseDetail' || target.id === 'detailBtnClose' || (target.classList.contains('modal-overlay') && target.id === 'detailModal')) {
+      // Close modals by clicking overlay
+      if (target.classList.contains('modal-overlay')) {
+        if (target.id === 'detailModal') closeDetail();
+        else if (target.id === 'whatsappModal') closeWhatsApp();
+        else if (target.id === 'editModal') closeEdit();
+        return;
+      }
+
+      // Close detail modal buttons
+      if (target.id === 'btnCloseDetail' || target.id === 'detailBtnClose') {
         closeDetail();
         return;
       }
 
       // Close WA modal
-      if (target.id === 'btnCloseWA' || (target.classList.contains('modal-overlay') && target.id === 'whatsappModal')) {
+      if (target.id === 'btnCloseWA') {
         closeWhatsApp();
         return;
       }
@@ -592,11 +825,6 @@ document.addEventListener('DOMContentLoaded', () => {
         waMessage.select();
         document.execCommand('copy');
       }
-    });
-
-    // WhatsApp from detail modal
-    detailWhatsApp.addEventListener('click', (e) => {
-      // default link behavior opens wa.me
     });
   }
 
@@ -640,8 +868,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function cleanPhone(phone) {
     const digits = (phone || '').replace(/\D/g, '');
-    // If starts with 0, remove leading 0
-    // If doesn't start with 55 (Brazil), prepend 55
     if (digits.startsWith('55')) return digits;
     if (digits.startsWith('0')) return '55' + digits.slice(1);
     return '55' + digits;
@@ -649,7 +875,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function parseDate(dateStr) {
     if (!dateStr) return null;
-    // Handle ISO string or YYYY-MM-DD
     const d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
   }
