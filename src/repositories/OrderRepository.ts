@@ -217,6 +217,20 @@ export class OrderRepository implements IOrderRepository {
         return this.findById(id);
     }
 
+    async updateStatus(id: number, status: string): Promise<OrderData | null> {
+        const result = await this.db.run(
+            `UPDATE orders SET status = ? WHERE id = ?`,
+            status,
+            id
+        );
+
+        if (result.changes === 0) {
+            return null;
+        }
+
+        return this.findById(id);
+    }
+
     async delete(id: number): Promise<boolean> {
         const result = await this.db.run(
             `DELETE FROM orders WHERE id = ?`,

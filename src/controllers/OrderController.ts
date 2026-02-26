@@ -102,6 +102,30 @@ export class OrderController implements IOrderController {
         reply.status(200).send(updatedOrder);
     }
 
+    async updateStatus(
+        request: FastifyRequest<{ Params: { id: string, status: string } }>,
+        reply: FastifyReply
+    ): Promise<void> {
+        const user_id = request.user.id;
+        const id = Number(request.params.id);
+        const status = request.params.status;
+        if (isNaN(id)) {
+            reply.status(400).send({ error: 'ID inválido' });
+            return;
+        }
+        if (!['pendente', 'concluida', 'cancelada'].includes(status)) {
+            reply.status(400).send({ error: 'Status inválido' });
+            return;
+        }
+
+        const updatedOrder = await this.orderService.updateOrderStatus(id, status, user_id);
+        if (!updatedOrder) {
+            reply.status(404).send({ error: 'Encomenda não encontrada ou acesso negado.' });
+            return;
+        }
+        reply.status(200).send(updatedOrder);
+    }
+
     async delete(
         request: FastifyRequest<{ Params: { id: string } }>,
         reply: FastifyReply

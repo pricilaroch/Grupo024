@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Encomenda - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── PDV Layout ── */
+    .pdv-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .pdv-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Cards / Sections ── */
+    .pdv-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .pdv-card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: var(--tracking-tight);
+    }
+
+    /* ── Item Adder ── */
+    .item-adder {
+      display: flex;
+      gap: .5rem;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    .item-adder .form-group { flex: 1; min-width: 120px; margin-bottom: 0; }
+    .item-adder .form-group label { font-size: .75rem; margin-bottom: .25rem; display: block; }
+    .item-adder select, .item-adder input {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+      font-size: .875rem;
+      font-family: var(--font-sans);
+      background: var(--background);
+    }
+    #btnAddItem {
+      white-space: nowrap;
+      padding: .5rem 1rem;
+      height: 38px;
+      align-self: end;
+    }
+
+    /* ── Cart Table ── */
+    .cart-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: .875rem;
+    }
+    .cart-table th {
+      text-align: left;
+      padding: .5rem .75rem;
+      border-bottom: 2px solid var(--border);
+      font-weight: 600;
+      font-size: .75rem;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .cart-table td {
+      padding: .6rem .75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .cart-table .td-right { text-align: right; }
+    .cart-table .btn-remove {
+      background: none;
+      border: none;
+      color: var(--destructive);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: .2rem .4rem;
+      border-radius: var(--radius-sm);
+      transition: background .15s;
+    }
+    .cart-table .btn-remove:hover { background: rgba(220,38,38,.08); }
+
+    .cart-empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted-foreground);
+      font-size: .875rem;
+    }
+
+    /* ── Summary ── */
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: .45rem 0;
+      font-size: .875rem;
+    }
+    .summary-row.total {
+      border-top: 2px solid var(--foreground);
+      margin-top: .5rem;
+      padding-top: .75rem;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .summary-row.lucro { color: var(--success); font-weight: 600; }
+    .summary-row .label { color: var(--muted-foreground); }
+    .summary-row.total .label { color: var(--foreground); }
+
+    .summary-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      margin-bottom: .75rem;
+    }
+    .summary-inputs label { font-size: .75rem; display: block; margin-bottom: .2rem; }
+    .summary-inputs input {
+      width: 100%;
+      padding: .45rem .6rem;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+      font-size: .875rem;
+      font-family: var(--font-sans);
+    }
+
+    /* ── Feedback ── */
+    .pdv-feedback {
+      padding: .75rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: .875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .pdv-feedback.success { display: block; background: #dcfce7; color: #166534; }
+    .pdv-feedback.error   { display: block; background: #fef2f2; color: #991b1b; }
+
+    /* ── Header-row with select ── */
+    .header-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+    }
+    @media (max-width: 600px) { .header-fields { grid-template-columns: 1fr; } }
+    .header-fields label { font-size: .75rem; display: block; margin-bottom: .2rem; }
+    .header-fields select, .header-fields input {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+      font-size: .875rem;
+      font-family: var(--font-sans);
+      background: var(--background);
+    }
+
+    .btn-submit-order {
+      width: 100%;
+      margin-top: 1rem;
+      padding: .7rem;
+      font-size: .95rem;
+      font-weight: 600;
+    }
+    .btn-submit-order:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <nav id="navbar" class="navbar"></nav>
+
+  <div class="container container-wide">
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="products-header">
+        <div>
+          <h1 class="products-title">Nova Encomenda</h1>
+          <p class="products-subtitle">Monte o pedido, revise os valores e confirme.</p>
+        </div>
+        <a href="/dashboard.html" class="btn btn-secondary">&larr; Voltar</a>
+      </div>
+
+      <!-- Feedback -->
+      <div id="feedback" class="pdv-feedback"></div>
+
+      <!-- PDV Grid -->
+      <div class="pdv-layout">
+
+        <!-- LEFT: Cabeçalho + Carrinho -->
+        <div>
+
+          <!-- Cabeçalho do Pedido -->
+          <div class="pdv-card" style="margin-bottom:1.25rem;">
+            <h2>Dados do Pedido</h2>
+            <div class="header-fields">
+              <div>
+                <label for="selectClient">Cliente *</label>
+                <select id="selectClient">
+                  <option value="">Carregando clientes…</option>
+                </select>
+              </div>
+              <div>
+                <label for="inputDataEntrega">Data de Entrega</label>
+                <input type="datetime-local" id="inputDataEntrega">
+              </div>
+              <div>
+                <label for="selectTipoEntrega">Tipo de Entrega</label>
+                <select id="selectTipoEntrega">
+                  <option value="retirada">Retirada</option>
+                  <option value="entrega">Entrega</option>
+                </select>
+              </div>
+              <div>
+                <label for="selectPagamento">Forma de Pagamento</label>
+                <select id="selectPagamento">
+                  <option value="">Definir depois</option>
+                  <option value="pix">PIX</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="cartao_credito">Cartão Crédito</option>
+                  <option value="cartao_debito">Cartão Débito</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top:.75rem;">
+              <label for="inputObservacoes" style="font-size:.75rem;">Observações</label>
+              <textarea id="inputObservacoes" rows="2" placeholder="Observações opcionais…"
+                style="width:100%;padding:.5rem .75rem;border:1px solid var(--input);border-radius:var(--radius-md);font-size:.875rem;font-family:var(--font-sans);resize:vertical;"></textarea>
+            </div>
+          </div>
+
+          <!-- Adicionar Item -->
+          <div class="pdv-card" style="margin-bottom:1.25rem;">
+            <h2>Adicionar Produto</h2>
+            <div class="item-adder">
+              <div class="form-group" style="flex:2;">
+                <label for="selectProduct">Produto</label>
+                <select id="selectProduct">
+                  <option value="">Carregando produtos…</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:0 0 90px;">
+                <label for="inputQtd">Qtd</label>
+                <input type="number" id="inputQtd" min="1" value="1">
+              </div>
+              <button id="btnAddItem" class="btn btn-primary">+ Adicionar</button>
+            </div>
+          </div>
+
+          <!-- Carrinho -->
+          <div class="pdv-card">
+            <h2>Itens do Pedido</h2>
+
+            <div id="cartEmpty" class="cart-empty">
+              Nenhum item adicionado. Use o seletor acima para começar.
+            </div>
+
+            <table id="cartTable" class="cart-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Qtd</th>
+                  <th>Unit.</th>
+                  <th class="td-right">Subtotal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="cartBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT: Resumo Financeiro -->
+        <div>
+          <div class="pdv-card" style="position:sticky;top:5rem;">
+            <h2>Resumo Financeiro</h2>
+
+            <div class="summary-inputs">
+              <div>
+                <label for="inputTaxaEntrega">Taxa de Entrega (R$)</label>
+                <input type="number" id="inputTaxaEntrega" min="0" step="0.01" value="0">
+              </div>
+              <div>
+                <label for="inputDesconto">Desconto (R$)</label>
+                <input type="number" id="inputDesconto" min="0" step="0.01" value="0">
+              </div>
+            </div>
+
+            <div class="summary-row">
+              <span class="label">Subtotal</span>
+              <span id="sumSubtotal">R$ 0,00</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Taxa de Entrega</span>
+              <span id="sumTaxa">R$ 0,00</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Desconto</span>
+              <span id="sumDesconto">- R$ 0,00</span>
+            </div>
+            <div class="summary-row total">
+              <span class="label">Total</span>
+              <span id="sumTotal">R$ 0,00</span>
+            </div>
+            <div class="summary-row lucro">
+              <span class="label">Lucro Estimado</span>
+              <span id="sumLucro">R$ 0,00</span>
+            </div>
+
+            <button id="btnSubmitOrder" class="btn btn-primary btn-submit-order" disabled>
+              Confirmar Encomenda
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
+  <script src="/js/orders.js"></script>
+</body>
+</html>

@@ -69,6 +69,7 @@ export interface IOrderRepository {
   findByUserId(user_id: number): Promise<OrderData[]>;
   findByUserIdAndStatus(user_id: number, status: string[]): Promise<OrderData[]>;
   update(id: number, order: UpdateOrderDTO): Promise<OrderData | null>;
+  updateStatus(id: number, status: string): Promise<OrderData | null>;
   delete(id: number): Promise<boolean>;
   findItemsByOrderId(order_id: number): Promise<OrderItemData[]>;
 }
@@ -80,6 +81,7 @@ export interface IOrderService {
   getByUserIdAndStatus(user_id: number, status: string[]): Promise<OrderData[]>;
   getItemsByOrderId(order_id: number, user_id: number): Promise<OrderItemData[] | null>;
   updateOrder(id: number, dto: UpdateOrderDTO, user_id: number): Promise<OrderData | null>;
+  updateOrderStatus(id: number, status: string, user_id: number): Promise<OrderData | null>;
   deleteOrder(id: number, user_id: number): Promise<boolean>;
 }
 
@@ -90,5 +92,6 @@ export interface IOrderController {
   getByUserIdAndStatus(request: FastifyRequest, reply: FastifyReply): Promise<void>;
   getItemsByOrderId(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void>;  
   update(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void>;
+  updateStatus(request: FastifyRequest<{ Params: { id: string, status: string } }>, reply: FastifyReply): Promise<void>;
   delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void>;
 }

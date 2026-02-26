@@ -170,6 +170,19 @@ export class OrderService implements IOrderService {
         return await this.orderRepository.delete(id);
     }
 
+    async updateOrderStatus(id: number, status: string, user_id: number): Promise<OrderData | null> {
+        const existingOrder = await this.orderRepository.findById(id);
+        if (!existingOrder || existingOrder.user_id !== user_id) {
+            return null;
+        }
+
+        if (existingOrder.status === 'concluida' || existingOrder.status === 'cancelada') {
+            throw new ValidationError('Pedido finalizado ou cancelado não pode ser alterado.');
+        }
+
+        return await this.orderRepository.updateStatus(id, status);
+    }
+
     async getItemsByOrderId(order_id: number, user_id: number): Promise<OrderItemData[] | null> {
         const order = await this.orderRepository.findById(order_id);
         if (!order || order.user_id !== user_id) {

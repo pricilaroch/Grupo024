@@ -25,6 +25,7 @@ export function buildOrderRoutes(orderController: IOrderController) {
         fastify.get('/status', orderController.getByUserIdAndStatus.bind(orderController));
         fastify.get('/:id/items', orderController.getItemsByOrderId.bind(orderController));
         fastify.patch('/:id', orderController.update.bind(orderController));
+        fastify.patch('/:id/status', orderController.updateStatus.bind(orderController));
         fastify.delete('/:id', orderController.delete.bind(orderController));
     };
 }
