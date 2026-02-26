@@ -264,6 +264,55 @@ const ApiService = {
         }
     },
 
+    async getOrdersByStatus(statuses = []) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const params = statuses.map(s => `status=${encodeURIComponent(s)}`).join('&');
+            const response = await fetch(`${this.BASE_URL}/orders/status?${params}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar encomendas por status:', error);
+            throw error;
+        }
+    },
+
+    async getOrderItems(orderId) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${orderId}/items`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar itens da encomenda:', error);
+            throw error;
+        }
+    },
+
+    async updateOrderStatus(id, status) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/orders/${id}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar status da encomenda:', error);
+            throw error;
+        }
+    },
+
     async deleteOrder(id) {
         const token = sessionStorage.getItem('token');
         try {

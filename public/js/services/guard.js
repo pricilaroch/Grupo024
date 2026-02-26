@@ -91,6 +91,8 @@ const RouteGuard = (() => {
       <div class="navbar-inner">
         <a href="${isAdmin ? '/admin.html' : '/dashboard.html'}" class="navbar-brand">Gestão de Encomendas</a>
         <div class="navbar-links">
+          ${!isAdmin ? '<a href="/dashboard.html" class="navbar-link">Painel</a>' : ''}
+          ${!isAdmin ? '<a href="/orders.html" class="navbar-link">Encomendas</a>' : ''}
           ${!isAdmin ? '<a href="/products.html" class="navbar-link">Produtos</a>' : ''}
           ${!isAdmin ? '<a href="/clients.html" class="navbar-link">Clientes</a>' : ''}
           <span class="navbar-user">${displayName}</span>

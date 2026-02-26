@@ -108,12 +108,13 @@ export class OrderController implements IOrderController {
     ): Promise<void> {
         const user_id = request.user.id;
         const id = Number(request.params.id);
-        const status = request.params.status;
+        const body = updateOrderSchema.parse(request.body);
+        const status = body.status as string | undefined;
         if (isNaN(id)) {
             reply.status(400).send({ error: 'ID inválido' });
             return;
         }
-        if (!['pendente', 'concluida', 'cancelada'].includes(status)) {
+        if (!status || !['pendente', 'concluida', 'cancelada'].includes(status)) {
             reply.status(400).send({ error: 'Status inválido' });
             return;
         }
