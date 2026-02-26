@@ -1,13 +1,57 @@
 /* ================================================================
-   DASHBOARD — Kanban + Financial Intelligence
+   DASHBOARD — Kanban 3-col + Histórico + Financial Intelligence
    Extends the core Design System tokens from style.css
    ================================================================ */
 
 /* ===========================
-   Dashboard Layout
+   Dashboard Layout — wider for PC
    =========================== */
 .container-dashboard {
-  max-width: 1120px;
+  max-width: 1320px;
+}
+
+/* ===========================
+   Finance Header (with toggle)
+   =========================== */
+.finance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.finance-mode-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--muted);
+  border-radius: var(--radius-md);
+  padding: 0.1875rem;
+}
+
+.finance-mode-btn {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  padding: 0.3125rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+  min-height: 28px;
+}
+
+.finance-mode-btn:hover {
+  color: var(--foreground);
+}
+
+.finance-mode-btn.active {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: var(--shadow-xs);
 }
 
 /* ===========================
@@ -165,7 +209,7 @@
 
 @media (min-width: 1100px) {
   .kanban-board {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -763,4 +807,210 @@
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+}
+
+/* ===========================
+   Dashboard Tabs
+   =========================== */
+.dashboard-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-tab {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  padding: 0.625rem 1.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.dashboard-tab:hover {
+  color: var(--foreground);
+}
+
+.dashboard-tab.active {
+  color: var(--foreground);
+  border-bottom-color: var(--foreground);
+}
+
+.tab-panel {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===========================
+   Pending Payments Section
+   =========================== */
+.pending-payments-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.pending-payments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pending-payments-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.pending-payments-total {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--destructive);
+  font-variant-numeric: tabular-nums;
+}
+
+.pending-payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pending-payment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--muted);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+.pending-payment-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.pending-payment-id {
+  font-weight: 700;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.pending-payment-client {
+  font-weight: 500;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pending-payment-date {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.pending-payment-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.pending-payment-value {
+  font-weight: 700;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================
+   History Table
+   =========================== */
+.history-content {
+  animation: fadeIn 0.2s ease;
+}
+
+.history-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.history-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--border);
+  background: var(--muted);
+  white-space: nowrap;
+}
+
+.history-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--foreground);
+}
+
+.history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.history-table tbody tr:hover {
+  background-color: var(--muted);
+}
+
+.td-mono {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.td-right {
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .history-table th:nth-child(4),
+  .history-table td:nth-child(4),
+  .history-table th:nth-child(6),
+  .history-table td:nth-child(6) {
+    display: none;
+  }
+
+  .pending-payment-date {
+    display: none;
+  }
 }

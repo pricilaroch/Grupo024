@@ -1,5 +1,5 @@
 /**
- * dashboard.js — Painel de Controle (Kanban + Inteligência Financeira)
+ * dashboard.js — Painel de Controle (Kanban 3-col + Histórico + Inteligência Financeira)
  * Fluxo: pendente → em_producao → pronto → entregue (ou cancelado)
  * Depende de: api.js, guard.js
  */
@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let clientsMap = {};
   let productsMap = {};   // id → product (for materials summary)
   let activeFilter = 'all';
+  let financeMode = 'previsao'; // 'previsao' or 'realizado'
+  let activeTab = 'production'; // 'production' or 'history'
   let currentDetailOrderId = null;
 
   // ── DOM refs ───────────────────────────────────────────
@@ -26,12 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const colPending     = document.getElementById('colPending');
   const colProduction  = document.getElementById('colProduction');
   const colReady       = document.getElementById('colReady');
-  const colDone        = document.getElementById('colDone');
 
   const countPending    = document.getElementById('countPending');
   const countProduction = document.getElementById('countProduction');
   const countReady      = document.getElementById('countReady');
-  const countDone       = document.getElementById('countDone');
   const kanbanCount     = document.getElementById('kanbanCount');
 
   // Financial
@@ -44,9 +44,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricPaid         = document.getElementById('metricPaid');
   const metricPaidHint     = document.getElementById('metricPaidHint');
 
+  // Pending Payments
+  const pendingPayments     = document.getElementById('pendingPayments');
+  const pendingPaymentTotal = document.getElementById('pendingPaymentTotal');
+  const pendingPaymentsList = document.getElementById('pendingPaymentsList');
+
   // Materials
   const materialsSummary = document.getElementById('materialsSummary');
   const materialsList    = document.getElementById('materialsList');
+
+  // Tabs & History
+  const tabProduction   = document.getElementById('tabProduction');
+  const tabHistory      = document.getElementById('tabHistory');
+  const historyContent  = document.getElementById('historyContent');
+  const historyCount    = document.getElementById('historyCount');
+  const historyEmpty    = document.getElementById('historyEmpty');
 
   // Modals
   const detailModal    = document.getElementById('detailModal');
@@ -112,24 +124,35 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderAll() {
     const filtered = applyTemporalFilter(allOrders);
     renderFinancialCards(allOrders);
+    renderPendingPayments(allOrders);
     renderMaterialsSummary(allOrders);
     renderKanban(filtered);
+    renderHistory(allOrders);
   }
 
   // ── Financial Cards ────────────────────────────────────
 
   function renderFinancialCards(orders) {
-    const delivered = orders.filter(o => o.status === 'entregue');
-    const totalRevenue = delivered.reduce((s, o) => s + (o.valor_total || 0), 0);
-    const totalProfit = delivered.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
-    const avgTicket = delivered.length ? totalRevenue / delivered.length : 0;
+    // Previsão = all delivered, Realizado = delivered AND paid
+    let baseOrders;
+    if (financeMode === 'realizado') {
+      baseOrders = orders.filter(o => o.status === 'entregue' && o.status_pagamento === 'pago');
+    } else {
+      baseOrders = orders.filter(o => o.status === 'entregue');
+    }
+
+    const totalRevenue = baseOrders.reduce((s, o) => s + (o.valor_total || 0), 0);
+    const totalProfit = baseOrders.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
+    const avgTicket = baseOrders.length ? totalRevenue / baseOrders.length : 0;
     const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+
+    const modeLabel = financeMode === 'realizado' ? 'pagos e entregues' : 'entregues';
 
     const paidCount = orders.filter(o => o.status_pagamento === 'pago').length;
     const totalCount = orders.filter(o => o.status !== 'cancelado').length;
 
     metricRevenue.textContent = formatCurrency(totalRevenue);
-    metricRevenueHint.textContent = `${delivered.length} pedido${delivered.length !== 1 ? 's' : ''} entregue${delivered.length !== 1 ? 's' : ''}`;
+    metricRevenueHint.textContent = `${baseOrders.length} pedido${baseOrders.length !== 1 ? 's' : ''} ${modeLabel}`;
 
     metricProfit.textContent = formatCurrency(totalProfit);
     metricProfitMargin.textContent = `Margem: ${margin.toFixed(1)}%`;
@@ -137,13 +160,50 @@ document.addEventListener('DOMContentLoaded', () => {
     metricProfit.classList.toggle('finance-value--danger', totalProfit < 0);
 
     metricTicket.textContent = formatCurrency(avgTicket);
-    metricTicketHint.textContent = delivered.length ? 'por pedido entregue' : 'sem dados';
+    metricTicketHint.textContent = baseOrders.length ? `por pedido ${modeLabel}` : 'sem dados';
 
     metricPaid.textContent = `${paidCount} / ${totalCount}`;
     const pendingPayment = totalCount - paidCount;
     metricPaidHint.textContent = paidCount === totalCount && totalCount > 0
       ? '✓ Todos pagos!'
       : `${pendingPayment} pendente${pendingPayment !== 1 ? 's' : ''}`;
+  }
+
+  // ── Pending Payments ───────────────────────────────────
+
+  function renderPendingPayments(orders) {
+    const pending = orders.filter(o =>
+      o.status !== 'cancelado' && o.status_pagamento !== 'pago'
+    );
+
+    if (pending.length === 0) {
+      pendingPayments.style.display = 'none';
+      return;
+    }
+
+    const totalPending = pending.reduce((s, o) => s + (o.valor_total || 0), 0);
+    pendingPaymentTotal.textContent = formatCurrency(totalPending);
+    pendingPayments.style.display = '';
+
+    pendingPaymentsList.innerHTML = pending.map(o => {
+      const client = clientsMap[o.client_id];
+      const clientName = client ? client.nome : `#${o.client_id}`;
+      const dateStr = o.data_entrega
+        ? parseDate(o.data_entrega).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+        : '—';
+      return `
+        <div class="pending-payment-item">
+          <div class="pending-payment-info">
+            <span class="pending-payment-id">#${o.id}</span>
+            <span class="pending-payment-client">${escapeHtml(clientName)}</span>
+            <span class="pending-payment-date">${dateStr}</span>
+          </div>
+          <div class="pending-payment-right">
+            <span class="pending-payment-value">${formatCurrency(o.valor_total || 0)}</span>
+            <button class="btn-card btn-card--pay" title="Confirmar Pagamento" data-order-id="${o.id}">&#128176;</button>
+          </div>
+        </div>`;
+    }).join('');
   }
 
   // ── Materials Summary ──────────────────────────────────
@@ -199,16 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Kanban Board ───────────────────────────────────────
 
   function renderKanban(orders) {
-    const pending    = orders.filter(o => o.status === 'pendente');
-    const production = orders.filter(o => o.status === 'em_producao');
-    const ready      = orders.filter(o => o.status === 'pronto');
-    const done       = orders.filter(o => o.status === 'entregue' || o.status === 'cancelado');
+    // Only active statuses in Kanban (3 columns)
+    const activeOrders = orders.filter(o => o.status !== 'entregue' && o.status !== 'cancelado');
+    const pending    = activeOrders.filter(o => o.status === 'pendente');
+    const production = activeOrders.filter(o => o.status === 'em_producao');
+    const ready      = activeOrders.filter(o => o.status === 'pronto');
 
     countPending.textContent    = pending.length;
     countProduction.textContent = production.length;
     countReady.textContent      = ready.length;
-    countDone.textContent       = done.length;
-    kanbanCount.textContent     = `${orders.length} encomenda${orders.length !== 1 ? 's' : ''}`;
+    kanbanCount.textContent     = `${activeOrders.length} encomenda${activeOrders.length !== 1 ? 's' : ''}`;
 
     colPending.innerHTML = pending.length
       ? pending.map(o => renderOrderCard(o)).join('')
@@ -222,16 +282,70 @@ document.addEventListener('DOMContentLoaded', () => {
       ? ready.map(o => renderOrderCard(o)).join('')
       : columnEmpty('Nenhum pedido pronto', '&#10003;');
 
-    colDone.innerHTML = done.length
-      ? done.map(o => renderOrderCard(o)).join('')
-      : columnEmpty('Sem finalizados', '&#128161;');
-
-    const hasOrders = orders.length > 0;
+    const hasActiveOrders = activeOrders.length > 0;
     const hasAnyOrders = allOrders.length > 0;
 
     kanbanBoard.style.display   = hasAnyOrders ? '' : 'none';
     emptyState.style.display    = !hasAnyOrders ? '' : 'none';
-    emptyFilter.style.display   = hasAnyOrders && !hasOrders ? '' : 'none';
+    emptyFilter.style.display   = hasAnyOrders && !hasActiveOrders ? '' : 'none';
+  }
+
+  // ── History Tab ────────────────────────────────────────
+
+  function renderHistory(orders) {
+    const finalized = orders.filter(o => o.status === 'entregue' || o.status === 'cancelado');
+
+    historyCount.textContent = `${finalized.length} pedido${finalized.length !== 1 ? 's' : ''}`;
+
+    if (finalized.length === 0) {
+      historyContent.innerHTML = '';
+      historyEmpty.style.display = '';
+      return;
+    }
+    historyEmpty.style.display = 'none';
+
+    // Sort by most recent first
+    const sorted = [...finalized].sort((a, b) => {
+      const da = a.updated_at || a.created_at || '';
+      const db = b.updated_at || b.created_at || '';
+      return db.localeCompare(da);
+    });
+
+    historyContent.innerHTML = `
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Status</th>
+              <th>Pagamento</th>
+              <th class="td-right">Total</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map(o => {
+              const client = clientsMap[o.client_id];
+              const clientName = client ? client.nome : `#${o.client_id}`;
+              const dateStr = (o.updated_at || o.created_at)
+                ? new Date(o.updated_at || o.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                : '—';
+              return `
+                <tr>
+                  <td class="td-mono">${o.id}</td>
+                  <td>${escapeHtml(clientName)}</td>
+                  <td>${getStatusBadge(o.status)}</td>
+                  <td>${getPaymentBadge(o.status_pagamento)}</td>
+                  <td class="td-right td-mono">${formatCurrency(o.valor_total || 0)}</td>
+                  <td>${dateStr}</td>
+                  <td><button class="btn-card btn-card--detail" title="Detalhes" data-order-id="${o.id}">&#128065;</button></td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
   }
 
   function renderOrderCard(order) {
@@ -733,6 +847,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════════════════
 
   function bindEvents() {
+    // Dashboard tabs (Produção | Histórico)
+    document.querySelectorAll('.dashboard-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dashboard-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        tabProduction.style.display = activeTab === 'production' ? '' : 'none';
+        tabHistory.style.display   = activeTab === 'history' ? '' : 'none';
+      });
+    });
+
+    // Finance mode toggle (Previsão | Realizado)
+    document.querySelectorAll('.finance-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.finance-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        financeMode = btn.dataset.financeMode;
+        renderFinancialCards(allOrders);
+      });
+    });
+
     // Temporal filters
     document.querySelectorAll('.filter-tab').forEach(btn => {
       btn.addEventListener('click', () => {

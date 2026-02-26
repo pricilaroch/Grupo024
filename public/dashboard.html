@@ -23,8 +23,14 @@
         <span class="badge">Conta Ativa</span>
       </div>
 
-      <!-- ═══════════ Financial Intelligence Cards ═══════════ -->
-      <h2 class="section-title">Inteligência financeira</h2>
+      <!-- ═══════════ Financial Intelligence ═══════════ -->
+      <div class="finance-header">
+        <h2 class="section-title">Inteligência financeira</h2>
+        <div class="finance-mode-toggle">
+          <button class="finance-mode-btn active" data-finance-mode="previsao" title="Todos os pedidos entregues">Previsão</button>
+          <button class="finance-mode-btn" data-finance-mode="realizado" title="Apenas pedidos entregues E pagos">Realizado</button>
+        </div>
+      </div>
       <div class="finance-grid">
         <div class="finance-card">
           <div class="finance-card-icon finance-icon--revenue" aria-hidden="true">$</div>
@@ -63,6 +69,15 @@
         </div>
       </div>
 
+      <!-- ═══════════ Pending Payments Section ═══════════ -->
+      <div id="pendingPayments" class="pending-payments-section" style="display:none;">
+        <div class="pending-payments-header">
+          <h3 class="pending-payments-title">&#128176; Pagamentos Pendentes</h3>
+          <span class="pending-payments-total" id="pendingPaymentTotal">R$ 0,00</span>
+        </div>
+        <div id="pendingPaymentsList" class="pending-payments-list"></div>
+      </div>
+
       <!-- ═══════════ Materials Summary ═══════════ -->
       <div id="materialsSummary" class="materials-summary" style="display:none;">
         <div class="materials-header">
@@ -71,86 +86,98 @@
         <div id="materialsList" class="materials-list"></div>
       </div>
 
-      <!-- ═══════════ Kanban Header ═══════════ -->
-      <div class="kanban-header">
-        <div>
-          <h2 class="kanban-title">Painel de Produção</h2>
-          <p class="kanban-subtitle">Gerencie suas encomendas com um clique.</p>
+      <!-- ═══════════ Dashboard Tabs: Produção | Histórico ═══════════ -->
+      <div class="dashboard-tabs">
+        <button class="dashboard-tab active" data-tab="production">&#9881; Produção</button>
+        <button class="dashboard-tab" data-tab="history">&#128218; Histórico</button>
+      </div>
+
+      <!-- ╌╌╌╌╌ TAB: Produção (Kanban) ╌╌╌╌╌ -->
+      <div id="tabProduction" class="tab-panel">
+        <div class="kanban-header">
+          <div>
+            <h2 class="kanban-title">Painel de Produção</h2>
+            <p class="kanban-subtitle">Gerencie suas encomendas com um clique.</p>
+          </div>
+          <div class="kanban-actions">
+            <a href="/orders.html" class="btn btn-primary btn-sm">+ Nova Encomenda</a>
+          </div>
         </div>
-        <div class="kanban-actions">
-          <a href="/orders.html" class="btn btn-primary btn-sm">+ Nova Encomenda</a>
+
+        <!-- Temporal Filters -->
+        <div class="temporal-filters">
+          <div class="products-filter-tabs">
+            <button class="filter-tab active" data-filter="all">Todos</button>
+            <button class="filter-tab" data-filter="today">Hoje</button>
+            <button class="filter-tab" data-filter="tomorrow">Amanhã</button>
+            <button class="filter-tab" data-filter="overdue">Atrasados</button>
+          </div>
+          <span class="kanban-count" id="kanbanCount">0 encomendas</span>
+        </div>
+
+        <div id="loadingState" class="kanban-loading">Carregando encomendas...</div>
+
+        <div id="kanbanBoard" class="kanban-board" style="display:none;">
+          <!-- Pendentes -->
+          <div class="kanban-column">
+            <div class="kanban-column-header kanban-col--pending">
+              <span class="kanban-column-dot kanban-dot--pending"></span>
+              <span class="kanban-column-name">Pendentes</span>
+              <span class="kanban-column-badge" id="countPending">0</span>
+            </div>
+            <div class="kanban-column-body" id="colPending"></div>
+          </div>
+
+          <!-- Em Produção -->
+          <div class="kanban-column">
+            <div class="kanban-column-header kanban-col--production">
+              <span class="kanban-column-dot kanban-dot--production"></span>
+              <span class="kanban-column-name">Em Produção</span>
+              <span class="kanban-column-badge" id="countProduction">0</span>
+            </div>
+            <div class="kanban-column-body" id="colProduction"></div>
+          </div>
+
+          <!-- Prontos -->
+          <div class="kanban-column">
+            <div class="kanban-column-header kanban-col--ready">
+              <span class="kanban-column-dot kanban-dot--ready"></span>
+              <span class="kanban-column-name">Prontos</span>
+              <span class="kanban-column-badge" id="countReady">0</span>
+            </div>
+            <div class="kanban-column-body" id="colReady"></div>
+          </div>
+        </div>
+
+        <!-- Empty states -->
+        <div id="emptyState" class="kanban-empty" style="display:none;">
+          <div class="kanban-empty-icon">&#128640;</div>
+          <h2>Nenhuma encomenda encontrada</h2>
+          <p>Comece criando sua primeira encomenda e veja seu painel ganhar vida!</p>
+          <a href="/orders.html" class="btn btn-primary">Criar Encomenda</a>
+        </div>
+        <div id="emptyFilter" class="kanban-empty" style="display:none;">
+          <div class="kanban-empty-icon">&#128269;</div>
+          <h2>Nenhum resultado para este filtro</h2>
+          <p>Tente outro período ou crie novas encomendas.</p>
         </div>
       </div>
 
-      <!-- ═══════════ Temporal Filters ═══════════ -->
-      <div class="temporal-filters">
-        <div class="products-filter-tabs">
-          <button class="filter-tab active" data-filter="all">Todos</button>
-          <button class="filter-tab" data-filter="today">Hoje</button>
-          <button class="filter-tab" data-filter="tomorrow">Amanhã</button>
-          <button class="filter-tab" data-filter="overdue">Atrasados</button>
-        </div>
-        <span class="kanban-count" id="kanbanCount">0 encomendas</span>
-      </div>
-
-      <!-- ═══════════ Kanban Board ═══════════ -->
-      <div id="loadingState" class="kanban-loading">Carregando encomendas...</div>
-
-      <div id="kanbanBoard" class="kanban-board" style="display:none;">
-        <!-- Pendentes -->
-        <div class="kanban-column">
-          <div class="kanban-column-header kanban-col--pending">
-            <span class="kanban-column-dot kanban-dot--pending"></span>
-            <span class="kanban-column-name">Pendentes</span>
-            <span class="kanban-column-badge" id="countPending">0</span>
+      <!-- ╌╌╌╌╌ TAB: Histórico ╌╌╌╌╌ -->
+      <div id="tabHistory" class="tab-panel" style="display:none;">
+        <div class="kanban-header">
+          <div>
+            <h2 class="kanban-title">Histórico de Encomendas</h2>
+            <p class="kanban-subtitle">Pedidos entregues e cancelados.</p>
           </div>
-          <div class="kanban-column-body" id="colPending"></div>
+          <span class="kanban-count" id="historyCount">0 pedidos</span>
         </div>
-
-        <!-- Em Produção -->
-        <div class="kanban-column">
-          <div class="kanban-column-header kanban-col--production">
-            <span class="kanban-column-dot kanban-dot--production"></span>
-            <span class="kanban-column-name">Em Produção</span>
-            <span class="kanban-column-badge" id="countProduction">0</span>
-          </div>
-          <div class="kanban-column-body" id="colProduction"></div>
+        <div id="historyContent" class="history-content"></div>
+        <div id="historyEmpty" class="kanban-empty" style="display:none;">
+          <div class="kanban-empty-icon">&#128218;</div>
+          <h2>Nenhum pedido finalizado</h2>
+          <p>Quando você entregar ou cancelar pedidos, eles aparecerão aqui.</p>
         </div>
-
-        <!-- Prontos -->
-        <div class="kanban-column">
-          <div class="kanban-column-header kanban-col--ready">
-            <span class="kanban-column-dot kanban-dot--ready"></span>
-            <span class="kanban-column-name">Prontos</span>
-            <span class="kanban-column-badge" id="countReady">0</span>
-          </div>
-          <div class="kanban-column-body" id="colReady"></div>
-        </div>
-
-        <!-- Entregues / Cancelados -->
-        <div class="kanban-column">
-          <div class="kanban-column-header kanban-col--done">
-            <span class="kanban-column-dot kanban-dot--done"></span>
-            <span class="kanban-column-name">Finalizados</span>
-            <span class="kanban-column-badge" id="countDone">0</span>
-          </div>
-          <div class="kanban-column-body" id="colDone"></div>
-        </div>
-      </div>
-
-      <!-- ═══════════ Empty State ═══════════ -->
-      <div id="emptyState" class="kanban-empty" style="display:none;">
-        <div class="kanban-empty-icon">&#128640;</div>
-        <h2>Nenhuma encomenda encontrada</h2>
-        <p>Comece criando sua primeira encomenda e veja seu painel ganhar vida!</p>
-        <a href="/orders.html" class="btn btn-primary">Criar Encomenda</a>
-      </div>
-
-      <!-- Empty filter -->
-      <div id="emptyFilter" class="kanban-empty" style="display:none;">
-        <div class="kanban-empty-icon">&#128269;</div>
-        <h2>Nenhum resultado para este filtro</h2>
-        <p>Tente outro período ou crie novas encomendas.</p>
       </div>
 
     </main>
