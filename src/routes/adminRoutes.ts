@@ -24,11 +24,11 @@ export function buildAdminRoutes(controller: AdminController) {
     // Aplica o decorator de autenticação em todas as rotas do prefix
     fastify.addHook('onRequest', authenticate);
 
-    fastify.get('/admin/users/pending', (request, reply) =>
+    fastify.get('/users/pending', (request, reply) =>
       controller.listPending(request, reply)
     );
 
-    fastify.patch('/admin/users/:id/status', (request, reply) =>
+    fastify.patch('/users/:id/status', (request, reply) =>
       controller.updateStatus(request as FastifyRequest<{ Params: { id: string } }>, reply)
     );
   };

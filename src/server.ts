@@ -113,9 +113,9 @@ async function main(): Promise<void> {
   const analyticsController = new AnalyticsController(analyticsService);
 
   // ─── Rotas ─────────────────────────────────────────────
-  await fastify.register(buildUserRoutes(userController));
+  await fastify.register(buildUserRoutes(userController), { prefix: '/users' });
   await fastify.register(buildAuthRoutes(authController));
-  await fastify.register(buildAdminRoutes(adminController));
+  await fastify.register(buildAdminRoutes(adminController), { prefix: '/admin' });
   await fastify.register(buildProductRoutes(productController), { prefix: '/products' });
   await fastify.register(buildClientRoutes(clientController),  { prefix: '/clients' });
   await fastify.register(buildOrderRoutes(orderController),    { prefix: '/orders' });

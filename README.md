@@ -102,7 +102,27 @@ npm run dev
 
 ---
 
-## 📚 Documentação Completa (Wiki)
+## � Documentação da API (Rotas)
+
+Cada endpoint base possui sua documentação detalhada com formato de entrada e possíveis saídas:
+
+| Endpoint       | Documentação                          | Descrição                                      |
+| -------------- | ------------------------------------- | ---------------------------------------------- |
+| `/users`       | [docs/users.md](docs/users.md)        | Registro de usuários                           |
+| `/login`       | [docs/auth.md](docs/auth.md)          | Autenticação e JWT                             |
+| `/admin`       | [docs/admin.md](docs/admin.md)        | Gestão de usuários pendentes (admin)           |
+| `/products`    | [docs/products.md](docs/products.md)  | CRUD de produtos                               |
+| `/clients`     | [docs/clients.md](docs/clients.md)    | CRUD de clientes                               |
+| `/orders`      | [docs/orders.md](docs/orders.md)      | Gestão de encomendas e itens                   |
+| `/sales`       | [docs/sales.md](docs/sales.md)        | Registro de vendas (livro caixa)               |
+| `/expenses`    | [docs/expenses.md](docs/expenses.md)  | Gestão de despesas                             |
+| `/analytics`   | [docs/analytics.md](docs/analytics.md)| Análises financeiras, balanço e metas          |
+
+> Documentação técnica adicional: [docs/api-reference.md](docs/api-reference.md)
+
+---
+
+## �📚 Documentação Completa (Wiki)
 
 Para detalhes sobre o **Diagrama de Classes**, **Gráficos Burndown**, **Sprints** e **Relatório Final**, acesse a nossa [Wiki do GitHub].
 

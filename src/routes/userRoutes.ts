@@ -3,7 +3,7 @@ import { UserController } from '../controllers/UserController';
 
 export function buildUserRoutes(controller: UserController) {
   return async function userRoutes(fastify: FastifyInstance): Promise<void> {
-    fastify.post('/users/register', (request, reply) =>
+    fastify.post('/register', (request, reply) =>
       controller.register(request, reply)
     );
   };
