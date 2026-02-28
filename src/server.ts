@@ -21,6 +21,7 @@ import { ProductService } from './services/ProductService';
 import { OrderService } from './services/OrderService';
 import { SaleService } from './services/SaleService';
 import { ExpenseService } from './services/ExpenseService';
+import { AnalyticsService } from './services/AnalyticsService';
 
 // Controllers
 import { UserController } from './controllers/UserController';
@@ -30,6 +31,7 @@ import { ProductController } from './controllers/ProductController';
 import { OrderController } from './controllers/OrderController';
 import { SaleController } from './controllers/SaleController';
 import { ExpenseController } from './controllers/ExpenseController';
+import { AnalyticsController } from './controllers/AnalyticsController';
 
 // Route builders
 import { buildUserRoutes } from './routes/userRoutes';
@@ -43,6 +45,7 @@ import { buildClientRoutes } from './routes/clientRoutes';
 import { buildOrderRoutes } from './routes/orderRoutes';
 import { buildSaleRoutes } from './routes/saleRoutes';
 import { buildExpenseRoutes } from './routes/expenseRoutes';
+import { buildAnalyticsRoutes } from './routes/analyticsRoutes';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
@@ -94,6 +97,7 @@ async function main(): Promise<void> {
   const orderService = new OrderService(orderRepository, productRepository, clientRepository);
   const saleService = new SaleService(saleRepository, orderRepository, clientRepository);
   const expenseService = new ExpenseService(expenseRepository);
+  const analyticsService = new AnalyticsService(saleRepository, expenseRepository);
 
   // Injeção tardia: OrderService usa SaleService para registrar vendas automaticamente
   orderService.setSaleService(saleService);
@@ -106,6 +110,7 @@ async function main(): Promise<void> {
   const orderController = new OrderController(orderService);
   const saleController = new SaleController(saleService);
   const expenseController = new ExpenseController(expenseService);
+  const analyticsController = new AnalyticsController(analyticsService);
 
   // ─── Rotas ─────────────────────────────────────────────
   await fastify.register(buildUserRoutes(userController));
@@ -116,6 +121,7 @@ async function main(): Promise<void> {
   await fastify.register(buildOrderRoutes(orderController),    { prefix: '/orders' });
   await fastify.register(buildSaleRoutes(saleController),      { prefix: '/sales' });
   await fastify.register(buildExpenseRoutes(expenseController), { prefix: '/expenses' });
+  await fastify.register(buildAnalyticsRoutes(analyticsController), { prefix: '/analytics' });
 
   // ─── Start ─────────────────────────────────────────────
   await fastify.listen({ port: config.port, host: '0.0.0.0' });

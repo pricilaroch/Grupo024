@@ -535,6 +535,50 @@ const ApiService = {
         }
     },
 
+    // ─── Analytics (Inteligência financeira) ─────────
+
+    async getMovements() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/analytics/movements`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar movimentações:', error);
+            throw error;
+        }
+    },
+
+    async getBalance() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/analytics/balance`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar saldo:', error);
+            throw error;
+        }
+    },
+
+    async getGoalSummary(metaValor) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/analytics/goal?meta=${metaValor || 0}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar meta:', error);
+            throw error;
+        }
+    },
+
     getUser() {
         const user = sessionStorage.getItem('user');
         return user ? JSON.parse(user) : null;

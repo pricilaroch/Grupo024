@@ -1,5 +1,5 @@
 /**
- * finance.js — Livro Caixa (Entradas + Saídas)
+ * finance.js — Livro Caixa (Entradas + Saídas + Extrato)
  * Depende de: api.js, guard.js
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,9 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── State ──────────────────────────────────────────────
   let allSales = [];
   let allExpenses = [];
+  let allMovements = [];
+  let balanceData = null; // { total_vendas, despesas_pagas, despesas_pendentes, saldo_real, saldo_projetado }
   let clients = [];
   let clientsMap = {};
-  let activeSection = 'entradas'; // 'entradas' | 'saidas'
+  let activeSection = 'entradas'; // 'entradas' | 'saidas' | 'extrato'
   let activeFilter = 'all';
   let activeExpFilter = 'all';
   let editingSaleId = null;
@@ -21,17 +23,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let deletingType = null; // 'sale' | 'expense'
 
   // ── DOM refs ───────────────────────────────────────────
-  const loadingState   = document.getElementById('loadingState');
+  const loadingState = document.getElementById('loadingState');
 
   // Summary
-  const summaryCount    = document.getElementById('summaryCount');
-  const summaryRevenue  = document.getElementById('summaryRevenue');
-  const summaryExpenses = document.getElementById('summaryExpenses');
-  const summaryBalance  = document.getElementById('summaryBalance');
+  const summaryRevenue     = document.getElementById('summaryRevenue');
+  const summaryCount       = document.getElementById('summaryCount');
+  const summaryPaidExp     = document.getElementById('summaryPaidExp');
+  const summaryRealBalance = document.getElementById('summaryRealBalance');
+  const summaryBalance     = document.getElementById('summaryBalance');
+  const summaryPendingHint = document.getElementById('summaryPendingHint');
 
   // Sections
   const sectionEntradas = document.getElementById('sectionEntradas');
   const sectionSaidas   = document.getElementById('sectionSaidas');
+  const sectionExtrato  = document.getElementById('sectionExtrato');
 
   // Sales
   const salesTableWrap = document.getElementById('salesTableWrap');
@@ -46,6 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const expEmptyState = document.getElementById('expEmptyState');
   const expCount      = document.getElementById('expCount');
   const expSearchInput = document.getElementById('expSearchInput');
+
+  // Movements (extrato)
+  const movTableWrap  = document.getElementById('movTableWrap');
+  const movBody       = document.getElementById('movBody');
+  const movEmptyState = document.getElementById('movEmptyState');
 
   // Sale modal
   const saleModal      = document.getElementById('saleModal');
@@ -86,14 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadData() {
     showLoading(true);
     try {
-      const [salesRes, clientsRes, expensesRes] = await Promise.all([
+      const [salesRes, clientsRes, expensesRes, balanceRes, movRes] = await Promise.all([
         ApiService.getSales(),
         ApiService.getClients(),
         ApiService.getExpenses(),
+        ApiService.getBalance(),
+        ApiService.getMovements(),
       ]);
 
       if (salesRes.ok) allSales = salesRes.data;
       if (expensesRes.ok) allExpenses = expensesRes.data;
+      if (balanceRes.ok) balanceData = balanceRes.data;
+      if (movRes.ok) allMovements = movRes.data;
       if (clientsRes.ok) {
         clients = clientsRes.data;
         clientsMap = {};
@@ -114,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
       emptyState.style.display = 'none';
       expTableWrap.style.display = 'none';
       expEmptyState.style.display = 'none';
+      movTableWrap.style.display = 'none';
+      movEmptyState.style.display = 'none';
     }
   }
 
@@ -125,26 +141,39 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSummary();
     renderSales();
     renderExpenses();
+    renderMovements();
   }
 
-  // ── Summary ────────────────────────────────────────────
+  // ── Summary (from backend-calculated balance) ──────────
 
   function updateSummary() {
-    const salesCount = allSales.length;
-    const revenue = allSales.reduce((s, v) => s + (v.valor_total || 0), 0);
-    const pendingExpenses = allExpenses
-      .filter(e => e.status === 'pendente')
-      .reduce((s, e) => s + (e.valor || 0), 0);
-    const balance = revenue - pendingExpenses;
+    if (balanceData) {
+      summaryRevenue.textContent = formatCurrency(balanceData.total_vendas);
+      summaryCount.textContent = allSales.length + ' venda' + (allSales.length !== 1 ? 's' : '');
+      summaryPaidExp.textContent = formatCurrency(balanceData.despesas_pagas);
 
-    summaryCount.textContent = salesCount;
-    summaryRevenue.textContent = formatCurrency(revenue);
-    summaryExpenses.textContent = formatCurrency(pendingExpenses);
-    summaryBalance.textContent = formatCurrency(balance);
+      summaryRealBalance.textContent = formatCurrency(balanceData.saldo_real);
+      summaryRealBalance.classList.remove('finance-value--success', 'finance-value--danger');
+      summaryRealBalance.classList.add(balanceData.saldo_real >= 0 ? 'finance-value--success' : 'finance-value--danger');
 
-    // Color cue for balance
-    summaryBalance.classList.remove('finance-value--success', 'finance-value--danger');
-    summaryBalance.classList.add(balance >= 0 ? 'finance-value--success' : 'finance-value--danger');
+      summaryBalance.textContent = formatCurrency(balanceData.saldo_projetado);
+      summaryBalance.classList.remove('finance-value--success', 'finance-value--danger');
+      summaryBalance.classList.add(balanceData.saldo_projetado >= 0 ? 'finance-value--success' : 'finance-value--danger');
+
+      summaryPendingHint.textContent = formatCurrency(balanceData.despesas_pendentes) + ' pendentes';
+    } else {
+      // Fallback: calculate client-side
+      var revenue = allSales.reduce(function(s, v) { return s + (v.valor_total || 0); }, 0);
+      var paidExp = allExpenses.filter(function(e) { return e.status === 'pago'; }).reduce(function(s, e) { return s + (e.valor || 0); }, 0);
+      var pendExp = allExpenses.filter(function(e) { return e.status === 'pendente'; }).reduce(function(s, e) { return s + (e.valor || 0); }, 0);
+
+      summaryRevenue.textContent = formatCurrency(revenue);
+      summaryCount.textContent = allSales.length + ' venda' + (allSales.length !== 1 ? 's' : '');
+      summaryPaidExp.textContent = formatCurrency(paidExp);
+      summaryRealBalance.textContent = formatCurrency(revenue - paidExp);
+      summaryBalance.textContent = formatCurrency(revenue - paidExp - pendExp);
+      summaryPendingHint.textContent = formatCurrency(pendExp) + ' pendentes';
+    }
   }
 
   // ── Sales Rendering ────────────────────────────────────
@@ -278,6 +307,34 @@ document.addEventListener('DOMContentLoaded', () => {
     return list;
   }
 
+  // ── Movements (Extrato) Rendering ──────────────────────
+
+  function renderMovements() {
+    if (allMovements.length === 0) {
+      movTableWrap.style.display = 'none';
+      movEmptyState.style.display = activeSection === 'extrato' ? '' : 'none';
+      return;
+    }
+
+    movEmptyState.style.display = 'none';
+    movTableWrap.style.display = activeSection === 'extrato' ? '' : 'none';
+
+    movBody.innerHTML = allMovements.map(function(m) {
+      var tipoBadge = m.tipo === 'entrada'
+        ? '<span class="badge badge-approved">Entrada</span>'
+        : '<span class="badge badge-rejected">Saída</span>';
+      var valorClass = m.tipo === 'entrada' ? 'color: var(--success)' : 'color: var(--destructive)';
+      var prefix = m.tipo === 'entrada' ? '+ ' : '- ';
+
+      return '<tr>' +
+        '<td>' + formatDate(m.data) + '</td>' +
+        '<td>' + tipoBadge + '</td>' +
+        '<td>' + escapeHtml(m.descricao) + '</td>' +
+        '<td class="td-right td-mono" style="' + valorClass + '">' + prefix + formatCurrency(m.valor) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
   // ══════════════════════════════════════════════════════
   //  EVENTS
   // ══════════════════════════════════════════════════════
@@ -299,8 +356,10 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSection = btn.dataset.section;
         sectionEntradas.style.display = activeSection === 'entradas' ? '' : 'none';
         sectionSaidas.style.display   = activeSection === 'saidas' ? '' : 'none';
+        sectionExtrato.style.display  = activeSection === 'extrato' ? '' : 'none';
         renderSales();
         renderExpenses();
+        renderMovements();
       });
     });
 
@@ -315,9 +374,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Expense filter tabs
-    document.querySelectorAll('.exp-filter-tab').forEach(function(btn) {
+    document.querySelectorAll('.exp-filter').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.exp-filter-tab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.exp-filter').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         activeExpFilter = btn.dataset.expFilter;
         renderExpenses();
@@ -543,12 +602,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ── Pay Expense ────────────────────────────────────────
+  // ── Pay Expense (instantly refreshes balance) ──────────
 
   async function handlePayExpense(id) {
     try {
       var res = await ApiService.payExpense(id);
       if (res.ok) {
+        // Full reload to refresh balance + movements + expenses
         await loadData();
       } else {
         alert(res.data?.error || 'Erro ao dar baixa na despesa.');

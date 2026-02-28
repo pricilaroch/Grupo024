@@ -32,27 +32,30 @@
       <!-- Summary cards -->
       <div class="finance-summary-grid">
         <div class="finance-summary-card">
-          <span class="finance-summary-label">Vendas no período</span>
-          <span class="finance-summary-value" id="summaryCount">0</span>
-        </div>
-        <div class="finance-summary-card">
-          <span class="finance-summary-label">Faturamento</span>
+          <span class="finance-summary-label">Faturamento (Vendas)</span>
           <span class="finance-summary-value" id="summaryRevenue">R$ 0,00</span>
+          <small class="finance-summary-hint" id="summaryCount">0 vendas</small>
         </div>
         <div class="finance-summary-card">
-          <span class="finance-summary-label">Despesas Pendentes</span>
-          <span class="finance-summary-value finance-value--danger" id="summaryExpenses">R$ 0,00</span>
+          <span class="finance-summary-label">Despesas Pagas</span>
+          <span class="finance-summary-value finance-value--danger" id="summaryPaidExp">R$ 0,00</span>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Saldo Real (Em Caixa)</span>
+          <span class="finance-summary-value" id="summaryRealBalance">R$ 0,00</span>
         </div>
         <div class="finance-summary-card">
           <span class="finance-summary-label">Saldo Projetado</span>
           <span class="finance-summary-value" id="summaryBalance">R$ 0,00</span>
+          <small class="finance-summary-hint" id="summaryPendingHint">R$ 0,00 pendentes</small>
         </div>
       </div>
 
-      <!-- Main section tabs: Entradas / Saídas -->
+      <!-- Main section tabs: Entradas / Saídas / Extrato -->
       <div class="finance-section-tabs">
         <button class="section-tab active" data-section="entradas">Entradas (Vendas)</button>
         <button class="section-tab" data-section="saidas">Saídas (Despesas)</button>
+        <button class="section-tab" data-section="extrato">Extrato</button>
       </div>
 
       <!-- ═══════ ENTRADAS (Sales) ═══════ -->
@@ -103,10 +106,10 @@
         <!-- Filter bar -->
         <div class="products-filter-bar">
           <div class="products-filter-tabs">
-            <button class="exp-filter-tab active" data-exp-filter="all">Todas</button>
-            <button class="exp-filter-tab" data-exp-filter="pendente">Pendentes</button>
-            <button class="exp-filter-tab" data-exp-filter="pago">Pagas</button>
-            <button class="exp-filter-tab" data-exp-filter="atrasado">Atrasadas</button>
+            <button class="filter-tab exp-filter active" data-exp-filter="all">Todas</button>
+            <button class="filter-tab exp-filter" data-exp-filter="pendente">Pendentes</button>
+            <button class="filter-tab exp-filter" data-exp-filter="pago">Pagas</button>
+            <button class="filter-tab exp-filter" data-exp-filter="atrasado">Atrasadas</button>
           </div>
           <div class="orders-search-row">
             <input type="text" id="expSearchInput" class="client-search-input" placeholder="Buscar por descrição ou categoria…">
@@ -138,6 +141,28 @@
           <h2>Nenhuma despesa registrada</h2>
           <p>Registre suas despesas fixas e variáveis para controle de fluxo de caixa.</p>
           <button id="btnExpEmptyNew" class="btn btn-secondary">+ Nova Despesa</button>
+        </div>
+      </div>
+
+      <!-- ═══════ EXTRATO (Movements) ═══════ -->
+      <div id="sectionExtrato" class="finance-section" style="display:none;">
+        <div id="movTableWrap" class="orders-table-wrap" style="display:none;">
+          <table class="orders-table movements-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th class="td-right">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="movBody"></tbody>
+          </table>
+        </div>
+        <div id="movEmptyState" class="products-empty" style="display:none;">
+          <div class="products-empty-icon" aria-hidden="true">&#128203;</div>
+          <h2>Nenhuma movimentação registrada</h2>
+          <p>Registre vendas e pague despesas para ver o extrato.</p>
         </div>
       </div>
 

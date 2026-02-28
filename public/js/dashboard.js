@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── State ──────────────────────────────────────────────
   let allOrders = [];
   let allSales  = [];      // from GET /sales
+  let goalData  = null;    // from GET /analytics/goal
+  let balanceData = null;  // from GET /analytics/balance
+  let followUpData = null; // from GET /sales/follow-up
   let clients = [];
   let clientsMap = {};
   let productsMap = {};   // id → product (for materials summary)
@@ -121,15 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadData() {
     showLoading(true);
     try {
-      const [ordersRes, clientsRes, productsRes, salesRes] = await Promise.all([
+      const [ordersRes, clientsRes, productsRes, salesRes, balanceRes, followUpRes] = await Promise.all([
         ApiService.getOrders(),
         ApiService.getClients(),
         ApiService.getProducts(),
-        ApiService.getSales()
+        ApiService.getSales(),
+        ApiService.getBalance(),
+        ApiService.getFollowUp(),
       ]);
 
       if (ordersRes.ok) allOrders = ordersRes.data || [];
       if (salesRes.ok)  allSales  = salesRes.data || [];
+      if (balanceRes.ok) balanceData = balanceRes.data;
+      if (followUpRes.ok) followUpData = followUpRes.data;
       if (clientsRes.ok) {
         clients = clientsRes.data || [];
         clientsMap = {};
@@ -140,6 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
         productsMap = {};
         prods.forEach(p => { productsMap[p.id] = p; });
       }
+
+      // Fetch goal from server (meta stored in localStorage)
+      try {
+        const goalRes = await ApiService.getGoalSummary(metaMensal);
+        if (goalRes.ok) goalData = goalRes.data;
+      } catch (_) { /* ignore */ }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     }
@@ -193,34 +206,50 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Goal + Caixinha ────────────────────────────────────
 
   function renderGoalAndCaixinha() {
-    // Realizado do mês (vendas)
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const monthSales = allSales.filter(s => {
-      const d = s.data_venda ? new Date(s.data_venda) : null;
+    // Use server-calculated goal data when available
+    if (goalData) {
+      var realized = goalData.realizado;
+      var pct = goalData.percentual;
+      var caixinha = goalData.caixinha;
+
+      metaFill.style.width = pct.toFixed(1) + '%';
+      metaRealized.textContent = formatCurrency(realized);
+      metaTarget.textContent = metaMensal > 0 ? 'Meta: ' + formatCurrency(metaMensal) : 'Meta: não definida';
+      metaPct.textContent = metaMensal > 0 ? pct.toFixed(0) + '%' : '—';
+
+      metaFill.classList.remove('goal-fill--ok', 'goal-fill--warn', 'goal-fill--danger');
+      if (pct >= 80) metaFill.classList.add('goal-fill--ok');
+      else if (pct >= 40) metaFill.classList.add('goal-fill--warn');
+      else metaFill.classList.add('goal-fill--danger');
+
+      caixinhaValue.textContent = formatCurrency(caixinha);
+      return;
+    }
+
+    // Fallback: client-side calculation
+    var now = new Date();
+    var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    var monthSales = allSales.filter(s => {
+      var d = s.data_venda ? new Date(s.data_venda) : null;
       return d && d >= monthStart && d < monthEnd;
     });
 
-    const realized = monthSales.reduce((s, v) => s + (v.valor_total || 0), 0);
-    const realizedProfit = monthSales.reduce((s, v) => s + (v.valor_lucro || 0), 0);
+    var fbRealized = monthSales.reduce((s, v) => s + (v.valor_total || 0), 0);
+    var fbRealizedProfit = monthSales.reduce((s, v) => s + (v.valor_lucro || 0), 0);
 
-    // Meta progress
-    const pct = metaMensal > 0 ? Math.min((realized / metaMensal) * 100, 100) : 0;
-    metaFill.style.width = pct.toFixed(1) + '%';
-    metaRealized.textContent = formatCurrency(realized);
+    var fbPct = metaMensal > 0 ? Math.min((fbRealized / metaMensal) * 100, 100) : 0;
+    metaFill.style.width = fbPct.toFixed(1) + '%';
+    metaRealized.textContent = formatCurrency(fbRealized);
     metaTarget.textContent = metaMensal > 0 ? `Meta: ${formatCurrency(metaMensal)}` : 'Meta: não definida';
-    metaPct.textContent = metaMensal > 0 ? `${pct.toFixed(0)}%` : '—';
+    metaPct.textContent = metaMensal > 0 ? `${fbPct.toFixed(0)}%` : '—';
 
-    // Color cue
     metaFill.classList.remove('goal-fill--ok', 'goal-fill--warn', 'goal-fill--danger');
-    if (pct >= 80) metaFill.classList.add('goal-fill--ok');
-    else if (pct >= 40) metaFill.classList.add('goal-fill--warn');
+    if (fbPct >= 80) metaFill.classList.add('goal-fill--ok');
+    else if (fbPct >= 40) metaFill.classList.add('goal-fill--warn');
     else metaFill.classList.add('goal-fill--danger');
 
-    // Caixinha = 10% lucro realizado
-    const caixinha = realizedProfit * 0.1;
-    caixinhaValue.textContent = formatCurrency(caixinha);
+    caixinhaValue.textContent = formatCurrency(fbRealizedProfit * 0.1);
   }
 
   // ── Financial Cards ────────────────────────────────────
@@ -272,17 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Performance Indicators ─────────────────────────────
 
   function renderPerformanceIndicators() {
-    // 1) Follow-up: média de dias entre created_at e data_venda
-    const salesWithDates = allSales.filter(s => s.created_at && s.data_venda);
-    if (salesWithDates.length > 0) {
-      const totalDays = salesWithDates.reduce((sum, s) => {
-        const created = new Date(s.created_at);
-        const sold    = new Date(s.data_venda);
-        return sum + Math.max(0, (sold - created) / 86400000);
-      }, 0);
-      const avg = totalDays / salesWithDates.length;
-      perfFollowUp.textContent = avg < 1 ? '< 1 dia' : `${avg.toFixed(1)} dias`;
-      perfFollowUpHint.textContent = `baseado em ${salesWithDates.length} vendas`;
+    // 1) Follow-up: use server JOIN endpoint data when available
+    if (followUpData && followUpData.count > 0) {
+      var avg = followUpData.avg_days;
+      perfFollowUp.textContent = avg < 1 ? '< 1 dia' : avg.toFixed(1) + ' dias';
+      perfFollowUpHint.textContent = 'baseado em ' + followUpData.count + ' vendas';
     } else {
       perfFollowUp.textContent = '— dias';
       perfFollowUpHint.textContent = 'sem dados';
@@ -1143,13 +1166,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Meta edit button
-    document.getElementById('btnEditMeta').addEventListener('click', () => {
+    document.getElementById('btnEditMeta').addEventListener('click', async () => {
       const input = prompt('Defina sua Meta Mensal (R$):', metaMensal || '');
       if (input === null) return;
       const val = parseFloat(input.replace(',', '.'));
       if (!isNaN(val) && val >= 0) {
         metaMensal = val;
         localStorage.setItem(META_KEY, val);
+        // Re-fetch goal from server with new meta value
+        try {
+          const goalRes = await ApiService.getGoalSummary(metaMensal);
+          if (goalRes.ok) goalData = goalRes.data;
+        } catch (_) { /* ignore */ }
         renderGoalAndCaixinha();
       }
     });

@@ -39,6 +39,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.finance-summary-hint {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
 .finance-value--success {
   color: var(--success) !important;
 }
