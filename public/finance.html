@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livro Caixa - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/finance.css">
+</head>
+<body>
+  <nav id="navbar" class="navbar"></nav>
+
+  <div class="container container-wide">
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="products-header">
+        <div>
+          <h1 class="products-title">Livro Caixa</h1>
+          <p class="products-subtitle">Registre e acompanhe todas as suas vendas e receitas.</p>
+        </div>
+        <button id="btnNewSale" class="btn btn-primary">+ Venda Rápida</button>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="finance-summary-grid">
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Vendas no período</span>
+          <span class="finance-summary-value" id="summaryCount">0</span>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Faturamento</span>
+          <span class="finance-summary-value" id="summaryRevenue">R$ 0,00</span>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Lucro Total</span>
+          <span class="finance-summary-value finance-value--success" id="summaryProfit">R$ 0,00</span>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Margem Média</span>
+          <span class="finance-summary-value" id="summaryMargin">0%</span>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="products-filter-bar">
+        <div class="products-filter-tabs">
+          <button class="filter-tab active" data-filter="all">Todas</button>
+          <button class="filter-tab" data-filter="manual">Manuais</button>
+          <button class="filter-tab" data-filter="order">Encomendas</button>
+        </div>
+        <div class="orders-search-row">
+          <input type="text" id="searchInput" class="client-search-input" placeholder="Buscar por descrição, cliente ou forma de pgto…">
+          <span id="saleCount" class="products-count"></span>
+        </div>
+      </div>
+
+      <!-- Sales table -->
+      <div id="salesTableWrap" class="orders-table-wrap" style="display:none;">
+        <table class="orders-table" id="salesTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Pagamento</th>
+              <th class="td-right">Total</th>
+              <th class="td-right">Lucro</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="salesBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="products-empty" style="display:none;">
+        <div class="products-empty-icon" aria-hidden="true">&#128176;</div>
+        <h2>Nenhuma venda registrada</h2>
+        <p>Comece registrando uma venda rápida ou finalize o pagamento de uma encomenda.</p>
+        <button id="btnEmptyNew" class="btn btn-primary">+ Registrar Venda</button>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loadingState" class="admin-loading">Carregando vendas…</div>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Criar / Editar Venda
+       ═══════════════════════════════════════════════════ -->
+  <div id="saleModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-product">
+      <h3 id="modalTitle">Venda Rápida</h3>
+      <p id="modalSubtitle" class="modal-user-name">Registre uma venda de feira ou balcão.</p>
+
+      <form id="saleForm" novalidate>
+        <div id="formAlert" class="alert alert-error" style="display:none;"></div>
+
+        <!-- Valor Total -->
+        <div class="form-group">
+          <label for="f-valor-total">Valor Total (R$) *</label>
+          <input type="number" id="f-valor-total" name="valor_total" step="0.01" min="0.01" placeholder="0,00" autocomplete="off">
+          <span class="field-error" data-for="valor_total"></span>
+        </div>
+
+        <!-- Valor Lucro -->
+        <div class="form-group">
+          <label for="f-valor-lucro">Lucro (R$) <small style="color: var(--muted-foreground);">— Padrão: 30% do total</small></label>
+          <input type="number" id="f-valor-lucro" name="valor_lucro" step="0.01" min="0" placeholder="Automático (30%)">
+          <span class="field-error" data-for="valor_lucro"></span>
+        </div>
+
+        <!-- Forma de Pagamento -->
+        <div class="form-group">
+          <label for="f-forma-pagamento">Forma de Pagamento *</label>
+          <select id="f-forma-pagamento" name="forma_pagamento" class="form-input">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+          </select>
+          <span class="field-error" data-for="forma_pagamento"></span>
+        </div>
+
+        <!-- Cliente (opcional) -->
+        <div class="form-group">
+          <label for="f-client">Cliente <small style="color: var(--muted-foreground);">— Opcional</small></label>
+          <select id="f-client" name="client_id" class="form-input">
+            <option value="">Venda anônima</option>
+          </select>
+        </div>
+
+        <!-- Data da Venda -->
+        <div class="form-group">
+          <label for="f-data-venda">Data da Venda</label>
+          <input type="date" id="f-data-venda" name="data_venda" class="form-input">
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-group">
+          <label for="f-descricao">Descrição</label>
+          <input type="text" id="f-descricao" name="descricao" placeholder="Ex: Venda feira, balcão…" autocomplete="off">
+          <span class="field-error" data-for="descricao"></span>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btnCancelSale" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btnSaveSale" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Confirmação de Exclusão
+       ═══════════════════════════════════════════════════ -->
+  <div id="deleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-confirm">
+      <h3>Excluir Venda</h3>
+      <p id="deleteMsg">Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button type="button" id="btnCancelDelete" class="btn btn-secondary">Cancelar</button>
+        <button type="button" id="btnConfirmDelete" class="btn btn-danger">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
+  <script src="/js/finance.js"></script>
+</body>
+</html>

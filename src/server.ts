@@ -12,11 +12,13 @@ import { getDatabase } from './database/database';
 import { UserRepository } from './repositories/UserRepository';
 import { ProductRepository } from './repositories/ProductRepository';
 import { OrderRepository } from './repositories/OrderRepository';
+import { SaleRepository } from './repositories/SaleRepository';
 
 // Services
 import { UserService } from './services/UserService';
 import { ProductService } from './services/ProductService';
-import { OrderService } from './services/OrderService'; 
+import { OrderService } from './services/OrderService';
+import { SaleService } from './services/SaleService'; 
 
 // Controllers
 import { UserController } from './controllers/UserController';
@@ -24,6 +26,7 @@ import { AuthController } from './controllers/AuthController';
 import { AdminController } from './controllers/AdminController';
 import { ProductController } from './controllers/ProductController';
 import { OrderController } from './controllers/OrderController';
+import { SaleController } from './controllers/SaleController';
 
 // Route builders
 import { buildUserRoutes } from './routes/userRoutes';
@@ -35,6 +38,7 @@ import { ClientService } from './services/ClientService';
 import { ClientController } from './controllers/ClientController';
 import { buildClientRoutes } from './routes/clientRoutes';
 import { buildOrderRoutes } from './routes/orderRoutes';
+import { buildSaleRoutes } from './routes/saleRoutes';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
@@ -77,11 +81,16 @@ async function main(): Promise<void> {
   const productRepository = new ProductRepository(db);
   const clientRepository = new ClientRepository(db);
   const orderRepository = new OrderRepository(db);
+  const saleRepository = new SaleRepository(db);
 
   const userService = new UserService(userRepository);
   const productService = new ProductService(productRepository);
   const clientService = new ClientService(clientRepository);
   const orderService = new OrderService(orderRepository, productRepository, clientRepository);
+  const saleService = new SaleService(saleRepository, orderRepository, clientRepository);
+
+  // Injeção tardia: OrderService usa SaleService para registrar vendas automaticamente
+  orderService.setSaleService(saleService);
 
   const userController = new UserController(userService);
   const authController = new AuthController(userService);
@@ -89,6 +98,7 @@ async function main(): Promise<void> {
   const productController = new ProductController(productService);
   const clientController = new ClientController(clientService);
   const orderController = new OrderController(orderService);
+  const saleController = new SaleController(saleService);
 
   // ─── Rotas ─────────────────────────────────────────────
   await fastify.register(buildUserRoutes(userController));
@@ -97,6 +107,7 @@ async function main(): Promise<void> {
   await fastify.register(buildProductRoutes(productController), { prefix: '/products' });
   await fastify.register(buildClientRoutes(clientController),  { prefix: '/clients' });
   await fastify.register(buildOrderRoutes(orderController),    { prefix: '/orders' });
+  await fastify.register(buildSaleRoutes(saleController),      { prefix: '/sales' });
 
   // ─── Start ─────────────────────────────────────────────
   await fastify.listen({ port: config.port, host: '0.0.0.0' });

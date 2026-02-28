@@ -1,0 +1,149 @@
+/* ================================================================
+   FINANCE — Livro Caixa
+   Extends the core Design System tokens from style.css
+   Reuses orders-table + products-header classes from existing CSS
+   ================================================================ */
+
+/* ===========================
+   Summary Grid
+   =========================== */
+.finance-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.finance-summary-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.finance-summary-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.finance-summary-value {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.finance-value--success {
+  color: var(--success) !important;
+}
+
+/* ===========================
+   Badges for origin
+   =========================== */
+.badge--info {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: #dbeafe;
+  color: #1d4ed8;
+  vertical-align: middle;
+}
+
+.badge--neutral {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  vertical-align: middle;
+}
+
+/* ===========================
+   Icon buttons (small)
+   =========================== */
+.btn-icon--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  cursor: pointer;
+  color: var(--foreground);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-icon--sm:hover {
+  background: var(--muted);
+}
+
+.btn-icon--danger {
+  color: var(--destructive);
+}
+
+.btn-icon--danger:hover {
+  background: #fef2f2;
+  border-color: var(--destructive);
+}
+
+/* ===========================
+   Confirm modal
+   =========================== */
+.modal-confirm {
+  max-width: 400px;
+  text-align: center;
+}
+
+.modal-confirm h3 {
+  margin-bottom: 0.75rem;
+}
+
+.modal-confirm p {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-bottom: 1.25rem;
+}
+
+.btn-danger {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 768px) {
+  .finance-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .finance-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

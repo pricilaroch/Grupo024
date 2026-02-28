@@ -8,12 +8,14 @@ import {
 } from "../models/Order";
 import { IProductRepository } from "../models/Product";
 import { IClientRepository } from "../models/Client";
+import { ISaleService } from "../models/Sale";
 import { AppError, NotFoundError, ValidationError } from "../errors/AppError";
 
 export class OrderService implements IOrderService {
     private orderRepository: IOrderRepository;
     private productRepository: IProductRepository;
     private clientRepository: IClientRepository;
+    private saleService?: ISaleService;
 
     constructor(
         orderRepository: IOrderRepository,
@@ -23,6 +25,13 @@ export class OrderService implements IOrderService {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.clientRepository = clientRepository;
+    }
+
+    /**
+     * Setter para injeção tardia do SaleService (evita dependência circular).
+     */
+    setSaleService(saleService: ISaleService): void {
+        this.saleService = saleService;
     }
 
     /**
@@ -223,7 +232,19 @@ export class OrderService implements IOrderService {
             return null;
         }
 
-        return await this.orderRepository.updatePaymentStatus(id, status_pagamento);
+        const updated = await this.orderRepository.updatePaymentStatus(id, status_pagamento);
+
+        // Integração automática: ao marcar como 'pago', registra no livro caixa
+        if (updated && status_pagamento === 'pago' && this.saleService) {
+            try {
+                await this.saleService.createFromOrder(id, user_id);
+            } catch (err) {
+                // Log do erro mas não falha a operação de pagamento
+                console.error('Erro ao criar registro de venda automática:', err);
+            }
+        }
+
+        return updated;
     }
 
     async getItemsByOrderId(order_id: number, user_id: number): Promise<OrderItemData[] | null> {
