@@ -1,8 +1,16 @@
 import Fastify, { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyJwt from '@fastify/jwt';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 import path from 'path';
 import { ZodError } from 'zod';
+import {
+  validatorCompiler,
+  serializerCompiler,
+  jsonSchemaTransform,
+  type ZodTypeProvider,
+} from 'fastify-type-provider-zod';
 
 import { config } from './config';
 import { AppError } from './errors/AppError';
@@ -49,6 +57,53 @@ import { buildAnalyticsRoutes } from './routes/analyticsRoutes';
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
+
+  // ─── Zod Type Provider ─────────────────────────────────
+  fastify.setValidatorCompiler(validatorCompiler);
+  fastify.setSerializerCompiler(serializerCompiler);
+
+  // ─── Swagger / OpenAPI ─────────────────────────────────
+  const enableDocs = process.env.NODE_ENV !== 'production';
+
+  if (enableDocs) {
+    await fastify.register(fastifySwagger, {
+      openapi: {
+        info: {
+          title: 'Gestão de Encomendas API',
+          description: 'API para gerenciamento de encomendas, vendas, despesas e produção artesanal.',
+          version: '1.0.0',
+        },
+        servers: [
+          { url: `http://localhost:${config.port}`, description: 'Servidor local' },
+        ],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+            },
+          },
+        },
+        tags: [
+          { name: 'Auth',      description: 'Autenticação e registro' },
+          { name: 'Users',     description: 'Gerenciamento de usuários' },
+          { name: 'Admin',     description: 'Painel administrativo' },
+          { name: 'Products',  description: 'Catálogo de produtos' },
+          { name: 'Clients',   description: 'Cadastro de clientes' },
+          { name: 'Orders',    description: 'Encomendas e Kanban' },
+          { name: 'Sales',     description: 'Registro de vendas' },
+          { name: 'Expenses',  description: 'Controle de despesas' },
+          { name: 'Analytics', description: 'Indicadores financeiros e metas' },
+        ],
+      },
+      transform: jsonSchemaTransform,
+    });
+
+    await fastify.register(fastifySwaggerUi, {
+      routePrefix: '/docs',
+    });
+  }
 
   // ─── Plugins ───────────────────────────────────────────
   await fastify.register(fastifyStatic, {
