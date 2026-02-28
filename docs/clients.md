@@ -30,11 +30,31 @@ Cadastra um novo cliente.
 
 ### Respostas
 
-| Status | Corpo                                          |
-| ------ | ---------------------------------------------- |
-| `201`  | `{ id, nome, telefone, email, endereco, ... }` |
-| `400`  | `{ "error": "<validação>" }`                   |
-| `401`  | `{ "error": "Token inválido..." }`             |
+| Status | Descrição                          |
+| ------ | -------------------------------- |
+| `201`  | Cliente criado com sucesso       |
+| `400`  | Campos inválidos ou ausentes     |
+| `401`  | Token inválido                   |
+
+#### `201` Created
+
+```json
+{
+  "id": 5,
+  "user_id": 1,
+  "nome": "João Souza",
+  "telefone": "(34) 99888-7777",
+  "email": "joao@email.com",
+  "endereco": "Av. Brasil, 456",
+  "created_at": "2026-02-28T16:00:00.000Z"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Telefone inválido. Use (XX) 9XXXX-XXXX" }
+```
 
 ---
 
@@ -44,9 +64,32 @@ Lista todos os clientes do usuário autenticado.
 
 ### Respostas
 
-| Status | Corpo                                          |
-| ------ | ---------------------------------------------- |
-| `200`  | `[ { id, nome, telefone, ... }, ... ]`         |
+| Status | Descrição                          |
+| ------ | -------------------------------- |
+| `200`  | Lista de clientes do usuário     |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 5,
+    "user_id": 1,
+    "nome": "João Souza",
+    "telefone": "(34) 99888-7777",
+    "email": "joao@email.com",
+    "endereco": "Av. Brasil, 456"
+  },
+  {
+    "id": 6,
+    "user_id": 1,
+    "nome": "Ana Lima",
+    "telefone": "(34) 99777-6666",
+    "email": "",
+    "endereco": "Rua Goiás, 789"
+  }
+]
+```
 
 ---
 
@@ -62,11 +105,30 @@ Retorna um cliente específico.
 
 ### Respostas
 
-| Status | Corpo                                                           |
-| ------ | --------------------------------------------------------------- |
-| `200`  | `{ id, nome, telefone, email, endereco, ... }`                 |
-| `400`  | `{ "error": "ID inválido" }`                                   |
-| `404`  | `{ "error": "Cliente não encontrado ou acesso negado." }`      |
+| Status | Descrição                                            |
+| ------ | ---------------------------------------------------- |
+| `200`  | Cliente encontrado                                  |
+| `400`  | ID inválido                                         |
+| `404`  | Cliente não encontrado ou não pertence ao usuário    |
+
+#### `200` OK
+
+```json
+{
+  "id": 5,
+  "user_id": 1,
+  "nome": "João Souza",
+  "telefone": "(34) 99888-7777",
+  "email": "joao@email.com",
+  "endereco": "Av. Brasil, 456"
+}
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Cliente não encontrado ou acesso negado." }
+```
 
 ---
 
@@ -91,11 +153,36 @@ Atualiza parcialmente um cliente. Todos os campos são opcionais.
 
 ### Respostas
 
-| Status | Corpo                                                           |
-| ------ | --------------------------------------------------------------- |
-| `200`  | `{ id, nome, telefone, email, endereco, ... }`                 |
-| `400`  | `{ "error": "ID inválido" }` ou `{ "error": "Nenhum campo..." }`|
-| `404`  | `{ "error": "Cliente não encontrado ou acesso negado." }`      |
+| Status | Descrição                                            |
+| ------ | ---------------------------------------------------- |
+| `200`  | Cliente atualizado                                  |
+| `400`  | ID inválido ou nenhum campo enviado                 |
+| `404`  | Cliente não encontrado ou não pertence ao usuário    |
+
+#### `200` OK
+
+```json
+{
+  "id": 5,
+  "user_id": 1,
+  "nome": "João Souza",
+  "telefone": "(34) 99888-7777",
+  "email": "joao_novo@email.com",
+  "endereco": "Av. Brasil, 456"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Nenhum campo para atualizar" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Cliente não encontrado ou acesso negado." }
+```
 
 ---
 
@@ -111,8 +198,20 @@ Remove um cliente.
 
 ### Respostas
 
-| Status | Corpo                                                           |
-| ------ | --------------------------------------------------------------- |
-| `204`  | Sem corpo                                                       |
-| `400`  | `{ "error": "ID inválido" }`                                   |
-| `404`  | `{ "error": "Cliente não encontrado ou acesso negado." }`      |
+| Status | Descrição                                            |
+| ------ | ---------------------------------------------------- |
+| `204`  | Cliente removido (sem corpo)                        |
+| `400`  | ID inválido                                         |
+| `404`  | Cliente não encontrado ou não pertence ao usuário    |
+
+#### `400` Bad Request
+
+```json
+{ "error": "ID inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Cliente não encontrado ou acesso negado." }
+```

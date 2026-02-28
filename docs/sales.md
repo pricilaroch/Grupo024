@@ -34,10 +34,33 @@ Registra uma venda manual.
 
 ### Respostas
 
-| Status | Corpo                                                                               |
-| ------ | ----------------------------------------------------------------------------------- |
-| `201`  | `{ id, user_id, client_id, valor_total, valor_lucro, forma_pagamento, ... }`       |
-| `400`  | `{ "error": "<validação>" }`                                                        |
+| Status | Descrição                      |
+| ------ | -------------------------- |
+| `201`  | Venda registrada           |
+| `400`  | Campos inválidos ou ausentes |
+
+#### `201` Created
+
+```json
+{
+  "id": 8,
+  "user_id": 1,
+  "client_id": 1,
+  "order_id": null,
+  "valor_total": 120.00,
+  "valor_lucro": 45.00,
+  "forma_pagamento": "pix",
+  "data_venda": "2026-02-28",
+  "descricao": "Venda de 3 bolos",
+  "created_at": "2026-02-28T18:00:00.000Z"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Forma de pagamento inválida. Use: pix, dinheiro, cartao_credito ou cartao_debito." }
+```
 
 ---
 
@@ -47,9 +70,27 @@ Lista todas as vendas do usuário autenticado.
 
 ### Respostas
 
-| Status | Corpo                                                       |
-| ------ | ----------------------------------------------------------- |
-| `200`  | `[ { id, valor_total, forma_pagamento, data_venda, ... } ]` |
+| Status | Descrição                      |
+| ------ | -------------------------- |
+| `200`  | Lista de vendas do usuário  |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 8,
+    "user_id": 1,
+    "client_id": 1,
+    "order_id": null,
+    "valor_total": 120.00,
+    "valor_lucro": 45.00,
+    "forma_pagamento": "pix",
+    "data_venda": "2026-02-28",
+    "descricao": "Venda de 3 bolos"
+  }
+]
+```
 
 ---
 
@@ -59,9 +100,18 @@ Retorna a média de dias entre criação da encomenda e pagamento (follow-up).
 
 ### Respostas
 
-| Status | Corpo                                     |
-| ------ | ----------------------------------------- |
-| `200`  | `{ "avg_days": 3.5, "count": 12 }`       |
+| Status | Descrição                         |
+| ------ | ----------------------------- |
+| `200`  | Média de dias e total de vendas |
+
+#### `200` OK
+
+```json
+{
+  "avg_days": 3.5,
+  "count": 12
+}
+```
 
 ---
 
@@ -88,15 +138,32 @@ Atualiza parcialmente uma venda.
 
 ### Respostas
 
-| Status | Corpo                                                                               |
-| ------ | ----------------------------------------------------------------------------------- |
-| `200`  | Objeto atualizado da venda                                                          |
-| `400`  | `{ "error": "ID inválido" }`                                                        |
-| `404`  | `{ "error": "..." }` — venda não encontrada                                         |
+| Status | Descrição                    |
+| ------ | ------------------------ |
+| `200`  | Venda atualizada         |
+| `400`  | ID inválido              |
+| `404`  | Venda não encontrada     |
 
----
+#### `200` OK
 
-## DELETE `/sales/:id`
+```json
+{
+  "id": 8,
+  "user_id": 1,
+  "client_id": 1,
+  "valor_total": 130.00,
+  "valor_lucro": 50.00,
+  "forma_pagamento": "dinheiro",
+  "data_venda": "2026-02-28",
+  "descricao": "Venda atualizada"
+}
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Venda não encontrada ou acesso negado." }
+```
 
 Remove uma venda.
 
@@ -108,8 +175,20 @@ Remove uma venda.
 
 ### Respostas
 
-| Status | Corpo                                                         |
-| ------ | ------------------------------------------------------------- |
-| `204`  | Sem corpo                                                     |
-| `400`  | `{ "error": "ID inválido" }`                                 |
-| `404`  | `{ "error": "Venda não encontrada ou acesso negado." }`      |
+| Status | Descrição                      |
+| ------ | -------------------------- |
+| `204`  | Venda removida (sem corpo)  |
+| `400`  | ID inválido                 |
+| `404`  | Venda não encontrada        |
+
+#### `400` Bad Request
+
+```json
+{ "error": "ID inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Venda não encontrada ou acesso negado." }
+```

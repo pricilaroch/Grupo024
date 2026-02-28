@@ -40,12 +40,38 @@ Cria um novo produto.
 
 ### Respostas
 
-| Status | Corpo                              |
-| ------ | ---------------------------------- |
-| `201`  | `{ id, nome, descricao, ... }`     |
-| `400`  | `{ "error": "<validação>" }`       |
-| `401`  | `{ "error": "Token inválido..." }` |
-| `500`  | `{ "error": "Erro interno..." }`   |
+| Status | Descrição                                        |
+| ------ | ------------------------------------------------ |
+| `201`  | Produto criado com sucesso                       |
+| `400`  | Campos inválidos ou ausentes                     |
+| `401`  | Token inválido ou usuário não aprovado           |
+| `500`  | Erro interno do servidor                         |
+
+#### `201` Created
+
+```json
+{
+  "id": 3,
+  "user_id": 1,
+  "nome": "Bolo de Chocolate",
+  "descricao": "Bolo caseiro de chocolate com cobertura",
+  "preco_venda": 45.00,
+  "preco_custo": 18.50,
+  "unidade_medida": "unidade",
+  "quantidade_estoque": 10,
+  "tempo_producao_minutos": 120,
+  "imagem_url": "",
+  "categoria": "bolos",
+  "ativo": true,
+  "created_at": "2026-02-28T15:00:00.000Z"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "O nome do produto deve ter pelo menos 3 caracteres." }
+```
 
 ---
 
@@ -55,10 +81,31 @@ Lista todos os produtos do usuário autenticado.
 
 ### Respostas
 
-| Status | Corpo                                    |
-| ------ | ---------------------------------------- |
-| `200`  | `[ { id, nome, preco_venda, ... }, ... ]`|
-| `401`  | `{ "error": "Token inválido..." }`       |
+| Status | Descrição                          |
+| ------ | -------------------------------- |
+| `200`  | Lista de produtos do usuário     |
+| `401`  | Token inválido                   |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 3,
+    "user_id": 1,
+    "nome": "Bolo de Chocolate",
+    "descricao": "Bolo caseiro de chocolate com cobertura",
+    "preco_venda": 45.00,
+    "preco_custo": 18.50,
+    "unidade_medida": "unidade",
+    "quantidade_estoque": 10,
+    "tempo_producao_minutos": 120,
+    "imagem_url": "",
+    "categoria": "bolos",
+    "ativo": true
+  }
+]
+```
 
 ---
 
@@ -74,11 +121,36 @@ Retorna um produto específico do usuário.
 
 ### Respostas
 
-| Status | Corpo                                                           |
-| ------ | --------------------------------------------------------------- |
-| `200`  | `{ id, nome, descricao, preco_venda, ... }`                    |
-| `400`  | `{ "error": "ID inválido" }`                                   |
-| `404`  | `{ "error": "Produto não encontrado ou acesso negado." }`      |
+| Status | Descrição                                          |
+| ------ | -------------------------------------------------- |
+| `200`  | Produto encontrado                                |
+| `400`  | ID inválido                                       |
+| `404`  | Produto não encontrado ou não pertence ao usuário  |
+
+#### `200` OK
+
+```json
+{
+  "id": 3,
+  "user_id": 1,
+  "nome": "Bolo de Chocolate",
+  "descricao": "Bolo caseiro de chocolate com cobertura",
+  "preco_venda": 45.00,
+  "preco_custo": 18.50,
+  "unidade_medida": "unidade",
+  "quantidade_estoque": 10,
+  "tempo_producao_minutos": 120,
+  "imagem_url": "",
+  "categoria": "bolos",
+  "ativo": true
+}
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Produto não encontrado ou acesso negado." }
+```
 
 ---
 
@@ -109,11 +181,42 @@ Atualiza parcialmente um produto. Todos os campos são opcionais.
 
 ### Respostas
 
-| Status | Corpo                                                           |
-| ------ | --------------------------------------------------------------- |
-| `200`  | `{ id, nome, descricao, preco_venda, ... }`                    |
-| `400`  | `{ "error": "ID inválido" }` ou `{ "error": "Nenhum campo..." }`|
-| `404`  | `{ "error": "Produto não encontrado ou acesso negado." }`      |
+| Status | Descrição                                          |
+| ------ | -------------------------------------------------- |
+| `200`  | Produto atualizado                                |
+| `400`  | ID inválido ou nenhum campo enviado               |
+| `404`  | Produto não encontrado ou não pertence ao usuário  |
+
+#### `200` OK
+
+```json
+{
+  "id": 3,
+  "user_id": 1,
+  "nome": "Bolo de Chocolate Premium",
+  "descricao": "Bolo caseiro de chocolate com cobertura",
+  "preco_venda": 50.00,
+  "preco_custo": 18.50,
+  "unidade_medida": "unidade",
+  "quantidade_estoque": 8,
+  "tempo_producao_minutos": 120,
+  "imagem_url": "",
+  "categoria": "bolos",
+  "ativo": true
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Nenhum campo recebido para atualização" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Produto não encontrado ou acesso negado." }
+```
 
 ---
 
@@ -129,8 +232,20 @@ Remove um produto.
 
 ### Respostas
 
-| Status | Corpo                                                           |
-| ------ | --------------------------------------------------------------- |
-| `204`  | Sem corpo                                                       |
-| `400`  | `{ "error": "ID inválido" }`                                   |
-| `404`  | `{ "error": "Produto não encontrado ou acesso negado." }`      |
+| Status | Descrição                                          |
+| ------ | -------------------------------------------------- |
+| `204`  | Produto removido (sem corpo)                      |
+| `400`  | ID inválido                                       |
+| `404`  | Produto não encontrado ou não pertence ao usuário  |
+
+#### `400` Bad Request
+
+```json
+{ "error": "ID inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Produto não encontrado ou acesso negado." }
+```

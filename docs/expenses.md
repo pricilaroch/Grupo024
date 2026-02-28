@@ -32,10 +32,32 @@ Registra uma nova despesa.
 
 ### Respostas
 
-| Status | Corpo                                                                        |
-| ------ | ---------------------------------------------------------------------------- |
-| `201`  | `{ id, valor, categoria, descricao, status, data_emissao, ... }`            |
-| `400`  | `{ "error": "<validação>" }`                                                 |
+| Status | Descrição                       |
+| ------ | --------------------------- |
+| `201`  | Despesa criada com sucesso  |
+| `400`  | Campos inválidos ou ausentes  |
+
+#### `201` Created
+
+```json
+{
+  "id": 9,
+  "user_id": 1,
+  "valor": 250.00,
+  "categoria": "materia_prima",
+  "descricao": "Compra de farinha e açúcar",
+  "data_emissao": "2026-02-25",
+  "data_vencimento": "2026-03-05",
+  "status": "pendente",
+  "created_at": "2026-02-28T19:00:00.000Z"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Categoria inválida. Use: materia_prima, embalagem, transporte, ..." }
+```
 
 ---
 
@@ -58,9 +80,26 @@ GET /expenses?status=pendente
 
 ### Respostas
 
-| Status | Corpo                                                    |
-| ------ | -------------------------------------------------------- |
-| `200`  | `[ { id, valor, categoria, status, ... }, ... ]`         |
+| Status | Descrição                               |
+| ------ | ------------------------------------- |
+| `200`  | Lista de despesas (filtrada ou não)  |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 9,
+    "user_id": 1,
+    "valor": 250.00,
+    "categoria": "materia_prima",
+    "descricao": "Compra de farinha e açúcar",
+    "data_emissao": "2026-02-25",
+    "data_vencimento": "2026-03-05",
+    "status": "pendente"
+  }
+]
+```
 
 ---
 
@@ -86,10 +125,31 @@ Atualiza parcialmente uma despesa.
 
 ### Respostas
 
-| Status | Corpo                                                |
-| ------ | ---------------------------------------------------- |
-| `200`  | Objeto atualizado da despesa                         |
-| `400`  | `{ "error": "ID inválido" }`                         |
+| Status | Descrição            |
+| ------ | ------------------ |
+| `200`  | Despesa atualizada |
+| `400`  | ID inválido        |
+
+#### `200` OK
+
+```json
+{
+  "id": 9,
+  "user_id": 1,
+  "valor": 275.00,
+  "categoria": "materia_prima",
+  "descricao": "Compra de farinha, açúcar e manteiga",
+  "data_emissao": "2026-02-25",
+  "data_vencimento": "2026-03-05",
+  "status": "pendente"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "ID inválido" }
+```
 
 ---
 
@@ -109,11 +169,32 @@ Nenhum.
 
 ### Respostas
 
-| Status | Corpo                                                |
-| ------ | ---------------------------------------------------- |
-| `200`  | Objeto da despesa com `status: "pago"`               |
-| `400`  | `{ "error": "ID inválido" }`                         |
-| `404`  | `{ "error": "..." }` — despesa não encontrada        |
+| Status | Descrição                       |
+| ------ | --------------------------- |
+| `200`  | Despesa marcada como paga   |
+| `400`  | ID inválido                 |
+| `404`  | Despesa não encontrada      |
+
+#### `200` OK
+
+```json
+{
+  "id": 9,
+  "user_id": 1,
+  "valor": 250.00,
+  "categoria": "materia_prima",
+  "descricao": "Compra de farinha e açúcar",
+  "data_emissao": "2026-02-25",
+  "data_vencimento": "2026-03-05",
+  "status": "pago"
+}
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Despesa não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -129,11 +210,23 @@ Remove uma despesa.
 
 ### Respostas
 
-| Status | Corpo                                                            |
-| ------ | ---------------------------------------------------------------- |
-| `204`  | Sem corpo                                                        |
-| `400`  | `{ "error": "ID inválido" }`                                    |
-| `404`  | `{ "error": "Despesa não encontrada ou acesso negado." }`       |
+| Status | Descrição                        |
+| ------ | ----------------------------- |
+| `204`  | Despesa removida (sem corpo)  |
+| `400`  | ID inválido                   |
+| `404`  | Despesa não encontrada        |
+
+#### `400` Bad Request
+
+```json
+{ "error": "ID inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Despesa não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -143,6 +236,32 @@ Retorna resumo mensal de despesas agrupado por categoria.
 
 ### Respostas
 
-| Status | Corpo                                                                                      |
-| ------ | ------------------------------------------------------------------------------------------ |
-| `200`  | `[ { "month": "2026-02", "total": 500.00, "count": 5, "by_category": { ... } }, ... ]`   |
+| Status | Descrição                        |
+| ------ | ----------------------------- |
+| `200`  | Resumo mensal de despesas     |
+
+#### `200` OK
+
+```json
+[
+  {
+    "month": "2026-02",
+    "total": 500.00,
+    "count": 3,
+    "by_category": {
+      "materia_prima": 250.00,
+      "embalagem": 150.00,
+      "transporte": 100.00
+    }
+  },
+  {
+    "month": "2026-01",
+    "total": 320.00,
+    "count": 2,
+    "by_category": {
+      "aluguel": 200.00,
+      "energia": 120.00
+    }
+  }
+]
+```

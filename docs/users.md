@@ -48,9 +48,41 @@ Nenhuma (rota pública).
 
 ### Respostas
 
-| Status | Corpo                                                                                                        |
-| ------ | ------------------------------------------------------------------------------------------------------------ |
-| `201`  | `{ "message": "Cadastro realizado com sucesso! Aguarde a aprovação do administrador.", "user": { ... } }`    |
-| `400`  | `{ "error": "<mensagem de validação Zod>" }` — campos inválidos ou ausentes                                  |
-| `409`  | `{ "error": "..." }` — CPF ou e-mail já cadastrado (se aplicável)                                           |
-| `500`  | `{ "error": "Erro interno do servidor." }`                                                                   |
+| Status | Descrição                                                         |
+| ------ | ----------------------------------------------------------------- |
+| `201`  | Usuário criado com sucesso (aguardando aprovação)                 |
+| `400`  | Campos inválidos ou ausentes                                      |
+| `409`  | CPF ou e-mail já cadastrado                                       |
+| `500`  | Erro interno do servidor                                          |
+
+#### `201` Created
+
+```json
+{
+  "message": "Cadastro realizado com sucesso! Aguarde a aprovação do administrador.",
+  "user": {
+    "id": 7,
+    "nome": "Maria Silva",
+    "nome_fantasia": "Doces da Maria",
+    "email": "maria@email.com",
+    "cpf": "123.456.789-00",
+    "telefone": "(34) 99999-9999",
+    "categoria_producao": "confeitaria",
+    "status": "pendente",
+    "role": "user",
+    "created_at": "2026-02-28T14:30:00.000Z"
+  }
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "O nome deve ter pelo menos 3 caracteres.; E-mail inválido." }
+```
+
+#### `500` Internal Server Error
+
+```json
+{ "error": "Erro interno do servidor." }
+```

@@ -43,11 +43,45 @@ Cria uma nova encomenda com snapshot de preços dos produtos no momento da cria�
 
 ### Respostas
 
-| Status | Corpo                                                                                         |
-| ------ | --------------------------------------------------------------------------------------------- |
-| `201`  | Objeto da encomenda com `valor_subtotal`, `valor_total`, `valor_lucro_total` calculados       |
-| `400`  | `{ "error": "<validação>" }` — campos inválidos, desconto excessivo, produto inativo etc.     |
-| `404`  | `{ "error": "Cliente não encontrado..." }` ou `{ "error": "Produto com ID X não encontrado..." }` |
+| Status | Descrição                                                            |
+| ------ | --------------------------------------------------------------------- |
+| `201`  | Encomenda criada com valores calculados automaticamente               |
+| `400`  | Campos inválidos, desconto excessivo, produto inativo etc.           |
+| `404`  | Cliente ou produto não encontrado                                     |
+
+#### `201` Created
+
+```json
+{
+  "id": 12,
+  "user_id": 1,
+  "client_id": 1,
+  "status": "pendente",
+  "forma_pagamento": "pix",
+  "status_pagamento": "pendente",
+  "tipo_entrega": "entrega",
+  "taxa_entrega": 10.00,
+  "desconto": 5.00,
+  "data_entrega": "2026-03-15",
+  "observacoes": "Sem glúten",
+  "valor_subtotal": 135.00,
+  "valor_total": 140.00,
+  "valor_lucro_total": 62.00,
+  "created_at": "2026-02-28T17:00:00.000Z"
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "O desconto não pode ser maior que o valor total da encomenda." }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Produto com ID 99 não encontrado ou não pertence ao usuário." }
+```
 
 ---
 
@@ -57,9 +91,26 @@ Lista todas as encomendas do usuário autenticado.
 
 ### Respostas
 
-| Status | Corpo                                             |
-| ------ | ------------------------------------------------- |
-| `200`  | `[ { id, client_id, status, valor_total, ... } ]` |
+| Status | Descrição                                  |
+| ------ | ---------------------------------------- |
+| `200`  | Lista de encomendas do usuário           |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 12,
+    "user_id": 1,
+    "client_id": 1,
+    "status": "pendente",
+    "status_pagamento": "pendente",
+    "forma_pagamento": "pix",
+    "valor_total": 140.00,
+    "data_entrega": "2026-03-15"
+  }
+]
+```
 
 ---
 
@@ -75,11 +126,38 @@ Retorna uma encomenda específica.
 
 ### Respostas
 
-| Status | Corpo                                                              |
-| ------ | ------------------------------------------------------------------ |
-| `200`  | `{ id, client_id, status, valor_total, ... }`                     |
-| `400`  | `{ "error": "ID inválido" }`                                      |
-| `404`  | `{ "error": "Encomenda não encontrada ou acesso negado." }`       |
+| Status | Descrição                                              |
+| ------ | ------------------------------------------------------ |
+| `200`  | Encomenda encontrada                                  |
+| `400`  | ID inválido                                           |
+| `404`  | Encomenda não encontrada ou não pertence ao usuário   |
+
+#### `200` OK
+
+```json
+{
+  "id": 12,
+  "user_id": 1,
+  "client_id": 1,
+  "status": "pendente",
+  "forma_pagamento": "pix",
+  "status_pagamento": "pendente",
+  "tipo_entrega": "entrega",
+  "taxa_entrega": 10.00,
+  "desconto": 5.00,
+  "data_entrega": "2026-03-15",
+  "observacoes": "Sem glúten",
+  "valor_subtotal": 135.00,
+  "valor_total": 140.00,
+  "valor_lucro_total": 62.00
+}
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Encomenda não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -101,10 +179,35 @@ GET /orders/status?status=pendente&status=em_producao
 
 ### Respostas
 
-| Status | Corpo                                             |
-| ------ | ------------------------------------------------- |
-| `200`  | `[ { id, status, ... }, ... ]`                    |
-| `400`  | `{ "error": "Status é obrigatório" }`             |
+| Status | Descrição                             |
+| ------ | ------------------------------------- |
+| `200`  | Lista filtrada de encomendas          |
+| `400`  | Parâmetro `status` ausente            |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 12,
+    "status": "pendente",
+    "valor_total": 140.00,
+    "client_id": 1
+  },
+  {
+    "id": 13,
+    "status": "em_producao",
+    "valor_total": 90.00,
+    "client_id": 2
+  }
+]
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Status é obrigatório" }
+```
 
 ---
 
@@ -120,11 +223,40 @@ Retorna os itens de uma encomenda específica.
 
 ### Respostas
 
-| Status | Corpo                                                                                                 |
-| ------ | ----------------------------------------------------------------------------------------------------- |
-| `200`  | `[ { product_id, quantidade, preco_venda_unitario, preco_custo_unitario }, ... ]`                     |
-| `400`  | `{ "error": "ID de encomenda inválido" }`                                                             |
-| `404`  | `{ "error": "Encomenda não encontrada ou acesso negado." }`                                           |
+| Status | Descrição                                              |
+| ------ | ------------------------------------------------------ |
+| `200`  | Lista de itens da encomenda                           |
+| `400`  | ID inválido                                           |
+| `404`  | Encomenda não encontrada ou não pertence ao usuário   |
+
+#### `200` OK
+
+```json
+[
+  {
+    "id": 1,
+    "order_id": 12,
+    "product_id": 1,
+    "quantidade": 2,
+    "preco_venda_unitario": 45.00,
+    "preco_custo_unitario": 18.50
+  },
+  {
+    "id": 2,
+    "order_id": 12,
+    "product_id": 3,
+    "quantidade": 1,
+    "preco_venda_unitario": 45.00,
+    "preco_custo_unitario": 20.00
+  }
+]
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Encomenda não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -154,11 +286,37 @@ Atualiza uma encomenda (campos e/ou itens). Encomendas com status `entregue` ou 
 
 ### Respostas
 
-| Status | Corpo                                                                           |
-| ------ | ------------------------------------------------------------------------------- |
-| `200`  | Objeto atualizado da encomenda com valores recalculados                         |
-| `400`  | `{ "error": "..." }` — validação, pedido finalizado, desconto inválido etc.    |
-| `404`  | `{ "error": "Encomenda não encontrada ou acesso negado." }`                    |
+| Status | Descrição                                                 |
+| ------ | --------------------------------------------------------- |
+| `200`  | Encomenda atualizada com valores recalculados             |
+| `400`  | Validação, pedido finalizado, desconto inválido etc.      |
+| `404`  | Encomenda não encontrada ou não pertence ao usuário        |
+
+#### `200` OK
+
+```json
+{
+  "id": 12,
+  "status": "pendente",
+  "taxa_entrega": 15.00,
+  "desconto": 5.00,
+  "valor_subtotal": 135.00,
+  "valor_total": 145.00,
+  "valor_lucro_total": 60.00
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Pedido finalizado ou cancelado não pode ser alterado." }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Encomenda não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -186,11 +344,34 @@ Atualiza apenas o status de produção da encomenda.
 
 ### Respostas
 
-| Status | Corpo                                                              |
-| ------ | ------------------------------------------------------------------ |
-| `200`  | Objeto atualizado da encomenda                                     |
-| `400`  | `{ "error": "Status inválido" }` ou pedido finalizado              |
-| `404`  | `{ "error": "Encomenda não encontrada ou acesso negado." }`       |
+| Status | Descrição                                              |
+| ------ | ------------------------------------------------------ |
+| `200`  | Status atualizado                                     |
+| `400`  | Status inválido ou pedido finalizado                  |
+| `404`  | Encomenda não encontrada ou não pertence ao usuário   |
+
+#### `200` OK
+
+```json
+{
+  "id": 12,
+  "status": "em_producao",
+  "status_pagamento": "pendente",
+  "valor_total": 140.00
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Status inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Encomenda não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -218,11 +399,37 @@ Atualiza o status de pagamento. Quando marcado como `"pago"`, cria automaticamen
 
 ### Respostas
 
-| Status | Corpo                                                              |
-| ------ | ------------------------------------------------------------------ |
-| `200`  | Objeto atualizado da encomenda                                     |
-| `400`  | `{ "error": "Status de pagamento inválido" }`                     |
-| `404`  | `{ "error": "Encomenda não encontrada ou acesso negado." }`       |
+| Status | Descrição                                              |
+| ------ | ------------------------------------------------------ |
+| `200`  | Status de pagamento atualizado                        |
+| `400`  | Status de pagamento inválido                          |
+| `404`  | Encomenda não encontrada ou não pertence ao usuário   |
+
+#### `200` OK
+
+```json
+{
+  "id": 12,
+  "status": "pronto",
+  "status_pagamento": "pago",
+  "forma_pagamento": "pix",
+  "valor_total": 140.00
+}
+```
+
+> Ao marcar como `"pago"`, uma venda é registrada automaticamente no livro caixa.
+
+#### `400` Bad Request
+
+```json
+{ "error": "Status de pagamento inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Encomenda não encontrada ou acesso negado." }
+```
 
 ---
 
@@ -238,8 +445,20 @@ Remove uma encomenda e seus itens.
 
 ### Respostas
 
-| Status | Corpo                                                              |
-| ------ | ------------------------------------------------------------------ |
-| `204`  | Sem corpo                                                          |
-| `400`  | `{ "error": "ID inválido" }`                                      |
-| `404`  | `{ "error": "Encomenda não encontrada ou acesso negado." }`       |
+| Status | Descrição                                              |
+| ------ | ------------------------------------------------------ |
+| `204`  | Encomenda removida (sem corpo)                        |
+| `400`  | ID inválido                                           |
+| `404`  | Encomenda não encontrada ou não pertence ao usuário   |
+
+#### `400` Bad Request
+
+```json
+{ "error": "ID inválido" }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Encomenda não encontrada ou acesso negado." }
+```

@@ -18,12 +18,36 @@ Nenhum.
 
 ### Respostas
 
-| Status | Corpo                                                          |
-| ------ | -------------------------------------------------------------- |
-| `200`  | `{ "users": [ { ... }, ... ] }` — lista de usuários pendentes |
-| `401`  | `{ "error": "Token inválido ou expirado." }`                  |
-| `401`  | `{ "error": "Acesso restrito a administradores." }`            |
-| `500`  | `{ "error": "Erro interno do servidor." }`                    |
+| Status | Descrição                                    |
+| ------ | ------------------------------------------ |
+| `200`  | Lista de usuários pendentes                 |
+| `401`  | Token inválido ou sem permissão de admin    |
+| `500`  | Erro interno do servidor                   |
+
+#### `200` OK
+
+```json
+{
+  "users": [
+    {
+      "id": 4,
+      "nome": "Carlos Mendes",
+      "nome_fantasia": "Arte do Carlos",
+      "email": "carlos@email.com",
+      "cpf": "987.654.321-00",
+      "status": "pendente",
+      "role": "user",
+      "created_at": "2026-02-27T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### `401` Unauthorized
+
+```json
+{ "error": "Acesso restrito a administradores." }
+```
 
 ---
 
@@ -59,11 +83,37 @@ JWT com `role = "admin"`.
 
 ### Respostas
 
-| Status | Corpo                                                                   |
-| ------ | ----------------------------------------------------------------------- |
-| `200`  | `{ "message": "Usuário aprovado com sucesso.", "user": { ... } }`      |
-| `400`  | `{ "error": "ID inválido." }` ou `{ "error": "<validação Zod>" }`     |
-| `401`  | `{ "error": "Token inválido ou expirado." }`                           |
-| `401`  | `{ "error": "Acesso restrito a administradores." }`                    |
-| `404`  | `{ "error": "..." }` — usuário não encontrado                          |
-| `500`  | `{ "error": "Erro interno do servidor." }`                             |
+| Status | Descrição                                  |
+| ------ | ---------------------------------------- |
+| `200`  | Status atualizado com sucesso            |
+| `400`  | ID ou campo inválido                     |
+| `401`  | Token inválido ou sem permissão de admin  |
+| `404`  | Usuário não encontrado                    |
+| `500`  | Erro interno do servidor                 |
+
+#### `200` OK
+
+```json
+{
+  "message": "Usuário aprovado com sucesso.",
+  "user": {
+    "id": 4,
+    "nome": "Carlos Mendes",
+    "email": "carlos@email.com",
+    "status": "aprovado",
+    "role": "user"
+  }
+}
+```
+
+#### `400` Bad Request
+
+```json
+{ "error": "Status inválido. Use \"aprovado\" ou \"reprovado\"." }
+```
+
+#### `404` Not Found
+
+```json
+{ "error": "Usuário não encontrado." }
+```
