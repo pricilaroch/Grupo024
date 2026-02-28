@@ -103,33 +103,32 @@ document.addEventListener('DOMContentLoaded', () => {
     saleCount.textContent = `${filtered.length} venda${filtered.length !== 1 ? 's' : ''}`;
 
     salesBody.innerHTML = filtered.map(sale => {
-      const clientName = sale.client_id && clientsMap[sale.client_id]
-        ? clientsMap[sale.client_id].nome
-        : '—';
+      const client = sale.client_id ? clientsMap[sale.client_id] : null;
+      const clientName = client ? client.nome : '—';
       const dateStr = formatDate(sale.data_venda);
       const desc = sale.descricao || (sale.order_id ? `Encomenda #${sale.order_id}` : 'Venda manual');
       const isFromOrder = !!sale.order_id;
       const originBadge = isFromOrder
-        ? '<span class="badge badge--info" title="Gerada a partir de encomenda">Encomenda</span>'
-        : '<span class="badge badge--neutral">Manual</span>';
+        ? '<span class="badge badge-delivered">Encomenda</span>'
+        : '<span class="badge badge-pending">Manual</span>';
+      const payBadge = getPaymentBadge(sale.forma_pagamento);
+      const profitPct = sale.valor_total > 0
+        ? ((sale.valor_lucro / sale.valor_total) * 100).toFixed(0)
+        : 0;
 
       return `
         <tr>
           <td class="td-mono">${sale.id}</td>
+          <td>${escapeHtml(clientName)}</td>
           <td>${dateStr}</td>
-          <td>
-            <div style="display:flex;flex-direction:column;gap:2px;">
-              <span>${desc}</span>
-              <span style="font-size:0.75rem;color:var(--muted-foreground);">${clientName} ${originBadge}</span>
-            </div>
-          </td>
-          <td>${formatPayment(sale.forma_pagamento)}</td>
+          <td>${escapeHtml(desc)} ${originBadge}</td>
+          <td>${payBadge}</td>
           <td class="td-right td-mono">${formatCurrency(sale.valor_total)}</td>
-          <td class="td-right td-mono finance-value--success">${formatCurrency(sale.valor_lucro)}</td>
+          <td class="td-right td-mono" style="color: var(--success)">${formatCurrency(sale.valor_lucro)} <small style="color: var(--muted-foreground); font-weight:400">${profitPct}%</small></td>
           <td>
             <div class="row-actions">
-              <button class="btn-icon btn-icon--sm" title="Editar" data-edit="${sale.id}">&#9998;</button>
-              <button class="btn-icon btn-icon--sm btn-icon--danger" title="Excluir" data-delete="${sale.id}">&#128465;</button>
+              <button class="btn-row btn-row--edit" title="Editar" data-edit="${sale.id}">&#9998;</button>
+              <button class="btn-row btn-row--delete" title="Excluir" data-delete="${sale.id}">&#128465;</button>
             </div>
           </td>
         </tr>`;
@@ -370,6 +369,22 @@ document.addEventListener('DOMContentLoaded', () => {
       cartao_debito: 'Débito',
     };
     return map[fp] || fp;
+  }
+
+  function getPaymentBadge(fp) {
+    const map = {
+      pix:             '<span class="badge badge-approved">PIX</span>',
+      dinheiro:        '<span class="badge badge-pending">Dinheiro</span>',
+      cartao_credito:  '<span class="badge badge-delivered">Crédito</span>',
+      cartao_debito:   '<span class="badge badge-delivered">Débito</span>',
+    };
+    return map[fp] || `<span class="badge">${fp}</span>`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
   }
 
   function clearErrors() {

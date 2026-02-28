@@ -44,60 +44,8 @@
 }
 
 /* ===========================
-   Badges for origin
+   Badges for origin (reuses .badge from style.css)
    =========================== */
-.badge--info {
-  display: inline-block;
-  font-size: 0.625rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: var(--radius-full);
-  background: #dbeafe;
-  color: #1d4ed8;
-  vertical-align: middle;
-}
-
-.badge--neutral {
-  display: inline-block;
-  font-size: 0.625rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: var(--radius-full);
-  background: var(--muted);
-  color: var(--muted-foreground);
-  vertical-align: middle;
-}
-
-/* ===========================
-   Icon buttons (small)
-   =========================== */
-.btn-icon--sm {
-  width: 28px;
-  height: 28px;
-  font-size: 0.8125rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--background);
-  cursor: pointer;
-  color: var(--foreground);
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.btn-icon--sm:hover {
-  background: var(--muted);
-}
-
-.btn-icon--danger {
-  color: var(--destructive);
-}
-
-.btn-icon--danger:hover {
-  background: #fef2f2;
-  border-color: var(--destructive);
-}
 
 /* ===========================
    Confirm modal
@@ -139,6 +87,19 @@
 @media (max-width: 768px) {
   .finance-summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Hide Description column on small screens */
+  .sales-table th:nth-child(4),
+  .sales-table td:nth-child(4) {
+    display: none;
+  }
+  /* Hide Payment column on small screens */
+  .sales-table th:nth-child(5),
+  .sales-table td:nth-child(5) {
+    display: none;
   }
 }
 
