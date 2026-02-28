@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livro Caixa - Sistema de Gestão de Encomendas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/orders.css">
+  <link rel="stylesheet" href="/css/finance.css">
+</head>
+<body>
+  <nav id="navbar" class="navbar"></nav>
+
+  <div class="container container-wide">
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="products-header">
+        <div>
+          <h1 class="products-title">Livro Caixa</h1>
+          <p class="products-subtitle">Registre e acompanhe todas as suas vendas, receitas e despesas.</p>
+        </div>
+        <div class="finance-header-actions">
+          <button id="btnNewSale" class="btn btn-primary">+ Venda Rápida</button>
+          <button id="btnNewExpense" class="btn btn-secondary">+ Nova Despesa</button>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="finance-summary-grid">
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Faturamento (Vendas)</span>
+          <span class="finance-summary-value" id="summaryRevenue">R$ 0,00</span>
+          <small class="finance-summary-hint" id="summaryCount">0 vendas</small>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Despesas Pagas</span>
+          <span class="finance-summary-value finance-value--danger" id="summaryPaidExp">R$ 0,00</span>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Saldo Real (Em Caixa)</span>
+          <span class="finance-summary-value" id="summaryRealBalance">R$ 0,00</span>
+        </div>
+        <div class="finance-summary-card">
+          <span class="finance-summary-label">Saldo Projetado</span>
+          <span class="finance-summary-value" id="summaryBalance">R$ 0,00</span>
+          <small class="finance-summary-hint" id="summaryPendingHint">R$ 0,00 pendentes</small>
+        </div>
+      </div>
+
+      <!-- Main section tabs: Entradas / Saídas / Extrato -->
+      <div class="finance-section-tabs">
+        <button class="section-tab active" data-section="entradas">Entradas (Vendas)</button>
+        <button class="section-tab" data-section="saidas">Saídas (Despesas)</button>
+        <button class="section-tab" data-section="extrato">Extrato</button>
+      </div>
+
+      <!-- ═══════ ENTRADAS (Sales) ═══════ -->
+      <div id="sectionEntradas" class="finance-section">
+        <!-- Filter bar -->
+        <div class="products-filter-bar">
+          <div class="products-filter-tabs">
+            <button class="filter-tab active" data-filter="all">Todas</button>
+            <button class="filter-tab" data-filter="manual">Manuais</button>
+            <button class="filter-tab" data-filter="order">Encomendas</button>
+          </div>
+          <div class="orders-search-row">
+            <input type="text" id="searchInput" class="client-search-input" placeholder="Buscar por descrição, cliente ou forma de pgto…">
+            <span id="saleCount" class="products-count"></span>
+          </div>
+        </div>
+
+        <!-- Sales table -->
+        <div id="salesTableWrap" class="orders-table-wrap" style="display:none;">
+          <table class="orders-table sales-table" id="salesTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Pagamento</th>
+                <th class="td-right">Total</th>
+                <th class="td-right">Lucro</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="salesBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="products-empty" style="display:none;">
+          <div class="products-empty-icon" aria-hidden="true">&#128176;</div>
+          <h2>Nenhuma venda registrada</h2>
+          <p>Comece registrando uma venda rápida ou finalize o pagamento de uma encomenda.</p>
+          <button id="btnEmptyNew" class="btn btn-primary">+ Registrar Venda</button>
+        </div>
+      </div>
+
+      <!-- ═══════ SAÍDAS (Expenses) ═══════ -->
+      <div id="sectionSaidas" class="finance-section" style="display:none;">
+        <!-- Filter bar -->
+        <div class="products-filter-bar">
+          <div class="products-filter-tabs">
+            <button class="filter-tab exp-filter active" data-exp-filter="all">Todas</button>
+            <button class="filter-tab exp-filter" data-exp-filter="pendente">Pendentes</button>
+            <button class="filter-tab exp-filter" data-exp-filter="pago">Pagas</button>
+            <button class="filter-tab exp-filter" data-exp-filter="atrasado">Atrasadas</button>
+          </div>
+          <div class="orders-search-row">
+            <input type="text" id="expSearchInput" class="client-search-input" placeholder="Buscar por descrição ou categoria…">
+            <span id="expCount" class="products-count"></span>
+          </div>
+        </div>
+
+        <!-- Expenses table -->
+        <div id="expTableWrap" class="orders-table-wrap" style="display:none;">
+          <table class="orders-table expenses-table" id="expTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Categoria</th>
+                <th>Descrição</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+                <th class="td-right">Valor</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="expBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Empty state expenses -->
+        <div id="expEmptyState" class="products-empty" style="display:none;">
+          <div class="products-empty-icon" aria-hidden="true">&#128181;</div>
+          <h2>Nenhuma despesa registrada</h2>
+          <p>Registre suas despesas fixas e variáveis para controle de fluxo de caixa.</p>
+          <button id="btnExpEmptyNew" class="btn btn-secondary">+ Nova Despesa</button>
+        </div>
+      </div>
+
+      <!-- ═══════ EXTRATO (Movements) ═══════ -->
+      <div id="sectionExtrato" class="finance-section" style="display:none;">
+        <div id="movTableWrap" class="orders-table-wrap" style="display:none;">
+          <table class="orders-table movements-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th class="td-right">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="movBody"></tbody>
+          </table>
+        </div>
+        <div id="movEmptyState" class="products-empty" style="display:none;">
+          <div class="products-empty-icon" aria-hidden="true">&#128203;</div>
+          <h2>Nenhuma movimentação registrada</h2>
+          <p>Registre vendas e pague despesas para ver o extrato.</p>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loadingState" class="admin-loading">Carregando dados…</div>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Criar / Editar Venda
+       ═══════════════════════════════════════════════════ -->
+  <div id="saleModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-product">
+      <h3 id="modalTitle">Venda Rápida</h3>
+      <p id="modalSubtitle" class="modal-user-name">Registre uma venda de feira ou balcão.</p>
+
+      <form id="saleForm" novalidate>
+        <div id="formAlert" class="alert alert-error" style="display:none;"></div>
+
+        <!-- Valor Total -->
+        <div class="form-group">
+          <label for="f-valor-total">Valor Total (R$) *</label>
+          <input type="number" id="f-valor-total" name="valor_total" step="0.01" min="0.01" placeholder="0,00" autocomplete="off">
+          <span class="field-error" data-for="valor_total"></span>
+        </div>
+
+        <!-- Valor Lucro -->
+        <div class="form-group">
+          <label for="f-valor-lucro">Lucro (R$) <small style="color: var(--muted-foreground);">— Padrão: 30% do total</small></label>
+          <input type="number" id="f-valor-lucro" name="valor_lucro" step="0.01" min="0" placeholder="Automático (30%)">
+          <span class="field-error" data-for="valor_lucro"></span>
+        </div>
+
+        <!-- Forma de Pagamento -->
+        <div class="form-group">
+          <label for="f-forma-pagamento">Forma de Pagamento *</label>
+          <select id="f-forma-pagamento" name="forma_pagamento" class="form-input">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+          </select>
+          <span class="field-error" data-for="forma_pagamento"></span>
+        </div>
+
+        <!-- Cliente (opcional) -->
+        <div class="form-group">
+          <label for="f-client">Cliente <small style="color: var(--muted-foreground);">— Opcional</small></label>
+          <select id="f-client" name="client_id" class="form-input">
+            <option value="">Venda anônima</option>
+          </select>
+        </div>
+
+        <!-- Data da Venda -->
+        <div class="form-group">
+          <label for="f-data-venda">Data da Venda</label>
+          <input type="date" id="f-data-venda" name="data_venda" class="form-input">
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-group">
+          <label for="f-descricao">Descrição</label>
+          <input type="text" id="f-descricao" name="descricao" placeholder="Ex: Venda feira, balcão…" autocomplete="off">
+          <span class="field-error" data-for="descricao"></span>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btnCancelSale" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btnSaveSale" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Confirmação de Exclusão
+       ═══════════════════════════════════════════════════ -->
+  <div id="deleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-confirm">
+      <h3 id="deleteModalTitle">Excluir</h3>
+      <p id="deleteMsg">Tem certeza que deseja excluir? Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button type="button" id="btnCancelDelete" class="btn btn-secondary">Cancelar</button>
+        <button type="button" id="btnConfirmDelete" class="btn btn-danger">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       Modal: Criar / Editar Despesa
+       ═══════════════════════════════════════════════════ -->
+  <div id="expenseModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-product">
+      <h3 id="expModalTitle">Nova Despesa</h3>
+      <p id="expModalSubtitle" class="modal-user-name">Registre uma saída fixa ou variável.</p>
+
+      <form id="expenseForm" novalidate>
+        <div id="expFormAlert" class="alert alert-error" style="display:none;"></div>
+
+        <!-- Valor -->
+        <div class="form-group">
+          <label for="exp-valor">Valor (R$) *</label>
+          <input type="number" id="exp-valor" name="valor" step="0.01" min="0.01" placeholder="0,00" autocomplete="off">
+          <span class="field-error" data-for="exp_valor"></span>
+        </div>
+
+        <!-- Categoria -->
+        <div class="form-group">
+          <label for="exp-categoria">Categoria *</label>
+          <select id="exp-categoria" name="categoria" class="form-input">
+            <option value="materia_prima">Matéria-prima</option>
+            <option value="embalagem">Embalagem</option>
+            <option value="transporte">Transporte</option>
+            <option value="aluguel">Aluguel</option>
+            <option value="energia">Energia</option>
+            <option value="agua">Água</option>
+            <option value="internet">Internet</option>
+            <option value="marketing">Marketing</option>
+            <option value="equipamento">Equipamento</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="impostos">Impostos</option>
+            <option value="salarios">Salários</option>
+            <option value="outros">Outros</option>
+          </select>
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-group">
+          <label for="exp-descricao">Descrição</label>
+          <input type="text" id="exp-descricao" name="descricao" placeholder="Ex: Farinha de trigo 25kg…" autocomplete="off">
+        </div>
+
+        <!-- Data de Emissão -->
+        <div class="form-group">
+          <label for="exp-data-emissao">Data de Emissão</label>
+          <input type="date" id="exp-data-emissao" name="data_emissao" class="form-input">
+        </div>
+
+        <!-- Data de Vencimento -->
+        <div class="form-group">
+          <label for="exp-data-vencimento">Data de Vencimento <small style="color: var(--muted-foreground);">— Agendamento</small></label>
+          <input type="date" id="exp-data-vencimento" name="data_vencimento" class="form-input">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btnCancelExpense" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btnSaveExpense" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
+  <script src="/js/finance.js"></script>
+</body>
+</html>

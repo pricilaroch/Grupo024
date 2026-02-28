@@ -2,6 +2,9 @@
  * dashboard.js — Painel de Controle (Kanban 3-col + Histórico + Inteligência Financeira)
  * Fluxo: pendente → em_producao → pronto → entregue (ou cancelado)
  * Depende de: api.js, guard.js
+ *
+ * Previsão  = orders entregues excluindo status_pagamento === 'pago'
+ * Realizado = sales (GET /sales — livro caixa real)
  */
 document.addEventListener('DOMContentLoaded', () => {
   // ── Guard ──────────────────────────────────────────────
@@ -10,18 +13,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── State ──────────────────────────────────────────────
   let allOrders = [];
+  let allSales  = [];      // from GET /sales
+  let goalData  = null;    // from GET /analytics/goal
+  let balanceData = null;  // from GET /analytics/balance
+  let followUpData = null; // from GET /sales/follow-up
   let clients = [];
   let clientsMap = {};
   let productsMap = {};   // id → product (for materials summary)
   let activeFilter = 'all';
   let financeMode = 'previsao'; // 'previsao' or 'realizado'
+  let dateRange   = 'month';   // 'today' | 'month' | 'total'
   let activeTab = 'production'; // 'production' or 'history'
   let currentDetailOrderId = null;
+
+  // Goal meta (persisted in localStorage)
+  const META_KEY = 'dashboard_meta_mensal';
+  let metaMensal = parseFloat(localStorage.getItem(META_KEY)) || 0;
 
   // ── DOM refs ───────────────────────────────────────────
   const welcomeMsg     = document.getElementById('welcomeMsg');
   const loadingState   = document.getElementById('loadingState');
   const kanbanBoard    = document.getElementById('kanbanBoard');
+  const kanbanMobileTabs = document.getElementById('kanbanMobileTabs');
   const emptyState     = document.getElementById('emptyState');
   const emptyFilter    = document.getElementById('emptyFilter');
 
@@ -48,6 +61,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const pendingPayments     = document.getElementById('pendingPayments');
   const pendingPaymentTotal = document.getElementById('pendingPaymentTotal');
   const pendingPaymentsList = document.getElementById('pendingPaymentsList');
+
+  // Goal / Caixinha
+  const metaFill      = document.getElementById('metaFill');
+  const metaRealized  = document.getElementById('metaRealized');
+  const metaTarget    = document.getElementById('metaTarget');
+  const metaPct       = document.getElementById('metaPct');
+  const caixinhaValue = document.getElementById('caixinhaValue');
+
+  // Performance
+  const perfFollowUp       = document.getElementById('perfFollowUp');
+  const perfFollowUpHint   = document.getElementById('perfFollowUpHint');
+  const perfRecompra       = document.getElementById('perfRecompra');
+  const perfRecompraHint   = document.getElementById('perfRecompraHint');
+  const perfSalesMonth     = document.getElementById('perfSalesMonth');
+  const perfSalesMonthHint = document.getElementById('perfSalesMonthHint');
+
+  // Charts
+  const chartSalesMonth = document.getElementById('chartSalesMonth');
+  const pieRepurchase   = document.getElementById('pieRepurchase');
+  const pieLegend       = document.getElementById('pieLegend');
 
   // Materials
   const materialsSummary = document.getElementById('materialsSummary');
@@ -92,13 +125,19 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadData() {
     showLoading(true);
     try {
-      const [ordersRes, clientsRes, productsRes] = await Promise.all([
+      const [ordersRes, clientsRes, productsRes, salesRes, balanceRes, followUpRes] = await Promise.all([
         ApiService.getOrders(),
         ApiService.getClients(),
-        ApiService.getProducts()
+        ApiService.getProducts(),
+        ApiService.getSales(),
+        ApiService.getBalance(),
+        ApiService.getFollowUp(),
       ]);
 
       if (ordersRes.ok) allOrders = ordersRes.data || [];
+      if (salesRes.ok)  allSales  = salesRes.data || [];
+      if (balanceRes.ok) balanceData = balanceRes.data;
+      if (followUpRes.ok) followUpData = followUpRes.data;
       if (clientsRes.ok) {
         clients = clientsRes.data || [];
         clientsMap = {};
@@ -109,6 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
         productsMap = {};
         prods.forEach(p => { productsMap[p.id] = p; });
       }
+
+      // Fetch goal from server (meta stored in localStorage)
+      try {
+        const goalRes = await ApiService.getGoalSummary(metaMensal);
+        if (goalRes.ok) goalData = goalRes.data;
+      } catch (_) { /* ignore */ }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     }
@@ -123,36 +168,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderAll() {
     const filtered = applyTemporalFilter(allOrders);
-    renderFinancialCards(allOrders);
+    renderGoalAndCaixinha();
+    renderFinancialCards();
+    renderPerformanceIndicators();
+    renderCharts();
     renderPendingPayments(allOrders);
     renderMaterialsSummary(allOrders);
     renderKanban(filtered);
     renderHistory(allOrders);
   }
 
-  // ── Financial Cards ────────────────────────────────────
+  // ── Date Range Helpers ─────────────────────────────────
 
-  function renderFinancialCards(orders) {
-    // Previsão = all delivered, Realizado = paid (any status)
-    let baseOrders;
-    if (financeMode === 'realizado') {
-      baseOrders = orders.filter(o => o.status_pagamento === 'pago');
-    } else {
-      baseOrders = orders.filter(o => o.status === 'entregue');
+  function getDateRangeBounds() {
+    const now = new Date();
+    if (dateRange === 'today') {
+      const s = startOfDay(now);
+      const e = new Date(s); e.setDate(e.getDate() + 1);
+      return { start: s, end: e };
+    }
+    if (dateRange === 'month') {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      const e = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      return { start: s, end: e };
+    }
+    return { start: null, end: null }; // total — no filter
+  }
+
+  function filterByDateRange(items, dateField) {
+    const { start, end } = getDateRangeBounds();
+    if (!start) return items; // total
+    return items.filter(item => {
+      const d = item[dateField] ? new Date(item[dateField]) : null;
+      return d && d >= start && d < end;
+    });
+  }
+
+  // ── Goal + Caixinha ────────────────────────────────────
+
+  function renderGoalAndCaixinha() {
+    // Use server-calculated goal data when available
+    if (goalData) {
+      var realized = goalData.realizado;
+      var pct = goalData.percentual;
+      var caixinha = goalData.caixinha;
+
+      metaFill.style.width = pct.toFixed(1) + '%';
+      metaRealized.textContent = formatCurrency(realized);
+      metaTarget.textContent = metaMensal > 0 ? 'Meta: ' + formatCurrency(metaMensal) : 'Meta: não definida';
+      metaPct.textContent = metaMensal > 0 ? pct.toFixed(0) + '%' : '—';
+
+      metaFill.classList.remove('goal-fill--ok', 'goal-fill--warn', 'goal-fill--danger');
+      if (pct >= 80) metaFill.classList.add('goal-fill--ok');
+      else if (pct >= 40) metaFill.classList.add('goal-fill--warn');
+      else metaFill.classList.add('goal-fill--danger');
+
+      caixinhaValue.textContent = formatCurrency(caixinha);
+      return;
     }
 
-    const totalRevenue = baseOrders.reduce((s, o) => s + (o.valor_total || 0), 0);
-    const totalProfit = baseOrders.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
-    const avgTicket = baseOrders.length ? totalRevenue / baseOrders.length : 0;
+    // Fallback: client-side calculation
+    var now = new Date();
+    var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    var monthSales = allSales.filter(s => {
+      var d = s.data_venda ? new Date(s.data_venda) : null;
+      return d && d >= monthStart && d < monthEnd;
+    });
+
+    var fbRealized = monthSales.reduce((s, v) => s + (v.valor_total || 0), 0);
+    var fbRealizedProfit = monthSales.reduce((s, v) => s + (v.valor_lucro || 0), 0);
+
+    var fbPct = metaMensal > 0 ? Math.min((fbRealized / metaMensal) * 100, 100) : 0;
+    metaFill.style.width = fbPct.toFixed(1) + '%';
+    metaRealized.textContent = formatCurrency(fbRealized);
+    metaTarget.textContent = metaMensal > 0 ? `Meta: ${formatCurrency(metaMensal)}` : 'Meta: não definida';
+    metaPct.textContent = metaMensal > 0 ? `${fbPct.toFixed(0)}%` : '—';
+
+    metaFill.classList.remove('goal-fill--ok', 'goal-fill--warn', 'goal-fill--danger');
+    if (fbPct >= 80) metaFill.classList.add('goal-fill--ok');
+    else if (fbPct >= 40) metaFill.classList.add('goal-fill--warn');
+    else metaFill.classList.add('goal-fill--danger');
+
+    caixinhaValue.textContent = formatCurrency(fbRealizedProfit * 0.1);
+  }
+
+  // ── Financial Cards ────────────────────────────────────
+
+  function renderFinancialCards() {
+    let totalRevenue, totalProfit, count, modeLabel;
+
+    if (financeMode === 'realizado') {
+      // Realizado: dados do Livro Caixa (GET /sales)
+      const filtered = filterByDateRange(allSales, 'data_venda');
+      totalRevenue = filtered.reduce((s, v) => s + (v.valor_total || 0), 0);
+      totalProfit  = filtered.reduce((s, v) => s + (v.valor_lucro || 0), 0);
+      count = filtered.length;
+      modeLabel = 'vendas';
+    } else {
+      // Previsão: orders entregues EXCLUINDO as já pagas (evita overlap)
+      const delivered = allOrders.filter(o => o.status === 'entregue' && o.status_pagamento !== 'pago');
+      const filtered = filterByDateRange(delivered, 'updated_at');
+      totalRevenue = filtered.reduce((s, o) => s + (o.valor_total || 0), 0);
+      totalProfit  = filtered.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
+      count = filtered.length;
+      modeLabel = 'previstos';
+    }
+
+    const avgTicket = count ? totalRevenue / count : 0;
     const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
-    const modeLabel = financeMode === 'realizado' ? 'pagos' : 'entregues';
-
-    const paidCount = orders.filter(o => o.status_pagamento === 'pago').length;
-    const totalCount = orders.filter(o => o.status !== 'cancelado').length;
+    const paidCount = allOrders.filter(o => o.status_pagamento === 'pago').length;
+    const totalCount = allOrders.filter(o => o.status !== 'cancelado').length;
 
     metricRevenue.textContent = formatCurrency(totalRevenue);
-    metricRevenueHint.textContent = `${baseOrders.length} pedido${baseOrders.length !== 1 ? 's' : ''} ${modeLabel}`;
+    metricRevenueHint.textContent = `${count} ${modeLabel}`;
 
     metricProfit.textContent = formatCurrency(totalProfit);
     metricProfitMargin.textContent = `Margem: ${margin.toFixed(1)}%`;
@@ -160,13 +290,171 @@ document.addEventListener('DOMContentLoaded', () => {
     metricProfit.classList.toggle('finance-value--danger', totalProfit < 0);
 
     metricTicket.textContent = formatCurrency(avgTicket);
-    metricTicketHint.textContent = baseOrders.length ? `por pedido ${modeLabel}` : 'sem dados';
+    metricTicketHint.textContent = count ? `por ${financeMode === 'realizado' ? 'venda' : 'pedido'}` : 'sem dados';
 
     metricPaid.textContent = `${paidCount} / ${totalCount}`;
     const pendingPayment = totalCount - paidCount;
     metricPaidHint.textContent = paidCount === totalCount && totalCount > 0
       ? '✓ Todos pagos!'
       : `${pendingPayment} pendente${pendingPayment !== 1 ? 's' : ''}`;
+  }
+
+  // ── Performance Indicators ─────────────────────────────
+
+  function renderPerformanceIndicators() {
+    // 1) Follow-up: use server JOIN endpoint data when available
+    if (followUpData && followUpData.count > 0) {
+      var avg = followUpData.avg_days;
+      perfFollowUp.textContent = avg < 1 ? '< 1 dia' : avg.toFixed(1) + ' dias';
+      perfFollowUpHint.textContent = 'baseado em ' + followUpData.count + ' vendas';
+    } else {
+      perfFollowUp.textContent = '— dias';
+      perfFollowUpHint.textContent = 'sem dados';
+    }
+
+    // 2) Índice de Recompra: % clientes com >1 venda finalizada
+    const clientSalesCount = {};
+    let uniqueClients = 0;
+    let repeatClients = 0;
+    allSales.forEach(s => {
+      if (s.client_id) {
+        clientSalesCount[s.client_id] = (clientSalesCount[s.client_id] || 0) + 1;
+      }
+    });
+    Object.values(clientSalesCount).forEach(cnt => {
+      uniqueClients++;
+      if (cnt > 1) repeatClients++;
+    });
+    const repurchasePct = uniqueClients > 0 ? (repeatClients / uniqueClients * 100) : 0;
+    perfRecompra.textContent = `${repurchasePct.toFixed(0)}%`;
+    perfRecompraHint.textContent = `${repeatClients} de ${uniqueClients} clientes`;
+
+    // 3) Vendas do mês
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const monthSales = allSales.filter(s => {
+      const d = s.data_venda ? new Date(s.data_venda) : null;
+      return d && d >= monthStart && d < monthEnd;
+    });
+    perfSalesMonth.textContent = monthSales.length;
+    const monthRevenue = monthSales.reduce((s, v) => s + (v.valor_total || 0), 0);
+    perfSalesMonthHint.textContent = `${formatCurrency(monthRevenue)} este mês`;
+  }
+
+  // ── Charts ─────────────────────────────────────────────
+
+  function renderCharts() {
+    renderBarChart();
+    renderPieChart();
+  }
+
+  function renderBarChart() {
+    // Last 6 months of sales
+    const now = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        label: d.toLocaleDateString('pt-BR', { month: 'short' }),
+        year: d.getFullYear(),
+        month: d.getMonth(),
+        count: 0,
+        revenue: 0,
+      });
+    }
+
+    allSales.forEach(s => {
+      const d = s.data_venda ? new Date(s.data_venda) : null;
+      if (!d) return;
+      const bucket = months.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
+      if (bucket) {
+        bucket.count++;
+        bucket.revenue += s.valor_total || 0;
+      }
+    });
+
+    const maxRevenue = Math.max(...months.map(m => m.revenue), 1);
+
+    chartSalesMonth.innerHTML = months.map(m => {
+      const pct = (m.revenue / maxRevenue * 100).toFixed(1);
+      return `
+        <div class="chart-bar-col">
+          <div class="chart-bar-value">${formatCurrency(m.revenue)}</div>
+          <div class="chart-bar" style="height:${Math.max(pct, 2)}%"></div>
+          <span class="chart-bar-label">${m.label}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function renderPieChart() {
+    // Pie: "Novos" vs "Recorrentes"
+    const clientSalesCount = {};
+    allSales.forEach(s => {
+      if (s.client_id) clientSalesCount[s.client_id] = (clientSalesCount[s.client_id] || 0) + 1;
+    });
+
+    let newClients = 0, repeatClients = 0;
+    Object.values(clientSalesCount).forEach(cnt => {
+      if (cnt > 1) repeatClients++; else newClients++;
+    });
+
+    // Also count anonymous sales
+    const anonCount = allSales.filter(s => !s.client_id).length;
+
+    const total = newClients + repeatClients + (anonCount > 0 ? 1 : 0);
+    if (total === 0) {
+      pieRepurchase.parentElement.innerHTML = '<p class="chart-empty">Sem dados de clientes</p>';
+      return;
+    }
+
+    // Draw SVG pie (simple 2-3 segment)
+    const segments = [];
+    if (repeatClients > 0) segments.push({ label: 'Recorrentes', value: repeatClients, color: '#16a34a' });
+    if (newClients > 0)    segments.push({ label: 'Novos', value: newClients, color: '#3b82f6' });
+    if (anonCount > 0)     segments.push({ label: 'Anônimos', value: anonCount, color: '#a1a1aa' });
+
+    const segTotal = segments.reduce((s, seg) => s + seg.value, 0);
+
+    // Canvas pie
+    const canvas = pieRepurchase;
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2, cy = canvas.height / 2, r = 65;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let startAngle = -Math.PI / 2;
+    segments.forEach(seg => {
+      const slice = (seg.value / segTotal) * 2 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+      startAngle += slice;
+    });
+
+    // Donut hole
+    ctx.beginPath();
+    ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Center text
+    ctx.fillStyle = '#18181b';
+    ctx.font = 'bold 18px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(segTotal, cx, cy - 6);
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillStyle = '#71717a';
+    ctx.fillText('clientes', cx, cy + 10);
+
+    // Legend
+    pieLegend.innerHTML = segments.map(seg => {
+      const pct = (seg.value / segTotal * 100).toFixed(0);
+      return `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${seg.color}"></span>${seg.label}: ${seg.value} (${pct}%)</span>`;
+    }).join('');
   }
 
   // ── Pending Payments ───────────────────────────────────
@@ -286,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasAnyOrders = allOrders.length > 0;
 
     kanbanBoard.style.display   = hasAnyOrders ? '' : 'none';
+    if (kanbanMobileTabs) kanbanMobileTabs.style.display = hasAnyOrders ? '' : 'none';
     emptyState.style.display    = !hasAnyOrders ? '' : 'none';
     emptyFilter.style.display   = hasAnyOrders && !hasActiveOrders ? '' : 'none';
   }
@@ -864,8 +1153,35 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.finance-mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         financeMode = btn.dataset.financeMode;
-        renderFinancialCards(allOrders);
+        renderFinancialCards();
       });
+    });
+
+    // Date range filter (Hoje | Mês | Total)
+    document.querySelectorAll('.date-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.date-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        dateRange = btn.dataset.range;
+        renderFinancialCards();
+      });
+    });
+
+    // Meta edit button
+    document.getElementById('btnEditMeta').addEventListener('click', async () => {
+      const input = prompt('Defina sua Meta Mensal (R$):', metaMensal || '');
+      if (input === null) return;
+      const val = parseFloat(input.replace(',', '.'));
+      if (!isNaN(val) && val >= 0) {
+        metaMensal = val;
+        localStorage.setItem(META_KEY, val);
+        // Re-fetch goal from server with new meta value
+        try {
+          const goalRes = await ApiService.getGoalSummary(metaMensal);
+          if (goalRes.ok) goalData = goalRes.data;
+        } catch (_) { /* ignore */ }
+        renderGoalAndCaixinha();
+      }
     });
 
     // Temporal filters
@@ -875,6 +1191,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add('active');
         activeFilter = btn.dataset.filter;
         renderAll();
+      });
+    });
+
+    // Kanban mobile tabs
+    document.querySelectorAll('.kanban-mobile-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.kanban-mobile-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const col = btn.dataset.col;
+        document.querySelectorAll('.kanban-board .kanban-column').forEach(c => {
+          c.classList.toggle('kanban-column--active', c.dataset.col === col);
+        });
       });
     });
 

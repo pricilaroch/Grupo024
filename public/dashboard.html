@@ -23,12 +23,48 @@
         <span class="badge">Conta Ativa</span>
       </div>
 
+      <!-- ═══════════ Goal Progress + Caixinha ═══════════ -->
+      <div class="goal-row">
+        <div class="goal-card goal-card--meta">
+          <div class="goal-card-header">
+            <span class="goal-card-title">&#127919; Meta Mensal</span>
+            <button id="btnEditMeta" class="btn-icon--inline" title="Editar meta">&#9998;</button>
+          </div>
+          <div class="goal-progress-wrap">
+            <div class="goal-progress-bar">
+              <div class="goal-progress-fill" id="metaFill" style="width:0%"></div>
+            </div>
+            <div class="goal-progress-labels">
+              <span id="metaRealized">R$ 0,00</span>
+              <span id="metaTarget">Meta: R$ 0,00</span>
+            </div>
+            <span class="goal-progress-pct" id="metaPct">0%</span>
+          </div>
+        </div>
+        <div class="goal-card goal-card--caixinha">
+          <div class="goal-card-header">
+            <span class="goal-card-title">&#128176; Caixinha (Reserva)</span>
+            <small class="goal-card-sub">10% do Lucro Realizado</small>
+          </div>
+          <span class="goal-card-value finance-value--success" id="caixinhaValue">R$ 0,00</span>
+        </div>
+      </div>
+
       <!-- ═══════════ Financial Intelligence ═══════════ -->
       <div class="finance-header">
         <h2 class="section-title">Inteligência financeira</h2>
-        <div class="finance-mode-toggle">
-          <button class="finance-mode-btn active" data-finance-mode="previsao" title="Todos os pedidos entregues">Previsão</button>
-          <button class="finance-mode-btn" data-finance-mode="realizado" title="Apenas pedidos entregues E pagos">Realizado</button>
+        <div class="finance-header-controls">
+          <!-- Date range filter -->
+          <div class="date-filter-toggle" id="dateFilterToggle">
+            <button class="date-filter-btn active" data-range="month">Mês</button>
+            <button class="date-filter-btn" data-range="today">Hoje</button>
+            <button class="date-filter-btn" data-range="total">Total</button>
+          </div>
+          <div class="finance-mode-toggle">
+            <a href="/finance.html" class="btn btn-sm btn-secondary" style="margin-right:0.5rem;">&#128176; Venda Rápida</a>
+            <button class="finance-mode-btn active" data-finance-mode="previsao" title="Encomendas entregues (excl. já pagas)">Previsão</button>
+            <button class="finance-mode-btn" data-finance-mode="realizado" title="Dados do Livro Caixa (vendas reais)">Realizado</button>
+          </div>
         </div>
       </div>
       <div class="finance-grid">
@@ -78,6 +114,52 @@
         <div id="pendingPaymentsList" class="pending-payments-list"></div>
       </div>
 
+      <!-- ═══════════ Performance Indicators ═══════════ -->
+      <div class="perf-section">
+        <h2 class="section-title">Indicadores de Performance</h2>
+        <div class="perf-grid">
+          <div class="perf-card">
+            <span class="perf-card-icon">&#9202;</span>
+            <div class="perf-card-body">
+              <span class="perf-card-label">Tempo Médio (Follow-up)</span>
+              <span class="perf-card-value" id="perfFollowUp">— dias</span>
+              <span class="perf-card-hint" id="perfFollowUpHint">entre criação e venda</span>
+            </div>
+          </div>
+          <div class="perf-card">
+            <span class="perf-card-icon">&#128257;</span>
+            <div class="perf-card-body">
+              <span class="perf-card-label">Índice de Recompra</span>
+              <span class="perf-card-value" id="perfRecompra">0%</span>
+              <span class="perf-card-hint" id="perfRecompraHint">clientes com >1 venda</span>
+            </div>
+          </div>
+          <div class="perf-card">
+            <span class="perf-card-icon">&#128200;</span>
+            <div class="perf-card-body">
+              <span class="perf-card-label">Vendas no Mês</span>
+              <span class="perf-card-value" id="perfSalesMonth">0</span>
+              <span class="perf-card-hint" id="perfSalesMonthHint">este mês</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════ Charts Section ═══════════ -->
+      <div class="charts-section">
+        <div class="chart-container">
+          <h3 class="chart-title">Vendas por Mês</h3>
+          <div class="chart-bar-wrap" id="chartSalesMonth"></div>
+        </div>
+        <div class="chart-container">
+          <h3 class="chart-title">Recompra de Clientes</h3>
+          <div class="chart-pie-wrap" id="chartRepurchase">
+            <canvas id="pieRepurchase" width="160" height="160"></canvas>
+            <div class="chart-pie-legend" id="pieLegend"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ═══════════ Materials Summary ═══════════ -->
       <div id="materialsSummary" class="materials-summary" style="display:none;">
         <div class="materials-header">
@@ -117,9 +199,22 @@
 
         <div id="loadingState" class="kanban-loading">Carregando encomendas...</div>
 
+        <!-- Mobile kanban tabs -->
+        <div class="kanban-mobile-tabs" id="kanbanMobileTabs" style="display:none;">
+          <button class="kanban-mobile-tab active" data-col="pending">
+            <span class="kanban-column-dot kanban-dot--pending"></span> Pendentes
+          </button>
+          <button class="kanban-mobile-tab" data-col="production">
+            <span class="kanban-column-dot kanban-dot--production"></span> Produção
+          </button>
+          <button class="kanban-mobile-tab" data-col="ready">
+            <span class="kanban-column-dot kanban-dot--ready"></span> Prontos
+          </button>
+        </div>
+
         <div id="kanbanBoard" class="kanban-board" style="display:none;">
           <!-- Pendentes -->
-          <div class="kanban-column">
+          <div class="kanban-column kanban-column--active" data-col="pending">
             <div class="kanban-column-header kanban-col--pending">
               <span class="kanban-column-dot kanban-dot--pending"></span>
               <span class="kanban-column-name">Pendentes</span>
@@ -129,7 +224,7 @@
           </div>
 
           <!-- Em Produção -->
-          <div class="kanban-column">
+          <div class="kanban-column" data-col="production">
             <div class="kanban-column-header kanban-col--production">
               <span class="kanban-column-dot kanban-dot--production"></span>
               <span class="kanban-column-name">Em Produção</span>
@@ -139,7 +234,7 @@
           </div>
 
           <!-- Prontos -->
-          <div class="kanban-column">
+          <div class="kanban-column" data-col="ready">
             <div class="kanban-column-header kanban-col--ready">
               <span class="kanban-column-dot kanban-dot--ready"></span>
               <span class="kanban-column-name">Prontos</span>
