@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastrar Produto - Sistema de Gestão</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav id="navbar" class="navbar"></nav>
+
+  <div class="container">
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Cadastrar Produto</h1>
+        <p>Adicione um novo item ao seu catálogo.</p>
+      </div>
+
+      <div class="card">
+        <form id="productRegisterForm" novalidate>
+          <div id="errorMessage" class="alert alert-error" style="display:none;"></div>
+
+          <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input id="nome" name="nome" type="text" placeholder="Ex: Bolo de Chocolate" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="descricao">Descrição *</label>
+            <textarea id="descricao" name="descricao" rows="3" placeholder="Descrição do produto"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-group-half">
+              <label for="preco_venda">Preço de Venda (R$) *</label>
+              <input id="preco_venda" name="preco_venda" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="form-group form-group-half">
+              <label for="preco_custo">Preço de Custo (R$)</label>
+              <input id="preco_custo" name="preco_custo" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+          </div>
+
+          <div id="profitPreview" class="profit-preview" style="display:none;">
+            <div class="profit-preview-row">
+              <span class="profit-preview-label">Lucro estimado</span>
+              <span id="profitValue" class="profit-preview-value">R$ 0,00</span>
+            </div>
+            <div class="profit-preview-row">
+              <span class="profit-preview-label">Margem</span>
+              <span id="marginValue" class="profit-preview-margin">0%</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-group-half">
+              <label for="categoria">Categoria *</label>
+              <input id="categoria" name="categoria" type="text" placeholder="Ex: Doces">
+            </div>
+            <div class="form-group form-group-half">
+              <label for="unidade_medida">Unidade de Medida</label>
+              <input id="unidade_medida" name="unidade_medida" type="text" placeholder="Ex: unidade, kg">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-group-half">
+              <label for="quantidade_estoque">Estoque</label>
+              <input id="quantidade_estoque" name="quantidade_estoque" type="number" min="0" step="1" placeholder="0">
+            </div>
+            <div class="form-group form-group-half">
+              <label for="tempo_producao_minutos">Tempo de Produção (min)</label>
+              <input id="tempo_producao_minutos" name="tempo_producao_minutos" type="number" min="0" step="1" placeholder="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="imagem_url">URL da Imagem</label>
+            <input id="imagem_url" name="imagem_url" type="url" placeholder="https://exemplo.com/foto.jpg">
+          </div>
+
+          <div class="form-actions">
+            <a href="/products.html" class="btn btn-secondary">Voltar</a>
+            <button type="submit" class="btn btn-primary">Salvar Produto</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/services/api.js"></script>
+  <script src="/js/services/guard.js"></script>
+  <script src="/js/product_register.js"></script>
+</body>
+</html>

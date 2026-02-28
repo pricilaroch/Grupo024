@@ -49,4 +49,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+        // --- Toggle mostrar/ocultar senha ---
+        const senhaInput = document.getElementById('senha');
+        const toggleBtn = document.querySelector('.password-toggle');
+        if (senhaInput && toggleBtn) {
+            toggleBtn.addEventListener('click', (e) => {
+                const isPwd = senhaInput.getAttribute('type') === 'password';
+                senhaInput.setAttribute('type', isPwd ? 'text' : 'password');
+                toggleBtn.setAttribute('aria-label', isPwd ? 'Ocultar senha' : 'Mostrar senha');
+                toggleBtn.setAttribute('title', isPwd ? 'Ocultar senha' : 'Mostrar senha');
+                // alterna aparência do ícone (simples via CSS swap de opacidade)
+                toggleBtn.classList.toggle('active', isPwd);
+            });
+        }
 });

@@ -27,7 +27,16 @@
 
         <div class="form-group">
           <label for="senha">Senha</label>
-          <input type="password" id="senha" name="senha" placeholder="Sua senha" required>
+          <div class="input-with-icon">
+            <input type="password" id="senha" name="senha" placeholder="Sua senha" required>
+            <button type="button" class="icon-button password-toggle" aria-label="Mostrar senha" title="Mostrar senha">
+              <!-- eye icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path class="eye" d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle class="pupil" cx="12" cy="12" r="3" fill="currentColor" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div id="errorMessage" class="alert alert-error" style="display: none;"></div>

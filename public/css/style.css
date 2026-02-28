@@ -380,6 +380,42 @@ body {
   opacity: 0.6;
 }
 
+/* Input com ícone (ex.: campo senha) */
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon input {
+  padding-right: 3rem;
+}
+
+.icon-button {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 34px;
+  width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  border-radius: 6px;
+}
+
+.icon-button:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.icon-button svg { display: block; }
+
+.icon-button.active .eye { opacity: 0.95; }
+
+
 /* Radio group */
 .radio-group {
   display: flex;
