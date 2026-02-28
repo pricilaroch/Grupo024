@@ -7,23 +7,11 @@ export const errorResponseSchema = z.object({
 });
 
 export const errorResponses = {
-  400: {
-    description: 'Erro de validação',
-    content: { 'application/json': { schema: errorResponseSchema } },
-  },
-  401: {
-    description: 'Não autorizado — token inválido, expirado ou usuário sem permissão',
-    content: { 'application/json': { schema: errorResponseSchema } },
-  },
-  404: {
-    description: 'Recurso não encontrado',
-    content: { 'application/json': { schema: errorResponseSchema } },
-  },
-  500: {
-    description: 'Erro interno do servidor',
-    content: { 'application/json': { schema: errorResponseSchema } },
-  },
-} as const;
+  400: errorResponseSchema.describe('Erro de validação'),
+  401: errorResponseSchema.describe('Não autorizado — token inválido, expirado ou usuário sem permissão'),
+  404: errorResponseSchema.describe('Recurso não encontrado'),
+  500: errorResponseSchema.describe('Erro interno do servidor'),
+};
 
 // ── Shared param schemas ────────────────────────────────────────
 

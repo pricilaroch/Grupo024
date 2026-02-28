@@ -55,7 +55,7 @@ import { buildSaleRoutes } from './routes/saleRoutes';
 import { buildExpenseRoutes } from './routes/expenseRoutes';
 import { buildAnalyticsRoutes } from './routes/analyticsRoutes';
 
-async function main(): Promise<void> {
+export async function buildServer() {
   const fastify = Fastify({ logger: true });
 
   // ─── Zod Type Provider ─────────────────────────────────
@@ -178,12 +178,20 @@ async function main(): Promise<void> {
   await fastify.register(buildExpenseRoutes(expenseController), { prefix: '/expenses' });
   await fastify.register(buildAnalyticsRoutes(analyticsController), { prefix: '/analytics' });
 
-  // ─── Start ─────────────────────────────────────────────
+  return fastify;
+}
+
+// ─── Start ─────────────────────────────────────────────
+async function main(): Promise<void> {
+  const fastify = await buildServer();
   await fastify.listen({ port: config.port, host: '0.0.0.0' });
   console.log(`Servidor rodando em http://localhost:${config.port}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Executa apenas quando chamado diretamente (não quando importado)
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

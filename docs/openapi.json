@@ -1,0 +1,6386 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Gestão de Encomendas API",
+    "description": "API para gerenciamento de encomendas, vendas, despesas e produção artesanal.",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {}
+  },
+  "paths": {
+    "/users/register": {
+      "post": {
+        "summary": "Registrar novo usuário",
+        "tags": [
+          "Users"
+        ],
+        "description": "Cria uma conta de produtor pendente de aprovação pelo admin.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "minLength": 11,
+                    "maxLength": 14,
+                    "pattern": "^[\\d.\\-]+$"
+                  },
+                  "cnpj": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 18,
+                    "pattern": "^[\\d.\\-/]*$"
+                  },
+                  "nome_fantasia": {
+                    "type": "string",
+                    "minLength": 2
+                  },
+                  "categoria_producao": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "telefone": {
+                    "type": "string",
+                    "minLength": 10
+                  },
+                  "data_nascimento": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "observacao": {
+                    "default": "",
+                    "type": "string"
+                  },
+                  "endereco": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "senha": {
+                    "type": "string",
+                    "minLength": 6
+                  }
+                },
+                "required": [
+                  "nome",
+                  "cpf",
+                  "nome_fantasia",
+                  "categoria_producao",
+                  "email",
+                  "telefone",
+                  "data_nascimento",
+                  "endereco",
+                  "senha"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "Autenticar usuário",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Realiza login com CPF e senha, retornando um token JWT.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "senha": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "senha"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/pending": {
+      "get": {
+        "summary": "Listar usuários pendentes",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Retorna todos os usuários com status \"pendente\" aguardando aprovação.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "nome": {
+                        "type": "string"
+                      },
+                      "cpf": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "telefone": {
+                        "type": "string"
+                      },
+                      "nome_fantasia": {
+                        "type": "string"
+                      },
+                      "categoria_producao": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nome",
+                      "cpf",
+                      "email",
+                      "telefone",
+                      "nome_fantasia",
+                      "categoria_producao",
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{id}/status": {
+      "patch": {
+        "summary": "Aprovar ou reprovar usuário",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Atualiza o status de um usuário pendente para \"aprovado\" ou \"reprovado\".",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "aprovado",
+                      "reprovado"
+                    ]
+                  },
+                  "motivo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/": {
+      "post": {
+        "summary": "Criar produto",
+        "tags": [
+          "Products"
+        ],
+        "description": "Cria um novo produto vinculado ao usuário autenticado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "descricao": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "preco_venda": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "preco_custo": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "unidade_medida": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "quantidade_estoque": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "tempo_producao_minutos": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "imagem_url": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "minLength": 3
+                  }
+                },
+                "required": [
+                  "nome",
+                  "descricao",
+                  "preco_venda",
+                  "categoria"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "nome": {
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "type": "string"
+                    },
+                    "preco_venda": {
+                      "type": "number"
+                    },
+                    "preco_custo": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "unidade_medida": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "quantidade_estoque": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "tempo_producao_minutos": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "imagem_url": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "categoria": {
+                      "type": "string"
+                    },
+                    "ativo": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "nome",
+                    "descricao",
+                    "preco_venda",
+                    "categoria"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar produtos do usuário",
+        "tags": [
+          "Products"
+        ],
+        "description": "Retorna todos os produtos do usuário autenticado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "user_id": {
+                        "type": "number"
+                      },
+                      "nome": {
+                        "type": "string"
+                      },
+                      "descricao": {
+                        "type": "string"
+                      },
+                      "preco_venda": {
+                        "type": "number"
+                      },
+                      "preco_custo": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "unidade_medida": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "quantidade_estoque": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "tempo_producao_minutos": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "imagem_url": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "categoria": {
+                        "type": "string"
+                      },
+                      "ativo": {
+                        "type": "boolean"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "user_id",
+                      "nome",
+                      "descricao",
+                      "preco_venda",
+                      "categoria"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "summary": "Buscar produto por ID",
+        "tags": [
+          "Products"
+        ],
+        "description": "Retorna os detalhes de um produto específico do usuário.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "nome": {
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "type": "string"
+                    },
+                    "preco_venda": {
+                      "type": "number"
+                    },
+                    "preco_custo": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "unidade_medida": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "quantidade_estoque": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "tempo_producao_minutos": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "imagem_url": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "categoria": {
+                      "type": "string"
+                    },
+                    "ativo": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "nome",
+                    "descricao",
+                    "preco_venda",
+                    "categoria"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar produto",
+        "tags": [
+          "Products"
+        ],
+        "description": "Atualiza parcialmente os dados de um produto existente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "descricao": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "preco_venda": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "preco_custo": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "unidade_medida": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "quantidade_estoque": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "tempo_producao_minutos": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "imagem_url": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "ativo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "nome": {
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "type": "string"
+                    },
+                    "preco_venda": {
+                      "type": "number"
+                    },
+                    "preco_custo": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "unidade_medida": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "quantidade_estoque": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "tempo_producao_minutos": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "imagem_url": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "categoria": {
+                      "type": "string"
+                    },
+                    "ativo": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "nome",
+                    "descricao",
+                    "preco_venda",
+                    "categoria"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir produto",
+        "tags": [
+          "Products"
+        ],
+        "description": "Remove um produto do usuário autenticado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/": {
+      "post": {
+        "summary": "Criar cliente",
+        "tags": [
+          "Clients"
+        ],
+        "description": "Cadastra um novo cliente vinculado ao usuário autenticado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "telefone": {
+                    "type": "string",
+                    "pattern": "^\\(?\\d{2}\\)?\\s?\\d{4,5}-?\\d{4}$"
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "email",
+                        "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "endereco": {
+                    "type": "string",
+                    "minLength": 5
+                  }
+                },
+                "required": [
+                  "nome",
+                  "telefone",
+                  "endereco"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "nome": {
+                      "type": "string"
+                    },
+                    "telefone": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "endereco": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "nome",
+                    "telefone",
+                    "endereco"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar clientes do usuário",
+        "tags": [
+          "Clients"
+        ],
+        "description": "Retorna todos os clientes do usuário autenticado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "user_id": {
+                        "type": "number"
+                      },
+                      "nome": {
+                        "type": "string"
+                      },
+                      "telefone": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "endereco": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "user_id",
+                      "nome",
+                      "telefone",
+                      "endereco"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{id}": {
+      "get": {
+        "summary": "Buscar cliente por ID",
+        "tags": [
+          "Clients"
+        ],
+        "description": "Retorna os detalhes de um cliente específico do usuário.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "nome": {
+                      "type": "string"
+                    },
+                    "telefone": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "endereco": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "nome",
+                    "telefone",
+                    "endereco"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar cliente",
+        "tags": [
+          "Clients"
+        ],
+        "description": "Atualiza parcialmente os dados de um cliente existente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "telefone": {
+                    "type": "string",
+                    "pattern": "^\\(?\\d{2}\\)?\\s?\\d{4,5}-?\\d{4}$"
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "email",
+                        "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "endereco": {
+                    "type": "string",
+                    "minLength": 5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "nome": {
+                      "type": "string"
+                    },
+                    "telefone": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "endereco": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "nome",
+                    "telefone",
+                    "endereco"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir cliente",
+        "tags": [
+          "Clients"
+        ],
+        "description": "Remove um cliente do usuário autenticado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/": {
+      "post": {
+        "summary": "Criar encomenda",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Cria uma nova encomenda com itens vinculados ao usuário autenticado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client_id": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "forma_pagamento": {
+                    "type": "string",
+                    "enum": [
+                      "pix",
+                      "dinheiro",
+                      "cartao_credito",
+                      "cartao_debito"
+                    ]
+                  },
+                  "tipo_entrega": {
+                    "default": "retirada",
+                    "type": "string",
+                    "enum": [
+                      "retirada",
+                      "entrega"
+                    ]
+                  },
+                  "taxa_entrega": {
+                    "default": 0,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "desconto": {
+                    "default": 0,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "data_entrega": {
+                    "type": "string"
+                  },
+                  "observacoes": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "product_id": {
+                          "type": "integer",
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        },
+                        "quantidade": {
+                          "type": "integer",
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "product_id",
+                        "quantidade"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "client_id",
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "client_id": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "forma_pagamento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status_pagamento": {
+                      "type": "string"
+                    },
+                    "tipo_entrega": {
+                      "type": "string"
+                    },
+                    "taxa_entrega": {
+                      "type": "number"
+                    },
+                    "desconto": {
+                      "type": "number"
+                    },
+                    "valor_total": {
+                      "type": "number"
+                    },
+                    "data_entrega": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "observacoes": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "cliente_nome": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "order_id": {
+                            "type": "number"
+                          },
+                          "product_id": {
+                            "type": "number"
+                          },
+                          "quantidade": {
+                            "type": "number"
+                          },
+                          "preco_unitario": {
+                            "type": "number"
+                          },
+                          "subtotal": {
+                            "type": "number"
+                          },
+                          "produto_nome": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "order_id",
+                          "product_id",
+                          "quantidade",
+                          "preco_unitario",
+                          "subtotal"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "client_id",
+                    "status",
+                    "status_pagamento",
+                    "tipo_entrega",
+                    "taxa_entrega",
+                    "desconto",
+                    "valor_total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar encomendas do usuário",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Retorna todas as encomendas do usuário autenticado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "user_id": {
+                        "type": "number"
+                      },
+                      "client_id": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "forma_pagamento": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "status_pagamento": {
+                        "type": "string"
+                      },
+                      "tipo_entrega": {
+                        "type": "string"
+                      },
+                      "taxa_entrega": {
+                        "type": "number"
+                      },
+                      "desconto": {
+                        "type": "number"
+                      },
+                      "valor_total": {
+                        "type": "number"
+                      },
+                      "data_entrega": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "observacoes": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      },
+                      "cliente_nome": {
+                        "type": "string"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "number"
+                            },
+                            "order_id": {
+                              "type": "number"
+                            },
+                            "product_id": {
+                              "type": "number"
+                            },
+                            "quantidade": {
+                              "type": "number"
+                            },
+                            "preco_unitario": {
+                              "type": "number"
+                            },
+                            "subtotal": {
+                              "type": "number"
+                            },
+                            "produto_nome": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "order_id",
+                            "product_id",
+                            "quantidade",
+                            "preco_unitario",
+                            "subtotal"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "user_id",
+                      "client_id",
+                      "status",
+                      "status_pagamento",
+                      "tipo_entrega",
+                      "taxa_entrega",
+                      "desconto",
+                      "valor_total"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "summary": "Buscar encomenda por ID",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Retorna os detalhes de uma encomenda específica, incluindo itens.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "client_id": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "forma_pagamento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status_pagamento": {
+                      "type": "string"
+                    },
+                    "tipo_entrega": {
+                      "type": "string"
+                    },
+                    "taxa_entrega": {
+                      "type": "number"
+                    },
+                    "desconto": {
+                      "type": "number"
+                    },
+                    "valor_total": {
+                      "type": "number"
+                    },
+                    "data_entrega": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "observacoes": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "cliente_nome": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "order_id": {
+                            "type": "number"
+                          },
+                          "product_id": {
+                            "type": "number"
+                          },
+                          "quantidade": {
+                            "type": "number"
+                          },
+                          "preco_unitario": {
+                            "type": "number"
+                          },
+                          "subtotal": {
+                            "type": "number"
+                          },
+                          "produto_nome": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "order_id",
+                          "product_id",
+                          "quantidade",
+                          "preco_unitario",
+                          "subtotal"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "client_id",
+                    "status",
+                    "status_pagamento",
+                    "tipo_entrega",
+                    "taxa_entrega",
+                    "desconto",
+                    "valor_total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar encomenda",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Atualiza parcialmente os dados de uma encomenda existente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pendente",
+                      "em_producao",
+                      "pronto",
+                      "entregue",
+                      "cancelado"
+                    ]
+                  },
+                  "forma_pagamento": {
+                    "type": "string",
+                    "enum": [
+                      "pix",
+                      "dinheiro",
+                      "cartao_credito",
+                      "cartao_debito"
+                    ]
+                  },
+                  "status_pagamento": {
+                    "type": "string",
+                    "enum": [
+                      "pendente",
+                      "pago",
+                      "parcial"
+                    ]
+                  },
+                  "tipo_entrega": {
+                    "type": "string",
+                    "enum": [
+                      "retirada",
+                      "entrega"
+                    ]
+                  },
+                  "taxa_entrega": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "desconto": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "data_entrega": {
+                    "type": "string"
+                  },
+                  "observacoes": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "product_id": {
+                          "type": "integer",
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        },
+                        "quantidade": {
+                          "type": "integer",
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "product_id",
+                        "quantidade"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "client_id": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "forma_pagamento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status_pagamento": {
+                      "type": "string"
+                    },
+                    "tipo_entrega": {
+                      "type": "string"
+                    },
+                    "taxa_entrega": {
+                      "type": "number"
+                    },
+                    "desconto": {
+                      "type": "number"
+                    },
+                    "valor_total": {
+                      "type": "number"
+                    },
+                    "data_entrega": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "observacoes": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "cliente_nome": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "order_id": {
+                            "type": "number"
+                          },
+                          "product_id": {
+                            "type": "number"
+                          },
+                          "quantidade": {
+                            "type": "number"
+                          },
+                          "preco_unitario": {
+                            "type": "number"
+                          },
+                          "subtotal": {
+                            "type": "number"
+                          },
+                          "produto_nome": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "order_id",
+                          "product_id",
+                          "quantidade",
+                          "preco_unitario",
+                          "subtotal"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "client_id",
+                    "status",
+                    "status_pagamento",
+                    "tipo_entrega",
+                    "taxa_entrega",
+                    "desconto",
+                    "valor_total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir encomenda",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Remove uma encomenda e seus itens do usuário autenticado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/status": {
+      "get": {
+        "summary": "Filtrar encomendas por status",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Retorna encomendas do usuário filtradas por status (query param ?status=).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "user_id": {
+                        "type": "number"
+                      },
+                      "client_id": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "forma_pagamento": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "status_pagamento": {
+                        "type": "string"
+                      },
+                      "tipo_entrega": {
+                        "type": "string"
+                      },
+                      "taxa_entrega": {
+                        "type": "number"
+                      },
+                      "desconto": {
+                        "type": "number"
+                      },
+                      "valor_total": {
+                        "type": "number"
+                      },
+                      "data_entrega": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "observacoes": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      },
+                      "cliente_nome": {
+                        "type": "string"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "number"
+                            },
+                            "order_id": {
+                              "type": "number"
+                            },
+                            "product_id": {
+                              "type": "number"
+                            },
+                            "quantidade": {
+                              "type": "number"
+                            },
+                            "preco_unitario": {
+                              "type": "number"
+                            },
+                            "subtotal": {
+                              "type": "number"
+                            },
+                            "produto_nome": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "order_id",
+                            "product_id",
+                            "quantidade",
+                            "preco_unitario",
+                            "subtotal"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "user_id",
+                      "client_id",
+                      "status",
+                      "status_pagamento",
+                      "tipo_entrega",
+                      "taxa_entrega",
+                      "desconto",
+                      "valor_total"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/items": {
+      "get": {
+        "summary": "Listar itens de uma encomenda",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Retorna todos os itens vinculados a uma encomenda específica.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "order_id": {
+                        "type": "number"
+                      },
+                      "product_id": {
+                        "type": "number"
+                      },
+                      "quantidade": {
+                        "type": "number"
+                      },
+                      "preco_unitario": {
+                        "type": "number"
+                      },
+                      "subtotal": {
+                        "type": "number"
+                      },
+                      "produto_nome": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "order_id",
+                      "product_id",
+                      "quantidade",
+                      "preco_unitario",
+                      "subtotal"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/status": {
+      "patch": {
+        "summary": "Atualizar status da encomenda",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Atualiza apenas o status de uma encomenda (pendente, em_producao, pronto, entregue, cancelado).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pendente",
+                      "em_producao",
+                      "pronto",
+                      "entregue",
+                      "cancelado"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/payment": {
+      "patch": {
+        "summary": "Atualizar status de pagamento",
+        "tags": [
+          "Orders"
+        ],
+        "description": "Atualiza o status de pagamento de uma encomenda (pendente, pago, parcial).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status_pagamento": {
+                    "type": "string",
+                    "enum": [
+                      "pendente",
+                      "pago",
+                      "parcial"
+                    ]
+                  }
+                },
+                "required": [
+                  "status_pagamento"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/": {
+      "post": {
+        "summary": "Registrar venda",
+        "tags": [
+          "Sales"
+        ],
+        "description": "Registra uma nova venda manual vinculada ao usuário autenticado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client_id": {
+                    "nullable": true,
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "valor_total": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "valor_lucro": {
+                    "type": "number"
+                  },
+                  "forma_pagamento": {
+                    "type": "string",
+                    "enum": [
+                      "pix",
+                      "dinheiro",
+                      "cartao_credito",
+                      "cartao_debito"
+                    ]
+                  },
+                  "data_venda": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "valor_total",
+                  "forma_pagamento"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "client_id": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "valor_total": {
+                      "type": "number"
+                    },
+                    "valor_lucro": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "forma_pagamento": {
+                      "type": "string"
+                    },
+                    "data_venda": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "cliente_nome": {
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "valor_total",
+                    "forma_pagamento"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar vendas do usuário",
+        "tags": [
+          "Sales"
+        ],
+        "description": "Retorna todas as vendas do usuário autenticado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "user_id": {
+                        "type": "number"
+                      },
+                      "client_id": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "valor_total": {
+                        "type": "number"
+                      },
+                      "valor_lucro": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "forma_pagamento": {
+                        "type": "string"
+                      },
+                      "data_venda": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "descricao": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      },
+                      "cliente_nome": {
+                        "nullable": true,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "user_id",
+                      "valor_total",
+                      "forma_pagamento"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/follow-up": {
+      "get": {
+        "summary": "Clientes para follow-up",
+        "tags": [
+          "Sales"
+        ],
+        "description": "Retorna clientes que não compraram recentemente e podem precisar de follow-up.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "client_id": {
+                        "type": "number"
+                      },
+                      "cliente_nome": {
+                        "type": "string"
+                      },
+                      "telefone": {
+                        "type": "string"
+                      },
+                      "ultima_compra": {
+                        "type": "string"
+                      },
+                      "dias_sem_compra": {
+                        "type": "number"
+                      },
+                      "total_compras": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "client_id",
+                      "cliente_nome",
+                      "telefone",
+                      "ultima_compra",
+                      "dias_sem_compra",
+                      "total_compras"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sales/{id}": {
+      "patch": {
+        "summary": "Atualizar venda",
+        "tags": [
+          "Sales"
+        ],
+        "description": "Atualiza parcialmente os dados de uma venda existente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client_id": {
+                    "nullable": true,
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "valor_total": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "valor_lucro": {
+                    "type": "number"
+                  },
+                  "forma_pagamento": {
+                    "type": "string",
+                    "enum": [
+                      "pix",
+                      "dinheiro",
+                      "cartao_credito",
+                      "cartao_debito"
+                    ]
+                  },
+                  "data_venda": {
+                    "type": "string"
+                  },
+                  "descricao": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "client_id": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "valor_total": {
+                      "type": "number"
+                    },
+                    "valor_lucro": {
+                      "nullable": true,
+                      "type": "number"
+                    },
+                    "forma_pagamento": {
+                      "type": "string"
+                    },
+                    "data_venda": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "cliente_nome": {
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "valor_total",
+                    "forma_pagamento"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir venda",
+        "tags": [
+          "Sales"
+        ],
+        "description": "Remove uma venda do usuário autenticado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/": {
+      "post": {
+        "summary": "Criar despesa",
+        "tags": [
+          "Expenses"
+        ],
+        "description": "Registra uma nova despesa vinculada ao usuário autenticado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "valor": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "enum": [
+                      "materia_prima",
+                      "embalagem",
+                      "transporte",
+                      "aluguel",
+                      "energia",
+                      "agua",
+                      "internet",
+                      "marketing",
+                      "equipamento",
+                      "manutencao",
+                      "impostos",
+                      "salarios",
+                      "outros"
+                    ]
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "data_emissao": {
+                    "type": "string"
+                  },
+                  "data_vencimento": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "valor",
+                  "categoria"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "valor": {
+                      "type": "number"
+                    },
+                    "categoria": {
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "data_emissao": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "data_vencimento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "data_pagamento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "valor",
+                    "categoria",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar despesas do usuário",
+        "tags": [
+          "Expenses"
+        ],
+        "description": "Retorna todas as despesas do usuário autenticado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "user_id": {
+                        "type": "number"
+                      },
+                      "valor": {
+                        "type": "number"
+                      },
+                      "categoria": {
+                        "type": "string"
+                      },
+                      "descricao": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "data_emissao": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "data_vencimento": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "data_pagamento": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "user_id",
+                      "valor",
+                      "categoria",
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/{id}": {
+      "patch": {
+        "summary": "Atualizar despesa",
+        "tags": [
+          "Expenses"
+        ],
+        "description": "Atualiza parcialmente os dados de uma despesa existente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "valor": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "enum": [
+                      "materia_prima",
+                      "embalagem",
+                      "transporte",
+                      "aluguel",
+                      "energia",
+                      "agua",
+                      "internet",
+                      "marketing",
+                      "equipamento",
+                      "manutencao",
+                      "impostos",
+                      "salarios",
+                      "outros"
+                    ]
+                  },
+                  "descricao": {
+                    "type": "string"
+                  },
+                  "data_emissao": {
+                    "type": "string"
+                  },
+                  "data_vencimento": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "user_id": {
+                      "type": "number"
+                    },
+                    "valor": {
+                      "type": "number"
+                    },
+                    "categoria": {
+                      "type": "string"
+                    },
+                    "descricao": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "data_emissao": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "data_vencimento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "data_pagamento": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "valor",
+                    "categoria",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir despesa",
+        "tags": [
+          "Expenses"
+        ],
+        "description": "Remove uma despesa do usuário autenticado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/{id}/pay": {
+      "patch": {
+        "summary": "Dar baixa em despesa",
+        "tags": [
+          "Expenses"
+        ],
+        "description": "Marca uma despesa pendente como paga (atualiza status e data_pagamento).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/summary": {
+      "get": {
+        "summary": "Resumo mensal de despesas",
+        "tags": [
+          "Expenses"
+        ],
+        "description": "Retorna o total de despesas agrupado por mês, útil para gráficos de fluxo de caixa.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "mes": {
+                        "type": "string"
+                      },
+                      "total": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "mes",
+                      "total"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/movements": {
+      "get": {
+        "summary": "Extrato de movimentações",
+        "tags": [
+          "Analytics"
+        ],
+        "description": "Retorna o extrato unificado de entradas e saídas do usuário autenticado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string"
+                      },
+                      "descricao": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "valor": {
+                        "type": "number"
+                      },
+                      "data": {
+                        "type": "string"
+                      },
+                      "categoria": {
+                        "nullable": true,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "valor",
+                      "data"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/balance": {
+      "get": {
+        "summary": "Saldo financeiro",
+        "tags": [
+          "Analytics"
+        ],
+        "description": "Retorna o saldo real, projetado, total de entradas/saídas e pendências.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "saldo_real": {
+                      "type": "number"
+                    },
+                    "saldo_projetado": {
+                      "type": "number"
+                    },
+                    "total_entradas": {
+                      "type": "number"
+                    },
+                    "total_saidas": {
+                      "type": "number"
+                    },
+                    "entradas_pendentes": {
+                      "type": "number"
+                    },
+                    "saidas_pendentes": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "saldo_real",
+                    "saldo_projetado",
+                    "total_entradas",
+                    "total_saidas",
+                    "entradas_pendentes",
+                    "saidas_pendentes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/goal": {
+      "get": {
+        "summary": "Meta mensal vs. realizado",
+        "tags": [
+          "Analytics"
+        ],
+        "description": "Compara a meta mensal informada via query param com o valor realizado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            },
+            "in": "query",
+            "name": "meta",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "number"
+                    },
+                    "realizado": {
+                      "type": "number"
+                    },
+                    "percentual": {
+                      "type": "number"
+                    },
+                    "faltam": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "meta",
+                    "realizado",
+                    "percentual",
+                    "faltam"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado — token inválido, expirado ou usuário sem permissão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Não autorizado — token inválido, expirado ou usuário sem permissão"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recurso não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro interno do servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Autenticação e registro"
+    },
+    {
+      "name": "Users",
+      "description": "Gerenciamento de usuários"
+    },
+    {
+      "name": "Admin",
+      "description": "Painel administrativo"
+    },
+    {
+      "name": "Products",
+      "description": "Catálogo de produtos"
+    },
+    {
+      "name": "Clients",
+      "description": "Cadastro de clientes"
+    },
+    {
+      "name": "Orders",
+      "description": "Encomendas e Kanban"
+    },
+    {
+      "name": "Sales",
+      "description": "Registro de vendas"
+    },
+    {
+      "name": "Expenses",
+      "description": "Controle de despesas"
+    },
+    {
+      "name": "Analytics",
+      "description": "Indicadores financeiros e metas"
+    }
+  ]
+}
