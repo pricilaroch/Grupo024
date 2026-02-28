@@ -45,6 +45,7 @@ export interface ISaleRepository {
   findByOrderId(order_id: number): Promise<SaleData | null>;
   update(id: number, data: Partial<SaleData>): Promise<SaleData | null>;
   delete(id: number): Promise<boolean>;
+  getFollowUpAvg(user_id: number): Promise<{ avg_days: number; count: number }>;
 }
 
 export interface ISaleService {
@@ -53,6 +54,7 @@ export interface ISaleService {
   getSalesByUserId(user_id: number): Promise<SaleData[]>;
   updateSale(id: number, dto: UpdateSaleDTO, user_id: number): Promise<SaleData>;
   deleteSale(id: number, user_id: number): Promise<boolean>;
+  getFollowUpAvg(user_id: number): Promise<{ avg_days: number; count: number }>;
 }
 
 export interface ISaleController {

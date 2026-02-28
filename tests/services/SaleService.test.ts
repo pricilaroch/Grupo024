@@ -14,6 +14,7 @@ function createMockSaleRepo(): jest.Mocked<ISaleRepository> {
     findByOrderId: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    getFollowUpAvg: jest.fn(),
   };
 }
 
@@ -468,6 +469,7 @@ describe('OrderService → SaleService integration', () => {
       getSalesByUserId: jest.fn(),
       updateSale: jest.fn(),
       deleteSale: jest.fn(),
+      getFollowUpAvg: jest.fn(),
     };
   }
 

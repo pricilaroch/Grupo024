@@ -420,6 +420,121 @@ const ApiService = {
         }
     },
 
+    // ─── Expenses (Despesas / Contas a Pagar) ────────
+
+    async getExpenses(status) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const qs = status ? `?status=${status}` : '';
+            const response = await fetch(`${this.BASE_URL}/expenses${qs}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar despesas:', error);
+            throw error;
+        }
+    },
+
+    async createExpense(data) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/expenses`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao criar despesa:', error);
+            throw error;
+        }
+    },
+
+    async updateExpense(id, data) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/expenses/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar despesa:', error);
+            throw error;
+        }
+    },
+
+    async payExpense(id) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/expenses/${id}/pay`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao pagar despesa:', error);
+            throw error;
+        }
+    },
+
+    async deleteExpense(id) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/expenses/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 204) return { ok: true, data: {} };
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao excluir despesa:', error);
+            throw error;
+        }
+    },
+
+    async getExpenseSummary() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/expenses/summary`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar resumo de despesas:', error);
+            throw error;
+        }
+    },
+
+    async getFollowUp() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/sales/follow-up`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar follow-up:', error);
+            throw error;
+        }
+    },
+
     getUser() {
         const user = sessionStorage.getItem('user');
         return user ? JSON.parse(user) : null;

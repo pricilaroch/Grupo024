@@ -58,4 +58,10 @@ export class SaleController implements ISaleController {
         }
         reply.status(204).send();
     }
+
+    async followUp(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+        const user_id = request.user.id;
+        const data = await this.saleService.getFollowUpAvg(user_id);
+        reply.status(200).send(data);
+    }
 }

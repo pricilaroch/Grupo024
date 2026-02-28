@@ -44,8 +44,75 @@
 }
 
 /* ===========================
-   Badges for origin (reuses .badge from style.css)
+   Header layout
    =========================== */
+.finance-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ===========================
+   Section tabs (Entradas / Saídas)
+   =========================== */
+.finance-section-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.section-tab {
+  padding: 0.5rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.section-tab:hover {
+  color: var(--foreground);
+}
+
+.section-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ===========================
+   Danger value (negative balance)
+   =========================== */
+.finance-value--danger {
+  color: var(--destructive) !important;
+}
+
+/* ===========================
+   Pay button (row check)
+   =========================== */
+.btn-row--pay {
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: opacity 0.15s;
+}
+
+.btn-row--pay:hover {
+  opacity: 0.85;
+}
 
 /* ===========================
    Confirm modal
@@ -99,6 +166,11 @@
   /* Hide Payment column on small screens */
   .sales-table th:nth-child(5),
   .sales-table td:nth-child(5) {
+    display: none;
+  }
+  /* Hide Description in expenses on small screens */
+  .expenses-table th:nth-child(3),
+  .expenses-table td:nth-child(3) {
     display: none;
   }
 }

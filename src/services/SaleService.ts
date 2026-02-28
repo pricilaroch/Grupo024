@@ -121,4 +121,8 @@ export class SaleService implements ISaleService {
         }
         return await this.saleRepository.delete(id);
     }
+
+    async getFollowUpAvg(user_id: number): Promise<{ avg_days: number; count: number }> {
+        return await this.saleRepository.getFollowUpAvg(user_id);
+    }
 }

@@ -131,4 +131,24 @@ export class SaleRepository implements ISaleRepository {
         );
         return result.changes ? result.changes > 0 : false;
     }
+
+    /**
+     * Calcula a média de dias entre orders.created_at e sales.data_venda
+     * para vendas que têm order_id (follow-up real via JOIN).
+     */
+    async getFollowUpAvg(user_id: number): Promise<{ avg_days: number; count: number }> {
+        const row = await this.db.get(
+            `SELECT
+                AVG(julianday(s.data_venda) - julianday(o.created_at)) AS avg_days,
+                COUNT(*) AS count
+             FROM sales s
+             INNER JOIN orders o ON s.order_id = o.id
+             WHERE s.user_id = ? AND s.order_id IS NOT NULL`,
+            user_id
+        );
+        return {
+            avg_days: (row as any)?.avg_days ?? 0,
+            count: (row as any)?.count ?? 0,
+        };
+    }
 }
