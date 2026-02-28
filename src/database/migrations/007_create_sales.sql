@@ -16,3 +16,7 @@ CREATE TABLE IF NOT EXISTS sales (
     FOREIGN KEY (client_id) REFERENCES clients(id),
     FOREIGN KEY (order_id)  REFERENCES orders(id)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_order_id_unique
+ON sales(order_id)
+WHERE order_id IS NOT NULL;

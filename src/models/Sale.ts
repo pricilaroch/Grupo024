@@ -60,6 +60,7 @@ export interface ISaleService {
 export interface ISaleController {
   create(request: FastifyRequest, reply: FastifyReply): Promise<void>;
   getByUserId(request: FastifyRequest, reply: FastifyReply): Promise<void>;
+  followUp(request: FastifyRequest, reply: FastifyReply): Promise<void>;
   update(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void>;
   delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<void>;
 }
