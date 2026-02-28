@@ -7,7 +7,22 @@
    Dashboard Layout — wider for PC
    =========================== */
 .container-dashboard {
-  max-width: 1320px;
+  max-width: 100%;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@media (min-width: 641px) {
+  .container-dashboard {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-dashboard {
+    max-width: 1320px;
+  }
 }
 
 /* ===========================
@@ -41,7 +56,13 @@
   background: none;
   cursor: pointer;
   transition: color 0.15s, background-color 0.15s;
-  min-height: 28px;
+  min-height: 44px;
+}
+
+@media (min-width: 641px) {
+  .finance-mode-btn {
+    min-height: 28px;
+  }
 }
 
 .finance-mode-btn:hover {
@@ -369,6 +390,12 @@
   cursor: pointer;
   transition: background-color 0.15s, transform 0.1s;
   line-height: 1;
+  /* Touch-friendly */
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-card:hover {
@@ -500,6 +527,11 @@
   border-radius: var(--radius-sm);
   transition: background-color 0.15s, color 0.15s;
   line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-icon:hover {
@@ -817,6 +849,8 @@
   gap: 0;
   border-bottom: 2px solid var(--border);
   margin-bottom: 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dashboard-tab {
@@ -832,6 +866,10 @@
   position: relative;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .dashboard-tab:hover {
@@ -1002,16 +1040,28 @@
   text-align: right;
 }
 
-@media (max-width: 640px) {
+/* ── Mobile-first: hide low-priority history/payment columns ── */
+.history-table th:nth-child(4),
+.history-table td:nth-child(4),
+.history-table th:nth-child(6),
+.history-table td:nth-child(6) {
+  display: none;
+}
+
+.pending-payment-date {
+  display: none;
+}
+
+@media (min-width: 641px) {
   .history-table th:nth-child(4),
   .history-table td:nth-child(4),
   .history-table th:nth-child(6),
   .history-table td:nth-child(6) {
-    display: none;
+    display: table-cell;
   }
 
   .pending-payment-date {
-    display: none;
+    display: inline;
   }
 }
 
@@ -1067,15 +1117,23 @@
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  width: 26px;
-  height: 26px;
-  font-size: 0.75rem;
+  width: 44px;
+  height: 44px;
+  font-size: 0.875rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--muted-foreground);
   transition: background 0.15s;
+}
+
+@media (min-width: 641px) {
+  .btn-icon--inline {
+    width: 26px;
+    height: 26px;
+    font-size: 0.75rem;
+  }
 }
 
 .btn-icon--inline:hover {
@@ -1152,7 +1210,13 @@
   background: none;
   cursor: pointer;
   transition: color 0.15s, background-color 0.15s;
-  min-height: 28px;
+  min-height: 44px;
+}
+
+@media (min-width: 641px) {
+  .date-filter-btn {
+    min-height: 28px;
+  }
 }
 
 .date-filter-btn:hover {
@@ -1349,4 +1413,121 @@
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+/* ===========================
+   Kanban Mobile Tabs
+   On small screens, the 3 kanban columns are navigated
+   via tab buttons that show one column at a time.
+   =========================== */
+.kanban-mobile-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.kanban-mobile-tab {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  padding: 0.625rem 0.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  text-align: center;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.kanban-mobile-tab:hover {
+  color: var(--foreground);
+}
+
+.kanban-mobile-tab.active {
+  color: var(--foreground);
+  border-bottom-color: var(--foreground);
+}
+
+.kanban-mobile-tab .kanban-column-dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+
+/* Mobile-first: hide non-active columns by default */
+.kanban-board .kanban-column {
+  display: none;
+}
+
+.kanban-board .kanban-column.kanban-column--active {
+  display: block;
+}
+
+/* Desktop: always show all columns, hide mobile tabs */
+@media (min-width: 768px) {
+  .kanban-mobile-tabs {
+    display: none;
+  }
+
+  .kanban-board .kanban-column {
+    display: block !important;
+  }
+}
+
+/* ===========================
+   Mobile table-to-card: optional history/pending
+   On very small screens, tables get horizontal scroll wrapper
+   =========================== */
+.history-table-wrap,
+.orders-table-wrap {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+
+/* ===========================
+   Sticky modal footer — mobile-first
+   Base: sticky; Desktop: static
+   =========================== */
+.modal-detail-footer,
+.modal-whatsapp-actions,
+.edit-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--popover);
+  padding: 0.75rem 0;
+  margin: 0 -1.25rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  border-top: 1px solid var(--border);
+  z-index: 5;
+}
+
+@media (min-width: 641px) {
+  .modal-detail-footer,
+  .modal-whatsapp-actions,
+  .edit-actions {
+    position: static;
+    background: none;
+    margin: 0;
+    margin-top: 1.5rem;
+    padding: 0;
+    padding-top: 1rem;
+    padding-left: 0;
+    padding-right: 0;
+    border-top: 1px solid var(--border);
+    z-index: auto;
+  }
 }

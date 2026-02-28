@@ -199,9 +199,22 @@
 
         <div id="loadingState" class="kanban-loading">Carregando encomendas...</div>
 
+        <!-- Mobile kanban tabs -->
+        <div class="kanban-mobile-tabs" id="kanbanMobileTabs" style="display:none;">
+          <button class="kanban-mobile-tab active" data-col="pending">
+            <span class="kanban-column-dot kanban-dot--pending"></span> Pendentes
+          </button>
+          <button class="kanban-mobile-tab" data-col="production">
+            <span class="kanban-column-dot kanban-dot--production"></span> Produção
+          </button>
+          <button class="kanban-mobile-tab" data-col="ready">
+            <span class="kanban-column-dot kanban-dot--ready"></span> Prontos
+          </button>
+        </div>
+
         <div id="kanbanBoard" class="kanban-board" style="display:none;">
           <!-- Pendentes -->
-          <div class="kanban-column">
+          <div class="kanban-column kanban-column--active" data-col="pending">
             <div class="kanban-column-header kanban-col--pending">
               <span class="kanban-column-dot kanban-dot--pending"></span>
               <span class="kanban-column-name">Pendentes</span>
@@ -211,7 +224,7 @@
           </div>
 
           <!-- Em Produção -->
-          <div class="kanban-column">
+          <div class="kanban-column" data-col="production">
             <div class="kanban-column-header kanban-col--production">
               <span class="kanban-column-dot kanban-dot--production"></span>
               <span class="kanban-column-name">Em Produção</span>
@@ -221,7 +234,7 @@
           </div>
 
           <!-- Prontos -->
-          <div class="kanban-column">
+          <div class="kanban-column" data-col="ready">
             <div class="kanban-column-header kanban-col--ready">
               <span class="kanban-column-dot kanban-dot--ready"></span>
               <span class="kanban-column-name">Prontos</span>

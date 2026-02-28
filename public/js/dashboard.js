@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const welcomeMsg     = document.getElementById('welcomeMsg');
   const loadingState   = document.getElementById('loadingState');
   const kanbanBoard    = document.getElementById('kanbanBoard');
+  const kanbanMobileTabs = document.getElementById('kanbanMobileTabs');
   const emptyState     = document.getElementById('emptyState');
   const emptyFilter    = document.getElementById('emptyFilter');
 
@@ -573,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasAnyOrders = allOrders.length > 0;
 
     kanbanBoard.style.display   = hasAnyOrders ? '' : 'none';
+    if (kanbanMobileTabs) kanbanMobileTabs.style.display = hasAnyOrders ? '' : 'none';
     emptyState.style.display    = !hasAnyOrders ? '' : 'none';
     emptyFilter.style.display   = hasAnyOrders && !hasActiveOrders ? '' : 'none';
   }
@@ -1189,6 +1191,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add('active');
         activeFilter = btn.dataset.filter;
         renderAll();
+      });
+    });
+
+    // Kanban mobile tabs
+    document.querySelectorAll('.kanban-mobile-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.kanban-mobile-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const col = btn.dataset.col;
+        document.querySelectorAll('.kanban-board .kanban-column').forEach(c => {
+          c.classList.toggle('kanban-column--active', c.dataset.col === col);
+        });
       });
     });
 
