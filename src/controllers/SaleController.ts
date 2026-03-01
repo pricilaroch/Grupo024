@@ -64,4 +64,16 @@ export class SaleController implements ISaleController {
         const data = await this.saleService.getFollowUpAvg(user_id);
         reply.status(200).send(data);
     }
+
+    async total(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+        const user_id = request.user.id;
+        const total = await this.saleService.getTotalRevenue(user_id);
+        reply.status(200).send({ total });
+    }
+
+    async summary(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+        const user_id = request.user.id;
+        const data = await this.saleService.getSalesSummary(user_id);
+        reply.status(200).send(data);
+    }
 }

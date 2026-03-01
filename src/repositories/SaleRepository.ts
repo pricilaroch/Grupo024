@@ -151,4 +151,32 @@ export class SaleRepository implements ISaleRepository {
             count: (row as any)?.count ?? 0,
         };
     }
+
+    /** retorna o total de faturamento (soma de valor_total) para o usuário */
+    async getTotalRevenue(user_id: number): Promise<number> {
+        const row = await this.db.get(
+            `SELECT SUM(valor_total) AS total
+             FROM sales
+             WHERE user_id = ?`,
+            user_id
+        );
+        return (row as any)?.total ?? 0;
+    }
+
+    async getSummary(user_id: number): Promise<{ count: number; total: number; profit: number }> {
+        const row = await this.db.get(
+            `SELECT
+                COUNT(*) AS count,
+                SUM(valor_total) AS total,
+                SUM(valor_lucro) AS profit
+             FROM sales
+             WHERE user_id = ?`,
+            user_id
+        );
+        return {
+            count: (row as any)?.count ?? 0,
+            total: (row as any)?.total ?? 0,
+            profit: (row as any)?.profit ?? 0,
+        };
+    }
 }

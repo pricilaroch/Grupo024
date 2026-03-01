@@ -535,6 +535,34 @@ const ApiService = {
         }
     },
 
+    async getTotalSales() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/sales/total`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar faturamento total:', error);
+            throw error;
+        }
+    },
+
+    async getSalesSummary() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/sales/summary`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar resumo de vendas:', error);
+            throw error;
+        }
+    },
+
     // ─── Analytics (Inteligência financeira) ─────────
 
     async getMovements() {

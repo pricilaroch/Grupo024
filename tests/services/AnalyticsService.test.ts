@@ -14,6 +14,8 @@ function createMockSaleRepo(): jest.Mocked<ISaleRepository> {
     update: jest.fn(),
     delete: jest.fn(),
     getFollowUpAvg: jest.fn(),
+    getTotalRevenue: jest.fn(),
+    getSummary: jest.fn(),
   };
 }
 
@@ -142,10 +144,9 @@ describe('AnalyticsService', () => {
 
   describe('getBalance', () => {
     it('deve calcular saldo_real = vendas - despesas pagas', async () => {
-      saleRepo.findByUserId.mockResolvedValue([
-        makeSale({ valor_total: 1000 }),
-        makeSale({ id: 2, valor_total: 500 }),
-      ]);
+      // com a mudança recente, o serviço agora consulta getTotalRevenue
+      // em vez de carregar todas as vendas
+      (saleRepo.getTotalRevenue as jest.Mock).mockResolvedValue(1500);
       expenseRepo.findByStatus
         .mockResolvedValueOnce([makeExpense({ valor: 300, status: 'pago' })]) // pago
         .mockResolvedValueOnce([makeExpense({ id: 2, valor: 200, status: 'pendente' })]); // pendente
@@ -153,6 +154,8 @@ describe('AnalyticsService', () => {
       const balance = await service.getBalance(1);
 
       expect(balance.total_vendas).toBe(1500);
+      // should not query all sales any more
+      expect(saleRepo.findByUserId).not.toHaveBeenCalled();
       expect(balance.despesas_pagas).toBe(300);
       expect(balance.despesas_pendentes).toBe(200);
       expect(balance.saldo_real).toBe(1200);       // 1500 - 300
@@ -160,7 +163,7 @@ describe('AnalyticsService', () => {
     });
 
     it('deve retornar zeros quando não há dados', async () => {
-      saleRepo.findByUserId.mockResolvedValue([]);
+      (saleRepo.getTotalRevenue as jest.Mock).mockResolvedValue(0);
       expenseRepo.findByStatus
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
@@ -175,7 +178,7 @@ describe('AnalyticsService', () => {
     });
 
     it('deve retornar saldo negativo quando despesas excedem vendas', async () => {
-      saleRepo.findByUserId.mockResolvedValue([makeSale({ valor_total: 100 })]);
+      (saleRepo.getTotalRevenue as jest.Mock).mockResolvedValue(100);
       expenseRepo.findByStatus
         .mockResolvedValueOnce([makeExpense({ valor: 500, status: 'pago' })])
         .mockResolvedValueOnce([makeExpense({ id: 2, valor: 200, status: 'pendente' })]);

@@ -125,4 +125,18 @@ export class SaleService implements ISaleService {
     async getFollowUpAvg(user_id: number): Promise<{ avg_days: number; count: number }> {
         return await this.saleRepository.getFollowUpAvg(user_id);
     }
+
+    /** soma total do faturamento de todas as vendas do usuário */
+    async getTotalRevenue(user_id: number): Promise<number> {
+        return await this.saleRepository.getTotalRevenue(user_id);
+    }
+
+    async getSalesSummary(user_id: number): Promise<{ count: number; total: number; profit: number; average: number }> {
+        const s = await (this.saleRepository as any).getSummary(user_id);
+        const count = s.count || 0;
+        const total = s.total || 0;
+        const profit = s.profit || 0;
+        const average = count ? total / count : 0;
+        return { count, total, profit, average };
+    }
 }

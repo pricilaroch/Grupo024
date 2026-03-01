@@ -71,13 +71,13 @@ export class AnalyticsService implements IAnalyticsService {
      * Saldo Projetado = Σ(Sales) − Σ(Expenses pagas) − Σ(Expenses pendentes)
      */
     async getBalance(user_id: number): Promise<BalanceSummary> {
-        const [sales, paidExpenses, pendingExpenses] = await Promise.all([
-            this.saleRepo.findByUserId(user_id),
+        // aproveitamos o método novo do repositório para obter o total sem
+        // precisar carregar todos os registros em memória.
+        const [totalVendas, paidExpenses, pendingExpenses] = await Promise.all([
+            this.saleRepo.getTotalRevenue(user_id),
             this.expenseRepo.findByStatus(user_id, 'pago'),
             this.expenseRepo.findByStatus(user_id, 'pendente'),
         ]);
-
-        const totalVendas = sales.reduce((sum, s) => sum + (s.valor_total || 0), 0);
         const despesasPagas = paidExpenses.reduce((sum, e) => sum + (e.valor || 0), 0);
         const despesasPendentes = pendingExpenses.reduce((sum, e) => sum + (e.valor || 0), 0);
 

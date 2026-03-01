@@ -22,6 +22,8 @@ export function buildSaleRoutes(saleController: ISaleController) {
         fastify.post('/', saleController.create.bind(saleController));
         fastify.get('/', saleController.getByUserId.bind(saleController));
         fastify.get('/follow-up', saleController.followUp.bind(saleController));
+        fastify.get('/total', saleController.total.bind(saleController));
+        fastify.get('/summary', saleController.summary.bind(saleController));
         fastify.patch('/:id', saleController.update.bind(saleController));
         fastify.delete('/:id', saleController.delete.bind(saleController));
     };

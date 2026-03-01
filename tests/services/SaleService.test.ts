@@ -15,6 +15,8 @@ function createMockSaleRepo(): jest.Mocked<ISaleRepository> {
     update: jest.fn(),
     delete: jest.fn(),
     getFollowUpAvg: jest.fn(),
+      getTotalRevenue: jest.fn(),
+      getSummary: jest.fn(),
   };
 }
 
@@ -435,6 +437,26 @@ describe('SaleService', () => {
         .rejects.toThrow(NotFoundError);
     });
   });
+
+  // ═══════════════════════════════════════════════════════
+  //  getTotalRevenue
+  // ═══════════════════════════════════════════════════════
+
+  describe('getTotalRevenue', () => {
+    it('deve devolver 0 quando não houver vendas', async () => {
+      (saleRepo.getTotalRevenue as jest.Mock).mockResolvedValue(0);
+      const total = await service.getTotalRevenue(1);
+      expect(total).toBe(0);
+      expect(saleRepo.getTotalRevenue).toHaveBeenCalledWith(1);
+    });
+
+    it('deve repassar o valor retornado pelo repositório', async () => {
+      (saleRepo.getTotalRevenue as jest.Mock).mockResolvedValue(1234.56);
+      const total = await service.getTotalRevenue(42);
+      expect(total).toBe(1234.56);
+      expect(saleRepo.getTotalRevenue).toHaveBeenCalledWith(42);
+    });
+  });
 });
 
 // ═════════════════════════════════════════════════════════
@@ -470,6 +492,8 @@ describe('OrderService → SaleService integration', () => {
       updateSale: jest.fn(),
       deleteSale: jest.fn(),
       getFollowUpAvg: jest.fn(),
+      getTotalRevenue: jest.fn(),
+      getSalesSummary: jest.fn(),
     };
   }
 

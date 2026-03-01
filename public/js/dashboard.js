@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricProfitMargin = document.getElementById('metricProfitMargin');
   const metricTicket       = document.getElementById('metricTicket');
   const metricTicketHint   = document.getElementById('metricTicketHint');
+  const metricTicketLabel  = document.getElementById('metricTicketLabel');
   const metricPaid         = document.getElementById('metricPaid');
   const metricPaidHint     = document.getElementById('metricPaidHint');
 
@@ -204,6 +205,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Calcula médias mensais (revenue, profit, count) dos últimos `months` meses
+   * a partir de uma lista genérica de itens com campo de data e valores.
+   * items: array de objetos onde `dateField` contém a data, `revenueField` e `profitField` os valores numéricos.
+   * Retorna: { avgRevenue, avgProfit, avgCount }
+   */
+  function computeMonthlyAverages(items, dateField = 'updated_at', revenueField = 'valor_total', profitField = 'valor_lucro', months = 3) {
+    const now = new Date();
+    const buckets = [];
+    for (let i = 1; i <= months; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets.push({ year: d.getFullYear(), month: d.getMonth(), revenue: 0, profit: 0, count: 0 });
+    }
+
+    items.forEach(it => {
+      const dateVal = it[dateField] ? new Date(it[dateField]) : null;
+      if (!dateVal) return;
+      const b = buckets.find(bk => bk.year === dateVal.getFullYear() && bk.month === dateVal.getMonth());
+      if (b) {
+        b.count += 1;
+        b.revenue += it[revenueField] || 0;
+        b.profit += it[profitField] || 0;
+      }
+    });
+
+    const monthsWithData = buckets.filter(b => b.count > 0).length || buckets.length;
+    const totals = buckets.reduce((s, b) => ({ revenue: s.revenue + b.revenue, profit: s.profit + b.profit, count: s.count + b.count }), { revenue: 0, profit: 0, count: 0 });
+
+    return {
+      avgRevenue: monthsWithData ? totals.revenue / monthsWithData : 0,
+      avgProfit: monthsWithData ? totals.profit / monthsWithData : 0,
+      avgCount: monthsWithData ? totals.count / monthsWithData : 0,
+    };
+  }
+
   // ── Goal + Caixinha ────────────────────────────────────
 
   function renderGoalAndCaixinha() {
@@ -266,13 +302,21 @@ document.addEventListener('DOMContentLoaded', () => {
       count = filtered.length;
       modeLabel = 'vendas';
     } else {
-      // Previsão: orders entregues EXCLUINDO as já pagas (evita overlap)
+      // Previsão: usar médias mensais dos pedidos entregues (excluindo já pagos)
+      // por padrão usamos média dos últimos 3 meses (ajustável)
+      const FORECAST_MONTHS = 3;
       const delivered = allOrders.filter(o => o.status === 'entregue' && o.status_pagamento !== 'pago');
-      const filtered = filterByDateRange(delivered, 'updated_at');
-      totalRevenue = filtered.reduce((s, o) => s + (o.valor_total || 0), 0);
-      totalProfit  = filtered.reduce((s, o) => s + (o.valor_lucro_total || 0), 0);
-      count = filtered.length;
-      modeLabel = 'previstos';
+      // Combine histórico de orders entregues com vendas reais (allSales)
+      // Mapeamos ambos para um formato comum e calculamos médias dos últimos meses
+      const mappedOrders = delivered.map(o => ({ updated_at: o.updated_at, valor_total: o.valor_total, valor_lucro: o.valor_lucro_total }));
+      const mappedSales = allSales.map(s => ({ updated_at: s.data_venda, valor_total: s.valor_total, valor_lucro: s.valor_lucro }));
+      const history = mappedOrders.concat(mappedSales);
+      const averages = computeMonthlyAverages(history, 'updated_at', 'valor_total', 'valor_lucro', FORECAST_MONTHS);
+
+      totalRevenue = averages.avgRevenue;
+      totalProfit = averages.avgProfit;
+      count = Math.round(averages.avgCount);
+      modeLabel = `média (${FORECAST_MONTHS} meses)`;
     }
 
     const avgTicket = count ? totalRevenue / count : 0;
@@ -282,15 +326,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalCount = allOrders.filter(o => o.status !== 'cancelado').length;
 
     metricRevenue.textContent = formatCurrency(totalRevenue);
-    metricRevenueHint.textContent = `${count} ${modeLabel}`;
+    // hints should mention if we're showing a real total or a forecast average
+    if (financeMode === 'realizado') {
+      metricRevenueHint.textContent = count
+        ? `${count} ${modeLabel}`
+        : 'sem dados';
+    } else {
+      metricRevenueHint.textContent = count
+        ? `${modeLabel} — ${count} ${financeMode === 'realizado' ? 'venda' : 'pedido'}`
+        : 'sem dados';
+    }
 
     metricProfit.textContent = formatCurrency(totalProfit);
     metricProfitMargin.textContent = `Margem: ${margin.toFixed(1)}%`;
     metricProfit.classList.toggle('finance-value--success', totalProfit >= 0);
     metricProfit.classList.toggle('finance-value--danger', totalProfit < 0);
 
+    // ensure label is always correct (guard against caching or stale HTML)
+    if (metricTicketLabel) {
+      metricTicketLabel.textContent = 'Ticket Médio';
+    }
     metricTicket.textContent = formatCurrency(avgTicket);
-    metricTicketHint.textContent = count ? `por ${financeMode === 'realizado' ? 'venda' : 'pedido'}` : 'sem dados';
+    metricTicketHint.textContent = count
+      ? (financeMode === 'realizado'
+          ? `por ${financeMode === 'realizado' ? 'venda' : 'pedido'}`
+          : `média por ${financeMode === 'realizado' ? 'venda' : 'pedido'}`)
+      : 'sem dados';
 
     metricPaid.textContent = `${paidCount} / ${totalCount}`;
     const pendingPayment = totalCount - paidCount;
