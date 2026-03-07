@@ -1764,10 +1764,11 @@
 
 .welcome-top {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
 }
 
 .btn-catalog {
@@ -1909,6 +1910,10 @@
   flex-direction: column;
   gap: 0.875rem;
   padding: 0.5rem 0 0;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.25rem;
 }
 
 .store-divider {

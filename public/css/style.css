@@ -1156,6 +1156,8 @@ body {
   padding: 1.75rem;
   width: 100%;
   max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg);
   animation: modalIn 0.2s ease;
   border: 1px solid var(--border);

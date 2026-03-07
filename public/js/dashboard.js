@@ -1257,10 +1257,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnCancelEditMeta').addEventListener('click', closeEditMetaModal);
     document.getElementById('btnCloseEditMeta').addEventListener('click', closeEditMetaModal);
 
-    // Catalog card — share button opens catalog modal
+    // Catalog card — share button opens catalog modal (QR Code + link)
     document.getElementById('btnShareCatalog').addEventListener('click', openCatalogModal);
     document.getElementById('btnCloseCatalog').addEventListener('click', closeCatalogModal);
-    document.getElementById('btnCopyCatalogLink').addEventListener('click', copyCatalogLink);
+    document.getElementById('btnCopyCatalogLink').addEventListener('click', () => copyCatalogLink());
     document.getElementById('btnDownloadQr').addEventListener('click', downloadQrCode);
 
     // Close catalog modal by overlay click
@@ -1515,10 +1515,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = '';
   }
 
-  async function copyCatalogLink() {
+  async function copyCatalogLink(btnEl) {
     const url = getCatalogUrl();
     if (!url) return;
-    const btn = document.getElementById('btnCopyCatalogLink');
+    const btn = btnEl ?? document.getElementById('btnCopyCatalogLink');
     let copied = false;
     try {
       await navigator.clipboard.writeText(url);
@@ -1582,8 +1582,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('storeNomeFantasia').value = userProfile.nome_fantasia || '';
     document.getElementById('storeCategoriaProducao').value = userProfile.categoria_producao || '';
     document.getElementById('storeSlug').value = userProfile.slug || '';
-    document.getElementById('storeEmail').value = userProfile.email || '';
     document.getElementById('storeTelefone').value = userProfile.telefone || '';
+    document.getElementById('storeNome').value = userProfile.nome || '';
+    document.getElementById('storeEndereco').value = userProfile.endereco || '';
+    document.getElementById('storeDataNascimento').value = userProfile.data_nascimento || '';
+    document.getElementById('storeObservacao').value = userProfile.observacao || '';
+    // Readonly fields
+    document.getElementById('storeEmail').value = userProfile.email || '';
     document.getElementById('storeCpfCnpj').value = userProfile.cnpj || userProfile.cpf || '';
     document.getElementById('storeSettingsFeedback').textContent = '';
 
@@ -1601,11 +1606,14 @@ document.addEventListener('DOMContentLoaded', () => {
   async function saveStoreSettings() {
     const feedback = document.getElementById('storeSettingsFeedback');
     const saveBtn  = document.getElementById('btnSaveStoreSettings');
-    const nome = document.getElementById('storeNomeFantasia').value.trim();
-    const cat  = document.getElementById('storeCategoriaProducao').value.trim();
-    const slug = document.getElementById('storeSlug').value.trim();
-    const email = document.getElementById('storeEmail').value.trim();
-    const telefone = document.getElementById('storeTelefone').value.trim();
+    const nome         = document.getElementById('storeNomeFantasia').value.trim();
+    const cat          = document.getElementById('storeCategoriaProducao').value.trim();
+    const slug         = document.getElementById('storeSlug').value.trim();
+    const telefone     = document.getElementById('storeTelefone').value.trim();
+    const nomeCompleto = document.getElementById('storeNome').value.trim();
+    const endereco     = document.getElementById('storeEndereco').value.trim();
+    const dataNasc     = document.getElementById('storeDataNascimento').value.trim();
+    const observacao   = document.getElementById('storeObservacao').value.trim();
 
     if (!nome) {
       feedback.textContent = 'O nome fantasia é obrigatório.';
@@ -1614,11 +1622,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const payload = {};
-    if (nome !== (userProfile.nome_fantasia || '')) payload.nome_fantasia = nome;
-    if (cat !== (userProfile.categoria_producao || '')) payload.categoria_producao = cat;
-    if (slug !== (userProfile.slug || '')) payload.slug = slug;
-    if (email !== (userProfile.email || '')) payload.email = email;
-    if (telefone !== (userProfile.telefone || '')) payload.telefone = telefone;
+    if (nome !== (userProfile.nome_fantasia || ''))        payload.nome_fantasia = nome;
+    if (cat !== (userProfile.categoria_producao || ''))   payload.categoria_producao = cat;
+    if (slug !== (userProfile.slug || ''))                payload.slug = slug;
+    if (telefone !== (userProfile.telefone || ''))        payload.telefone = telefone;
+    if (nomeCompleto !== (userProfile.nome || ''))        payload.nome = nomeCompleto;
+    if (endereco !== (userProfile.endereco || ''))        payload.endereco = endereco;
+    if (dataNasc !== (userProfile.data_nascimento || '')) payload.data_nascimento = dataNasc;
+    if (observacao !== (userProfile.observacao || ''))    payload.observacao = observacao;
 
     if (Object.keys(payload).length === 0) {
       closeStoreSettings();

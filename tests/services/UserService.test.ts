@@ -388,41 +388,58 @@ describe('UserService', () => {
       expect(result.id).toBe(1);
     });
 
-    it('deve atualizar email e telefone', async () => {
-      const user = makeUser({ id: 1, email: 'old@test.com', telefone: '(34) 99999-0000' });
+    it('deve atualizar telefone', async () => {
+      const user = makeUser({ id: 1, telefone: '(34) 99999-0000' });
       repo.findById.mockResolvedValue(user);
       repo.updateProfile.mockResolvedValue();
 
-      const result = await service.updateProfile(1, {
-        email: 'new@test.com',
-        telefone: '(11) 98888-1111',
-      });
+      const result = await service.updateProfile(1, { telefone: '(11) 98888-1111' });
 
-      expect(repo.updateProfile).toHaveBeenCalledWith(1, {
-        email: 'new@test.com',
-        telefone: '(11) 98888-1111',
-      });
-      expect(result.email).toBe('new@test.com');
+      expect(repo.updateProfile).toHaveBeenCalledWith(1, { telefone: '(11) 98888-1111' });
       expect(result.telefone).toBe('(11) 98888-1111');
     });
 
-    it('deve atualizar nome_fantasia junto com email sem alterar slug se nome não mudou', async () => {
-      const user = makeUser({ id: 1, nome_fantasia: 'Fazenda da Maria', slug: 'fazenda-da-maria', email: 'a@a.com' });
+    it('deve atualizar campos pessoais: nome, endereco, data_nascimento, observacao', async () => {
+      const user = makeUser({ id: 1 });
+      repo.findById.mockResolvedValue(user);
+      repo.updateProfile.mockResolvedValue();
+
+      const result = await service.updateProfile(1, {
+        nome:            'Ana Beatriz',
+        endereco:        'Av. Brasil, 500',
+        data_nascimento: '1990-03-20',
+        observacao:      'Entrega somente pela manhã',
+      });
+
+      expect(repo.updateProfile).toHaveBeenCalledWith(1, {
+        nome:            'Ana Beatriz',
+        endereco:        'Av. Brasil, 500',
+        data_nascimento: '1990-03-20',
+        observacao:      'Entrega somente pela manhã',
+      });
+      expect(result.nome).toBe('Ana Beatriz');
+      expect(result.endereco).toBe('Av. Brasil, 500');
+      expect(result.data_nascimento).toBe('1990-03-20');
+      expect(result.observacao).toBe('Entrega somente pela manhã');
+    });
+
+    it('deve atualizar nome_fantasia sem alterar slug se nome não mudou', async () => {
+      const user = makeUser({ id: 1, nome_fantasia: 'Fazenda da Maria', slug: 'fazenda-da-maria' });
       repo.findById.mockResolvedValue(user);
       repo.updateProfile.mockResolvedValue();
 
       const result = await service.updateProfile(1, {
         nome_fantasia: 'Fazenda da Maria',
-        email: 'b@b.com',
+        nome:          'Maria Aparecida',
       });
 
-      // nome_fantasia is sent but unchanged → included in fields, slug NOT regenerated
+      // nome_fantasia unchanged → slug NOT regenerated
       expect(repo.updateProfile).toHaveBeenCalledWith(1, {
         nome_fantasia: 'Fazenda da Maria',
-        email: 'b@b.com',
+        nome:          'Maria Aparecida',
       });
-      expect(result.email).toBe('b@b.com');
       expect(result.slug).toBe('fazenda-da-maria');
+      expect(result.nome).toBe('Maria Aparecida');
     });
   });
 });

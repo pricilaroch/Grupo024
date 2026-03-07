@@ -387,15 +387,36 @@
             <small class="form-hint">Escolha um identificador único para a URL pública da sua vitrine.</small>
           </div>
           <hr class="store-divider">
-          <div class="form-group">
-            <label for="storeEmail" class="form-label">E-mail</label>
-            <input id="storeEmail" type="email" class="form-input" maxlength="255" placeholder="seu@email.com">
-          </div>
+          <!-- Contato -->
           <div class="form-group">
             <label for="storeTelefone" class="form-label">Telefone / WhatsApp</label>
             <input id="storeTelefone" type="tel" class="form-input" maxlength="20" placeholder="(00) 00000-0000">
           </div>
           <hr class="store-divider">
+          <!-- Dados Pessoais -->
+          <div class="form-group">
+            <label for="storeNome" class="form-label">Nome Completo</label>
+            <input id="storeNome" type="text" class="form-input" maxlength="120" placeholder="Seu nome completo">
+          </div>
+          <div class="form-group">
+            <label for="storeEndereco" class="form-label">Endereço</label>
+            <input id="storeEndereco" type="text" class="form-input" maxlength="255" placeholder="Rua, número, bairro, cidade">
+          </div>
+          <div class="form-group">
+            <label for="storeDataNascimento" class="form-label">Data de Nascimento</label>
+            <input id="storeDataNascimento" type="date" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="storeObservacao" class="form-label">Observação</label>
+            <textarea id="storeObservacao" class="form-input" rows="3" maxlength="500" placeholder="Informações adicionais..."></textarea>
+          </div>
+          <hr class="store-divider">
+          <!-- Campos bloqueados -->
+          <div class="form-group">
+            <label class="form-label form-label--readonly">E-mail</label>
+            <input id="storeEmail" type="email" class="form-input form-input--readonly" readonly tabindex="-1">
+            <small class="form-hint">O e-mail não pode ser alterado por aqui.</small>
+          </div>
           <div class="form-group">
             <label class="form-label form-label--readonly">CPF / CNPJ</label>
             <input id="storeCpfCnpj" type="text" class="form-input form-input--readonly" readonly tabindex="-1">

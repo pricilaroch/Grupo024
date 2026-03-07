@@ -29,6 +29,7 @@
   let SLUG       = extractSlug();
   let ALL_PRODUCTS = [];   // todos os produtos carregados
   let ACTIVE_CAT = 'all';  // categoria ativa
+  let SEARCH_QUERY = '';   // texto de busca atual
   let STORE_PHONE = null;  // telefone do produtor (do banco)
 
   /* ── Locale storage cart ─────────────────────────────────────── */
@@ -270,14 +271,24 @@
   /* ── Filtra e re-renderiza produtos ─────────────────────────── */
   function filterProducts(cat) {
     ACTIVE_CAT = cat;
-    // update active pill
     document.querySelectorAll('.pill').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.cat === cat);
     });
+    applyFilters();
+  }
 
-    const visible = cat === 'all'
+  function applyFilters() {
+    const query = SEARCH_QUERY.toLowerCase().trim();
+    let visible = ACTIVE_CAT === 'all'
       ? ALL_PRODUCTS
-      : ALL_PRODUCTS.filter(p => p.categoria === cat);
+      : ALL_PRODUCTS.filter(p => p.categoria === ACTIVE_CAT);
+
+    if (query) {
+      visible = visible.filter(p =>
+        (p.nome || '').toLowerCase().includes(query) ||
+        (p.descricao || '').toLowerCase().includes(query)
+      );
+    }
 
     renderProducts(visible);
   }
@@ -349,7 +360,7 @@
   function showSkeleton() {
     const sk = $('skeletonGrid');
     const pg = $('productGrid');
-    if (sk) sk.style.display = 'flex';
+    if (sk) sk.style.display = 'grid';
     if (pg) pg.style.display = 'none';
   }
 
@@ -357,7 +368,7 @@
     const sk = $('skeletonGrid');
     const pg = $('productGrid');
     if (sk) sk.style.display = 'none';
-    if (pg) pg.style.display = 'flex';
+    if (pg) pg.style.display = 'grid';
   }
 
   /* ── Estados de erro ─────────────────────────────────────────── */
@@ -394,7 +405,7 @@
       renderStore(SLUG, data.loja || null);
       renderCategories(ALL_PRODUCTS);
       hideSkeleton();
-      renderProducts(ALL_PRODUCTS);
+      applyFilters();
       updateBadge();
 
       // Mostra FAB somente se há produtos
@@ -488,6 +499,30 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeCart();
   });
+
+  /* Busca de produtos */
+  const searchInput   = $('productSearch');
+  const searchClearBtn = $('searchClearBtn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', e => {
+      SEARCH_QUERY = e.target.value;
+      if (searchClearBtn) {
+        searchClearBtn.classList.toggle('visible', SEARCH_QUERY.length > 0);
+      }
+      applyFilters();
+    });
+  }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', () => {
+      SEARCH_QUERY = '';
+      if (searchInput) searchInput.value = '';
+      searchClearBtn.classList.remove('visible');
+      applyFilters();
+      searchInput && searchInput.focus();
+    });
+  }
 
   /* ── Boot ─────────────────────────────────────────────────────── */
   if (document.readyState === 'loading') {

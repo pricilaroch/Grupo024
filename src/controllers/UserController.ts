@@ -10,11 +10,14 @@ const updateMetaSchema = z.object({
 });
 
 const updateProfileSchema = z.object({
-  nome_fantasia: z.string().min(1).max(120).optional(),
+  nome_fantasia:      z.string().min(1).max(120).optional(),
   categoria_producao: z.string().min(1).max(120).optional(),
-  slug: z.string().min(1).max(60).optional(),
-  email: z.string().email().max(255).optional(),
-  telefone: z.string().min(8).max(20).optional(),
+  slug:               z.string().min(1).max(60).optional(),
+  telefone:           z.string().min(8).max(20).optional(),
+  nome:               z.string().min(1).max(120).optional(),
+  endereco:           z.string().max(255).optional(),
+  data_nascimento:    z.string().max(20).optional(),
+  observacao:         z.string().max(500).optional(),
 });
 
 export class UserController {
@@ -79,8 +82,8 @@ export class UserController {
     reply: FastifyReply
   ): Promise<void> {
     const { id } = request.user as { id: number };
-    // Strip immutable fields (cpf, cnpj) the client may have sent
-    const { cpf, cnpj, ...rest } = request.body as Record<string, unknown>;
+    // Strip immutable fields (cpf, cnpj, email) the client may have sent
+    const { cpf, cnpj, email, ...rest } = request.body as Record<string, unknown>;
     const dto = updateProfileSchema.parse(rest) as UpdateProfileDTO;
     const user = await this.userService.updateProfile(id, dto);
     reply.status(200).send({

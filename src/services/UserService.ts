@@ -17,8 +17,11 @@ export interface UpdateProfileDTO {
   nome_fantasia?: string;
   categoria_producao?: string;
   slug?: string;
-  email?: string;
   telefone?: string;
+  nome?: string;
+  endereco?: string;
+  data_nascimento?: string;
+  observacao?: string;
 }
 
 export interface RegisterDTO {
@@ -176,7 +179,11 @@ export class UserService {
       throw new NotFoundError('Usuário não encontrado.');
     }
 
-    const fields: { nome_fantasia?: string; categoria_producao?: string; slug?: string; email?: string; telefone?: string } = {};
+    const fields: {
+      nome_fantasia?: string; categoria_producao?: string; slug?: string;
+      telefone?: string; nome?: string; endereco?: string;
+      data_nascimento?: string; observacao?: string;
+    } = {};
 
     if (dto.nome_fantasia !== undefined && dto.nome_fantasia.trim() !== '') {
       fields.nome_fantasia = dto.nome_fantasia.trim();
@@ -186,12 +193,24 @@ export class UserService {
       fields.categoria_producao = dto.categoria_producao.trim();
     }
 
-    if (dto.email !== undefined && dto.email.trim() !== '') {
-      fields.email = dto.email.trim();
-    }
-
     if (dto.telefone !== undefined && dto.telefone.trim() !== '') {
       fields.telefone = dto.telefone.trim();
+    }
+
+    if (dto.nome !== undefined && dto.nome.trim() !== '') {
+      fields.nome = dto.nome.trim();
+    }
+
+    if (dto.endereco !== undefined) {
+      fields.endereco = dto.endereco.trim();
+    }
+
+    if (dto.data_nascimento !== undefined && dto.data_nascimento.trim() !== '') {
+      fields.data_nascimento = dto.data_nascimento.trim();
+    }
+
+    if (dto.observacao !== undefined) {
+      fields.observacao = dto.observacao.trim();
     }
 
     // Handle slug: explicit slug takes precedence, otherwise auto-generate if name changed
@@ -219,8 +238,11 @@ export class UserService {
     if (fields.nome_fantasia) user.nome_fantasia = fields.nome_fantasia;
     if (fields.categoria_producao) user.categoria_producao = fields.categoria_producao;
     if (fields.slug) user.slug = fields.slug;
-    if (fields.email) user.email = fields.email;
     if (fields.telefone) user.telefone = fields.telefone;
+    if (fields.nome) user.nome = fields.nome;
+    if (fields.endereco !== undefined) user.endereco = fields.endereco;
+    if (fields.data_nascimento) user.data_nascimento = fields.data_nascimento;
+    if (fields.observacao !== undefined) user.observacao = fields.observacao;
 
     return user;
   }

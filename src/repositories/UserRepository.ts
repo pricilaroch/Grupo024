@@ -141,11 +141,15 @@ export class UserRepository {
   }
 
   /**
-   * Atualiza campos editáveis do perfil (nome_fantasia, categoria_producao, slug).
+   * Atualiza campos editáveis do perfil.
    */
   public async updateProfile(
     id: number,
-    fields: { nome_fantasia?: string; categoria_producao?: string; slug?: string; email?: string; telefone?: string }
+    fields: {
+      nome_fantasia?: string; categoria_producao?: string; slug?: string;
+      telefone?: string; nome?: string; endereco?: string;
+      data_nascimento?: string; observacao?: string;
+    }
   ): Promise<void> {
     const db = await getDatabase();
     const sets: string[] = [];
@@ -163,13 +167,25 @@ export class UserRepository {
       sets.push('slug = ?');
       values.push(fields.slug);
     }
-    if (fields.email !== undefined) {
-      sets.push('email = ?');
-      values.push(fields.email);
-    }
     if (fields.telefone !== undefined) {
       sets.push('telefone = ?');
       values.push(fields.telefone);
+    }
+    if (fields.nome !== undefined) {
+      sets.push('nome = ?');
+      values.push(fields.nome);
+    }
+    if (fields.endereco !== undefined) {
+      sets.push('endereco = ?');
+      values.push(fields.endereco);
+    }
+    if (fields.data_nascimento !== undefined) {
+      sets.push('data_nascimento = ?');
+      values.push(fields.data_nascimento);
+    }
+    if (fields.observacao !== undefined) {
+      sets.push('observacao = ?');
+      values.push(fields.observacao);
     }
 
     if (sets.length === 0) return;
