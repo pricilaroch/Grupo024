@@ -645,6 +645,25 @@ const ApiService = {
         }
     },
 
+    async updateProfile(data) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/users/me`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar perfil:', error);
+            throw error;
+        }
+    },
+
     logout() {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');

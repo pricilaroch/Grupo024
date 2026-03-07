@@ -1854,3 +1854,203 @@
   object-fit: contain;
 }
 
+/* QR download button */
+.btn-download-qr {
+  margin-top: 0.25rem;
+  white-space: nowrap;
+}
+
+/* Catalog modal link section */
+.modal-catalog-link-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   WELCOME — Clickable name
+   ══════════════════════════════════════════════════════════ */
+
+.welcome-clickable {
+  cursor: pointer;
+  transition: opacity 0.15s;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.welcome-clickable::after {
+  content: '⚙';
+  font-size: 0.6em;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.welcome-clickable:hover::after {
+  opacity: 0.7;
+}
+
+.welcome-clickable:hover {
+  opacity: 0.85;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODAL — Configurações da Loja
+   ══════════════════════════════════════════════════════════ */
+
+.modal-store-settings {
+  max-width: 480px;
+  width: 100%;
+}
+
+.store-settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 0.5rem 0 0;
+}
+
+.store-divider {
+  border: none;
+  border-top: 1px solid var(--border, #1f2937);
+  margin: 0.25rem 0;
+}
+
+/* Slug input with prefix */
+.slug-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border, #1f2937);
+  border-radius: var(--radius-md, 8px);
+  background: var(--muted, #0d1526);
+  overflow: hidden;
+}
+
+.slug-prefix {
+  padding: 0 0 0 0.75rem;
+  color: var(--muted-foreground, #9ca3af);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.slug-input {
+  border: none !important;
+  background: transparent !important;
+  padding-left: 0.25rem !important;
+  flex: 1;
+  min-width: 0;
+}
+
+.slug-input:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.slug-input-wrap:focus-within {
+  border-color: var(--primary, #22c55e);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+/* Read-only field style */
+.form-label--readonly {
+  color: var(--muted-foreground, #9ca3af);
+  font-size: 0.8125rem;
+}
+
+.form-input--readonly {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--muted, #0d1526) !important;
+}
+
+.form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted-foreground, #9ca3af);
+  margin-top: 0.25rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CATALOG CARD — below welcome banner
+   ══════════════════════════════════════════════════════════ */
+
+.catalog-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: var(--card, #111827);
+  border: 1px solid var(--border, #1f2937);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1rem 1.25rem;
+  margin-top: 0.75rem;
+  transition: box-shadow 0.15s;
+}
+
+.catalog-card:hover {
+  box-shadow: 0 0 0 1px var(--primary, #22c55e), var(--shadow-sm);
+}
+
+.catalog-card-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.12);
+  border-radius: var(--radius-md, 8px);
+}
+
+.catalog-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.catalog-card-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--foreground, #f9fafb);
+}
+
+.catalog-card-subtitle {
+  font-size: 0.75rem;
+  color: var(--muted-foreground, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catalog-card-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .catalog-card {
+    flex-wrap: wrap;
+  }
+  .catalog-card-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   NAVBAR USER — clickable
+   ══════════════════════════════════════════════════════════ */
+
+.navbar-user--clickable {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navbar-user--clickable:hover {
+  background-color: var(--border, #1f2937);
+  color: var(--foreground, #f9fafb);
+}

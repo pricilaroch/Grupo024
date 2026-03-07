@@ -161,6 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
             metaMensal = userProfile.meta_faturamento;
             localStorage.setItem(META_KEY, metaMensal);
           }
+          // Refresh welcome with nome_fantasia from DB
+          setWelcomeMessage();
+          // Show catalog card if slug exists
+          showCatalogCard();
         }
       } catch (_) { /* ignore — use cached localStorage value */ }
 
@@ -1253,10 +1257,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnCancelEditMeta').addEventListener('click', closeEditMetaModal);
     document.getElementById('btnCloseEditMeta').addEventListener('click', closeEditMetaModal);
 
-    // Meu Catálogo público button
-    document.getElementById('btnMyCatalog').addEventListener('click', openCatalogModal);
+    // Catalog card — share button opens catalog modal
+    document.getElementById('btnShareCatalog').addEventListener('click', openCatalogModal);
     document.getElementById('btnCloseCatalog').addEventListener('click', closeCatalogModal);
     document.getElementById('btnCopyCatalogLink').addEventListener('click', copyCatalogLink);
+    document.getElementById('btnDownloadQr').addEventListener('click', downloadQrCode);
 
     // Close catalog modal by overlay click
     document.getElementById('catalogModal').addEventListener('click', (e) => {
@@ -1264,6 +1269,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('editMetaModal').addEventListener('click', (e) => {
       if (e.target.id === 'editMetaModal') closeEditMetaModal();
+    });
+
+    // Store Settings modal — clickable welcome name + navbar user
+    document.getElementById('welcomeMsg').addEventListener('click', openStoreSettings);
+    // Navbar user name click (rendered by guard.js — may not exist yet, use delegation)
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'navUserName') openStoreSettings();
+    });
+    document.getElementById('btnCloseStoreSettings').addEventListener('click', closeStoreSettings);
+    document.getElementById('btnCancelStoreSettings').addEventListener('click', closeStoreSettings);
+    document.getElementById('storeSettingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveStoreSettings();
+    });
+    document.getElementById('storeSettingsModal').addEventListener('click', (e) => {
+      if (e.target.id === 'storeSettingsModal') closeStoreSettings();
     });
 
     // Temporal filters
@@ -1378,9 +1399,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════════════════
 
   function setWelcomeMessage() {
-    const user = ApiService.getUser();
+    const user = userProfile || ApiService.getUser();
     if (user) {
-      welcomeMsg.textContent = `Olá, ${user.nome.split(' ')[0]}!`;
+      const displayName = user.nome_fantasia || user.nome.split(' ')[0];
+      welcomeMsg.textContent = `Olá, ${displayName}!`;
+    }
+  }
+
+  function updateNavbarUserName() {
+    const navUser = document.getElementById('navUserName');
+    if (!navUser || !userProfile) return;
+    const displayName = userProfile.nome_fantasia || userProfile.nome.split(' ')[0];
+    navUser.textContent = displayName;
+  }
+
+  function showCatalogCard() {
+    const card = document.getElementById('catalogCard');
+    if (!card) return;
+    const slug = userProfile && userProfile.slug;
+    if (slug) {
+      const url = `${window.location.origin}/catalog/${slug}`;
+      const subtitle = document.getElementById('catalogCardUrl');
+      if (subtitle) subtitle.textContent = url;
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
     }
   }
 
@@ -1431,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ══════════════════════════════════════════════════════
-  //  CATALOG MODAL — Meu Catálogo Público
+  //  CATALOG MODAL — Meu Catálogo Público (redesigned)
   // ══════════════════════════════════════════════════════
 
   function getCatalogUrl() {
@@ -1493,6 +1536,131 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.innerHTML = copied ? '&#10003; Copiado!' : '&#10005; Falhou';
       btn.disabled = true;
       setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+    }
+  }
+
+  function downloadQrCode() {
+    const qrImg = document.getElementById('catalogQrImg');
+    if (!qrImg || !qrImg.src) return;
+
+    const btn = document.getElementById('btnDownloadQr');
+    const origText = btn ? btn.innerHTML : '';
+
+    // Create a canvas to draw the image then trigger download
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      const link = document.createElement('a');
+      link.download = `qrcode-vitrine-${(userProfile && userProfile.slug) || 'loja'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      if (btn) {
+        btn.innerHTML = '&#10003; Salvo!';
+        btn.disabled = true;
+        setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+      }
+    };
+    img.onerror = function () {
+      // Fallback: open image in new tab
+      window.open(qrImg.src, '_blank');
+    };
+    img.src = qrImg.src;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  STORE SETTINGS MODAL — Configurações da Loja
+  // ══════════════════════════════════════════════════════
+
+  function openStoreSettings() {
+    const modal = document.getElementById('storeSettingsModal');
+    if (!modal || !userProfile) return;
+
+    document.getElementById('storeNomeFantasia').value = userProfile.nome_fantasia || '';
+    document.getElementById('storeCategoriaProducao').value = userProfile.categoria_producao || '';
+    document.getElementById('storeSlug').value = userProfile.slug || '';
+    document.getElementById('storeEmail').value = userProfile.email || '';
+    document.getElementById('storeTelefone').value = userProfile.telefone || '';
+    document.getElementById('storeCpfCnpj').value = userProfile.cnpj || userProfile.cpf || '';
+    document.getElementById('storeSettingsFeedback').textContent = '';
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('storeNomeFantasia').focus(), 50);
+  }
+
+  function closeStoreSettings() {
+    const modal = document.getElementById('storeSettingsModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function saveStoreSettings() {
+    const feedback = document.getElementById('storeSettingsFeedback');
+    const saveBtn  = document.getElementById('btnSaveStoreSettings');
+    const nome = document.getElementById('storeNomeFantasia').value.trim();
+    const cat  = document.getElementById('storeCategoriaProducao').value.trim();
+    const slug = document.getElementById('storeSlug').value.trim();
+    const email = document.getElementById('storeEmail').value.trim();
+    const telefone = document.getElementById('storeTelefone').value.trim();
+
+    if (!nome) {
+      feedback.textContent = 'O nome fantasia é obrigatório.';
+      feedback.style.color = '#f97373';
+      return;
+    }
+
+    const payload = {};
+    if (nome !== (userProfile.nome_fantasia || '')) payload.nome_fantasia = nome;
+    if (cat !== (userProfile.categoria_producao || '')) payload.categoria_producao = cat;
+    if (slug !== (userProfile.slug || '')) payload.slug = slug;
+    if (email !== (userProfile.email || '')) payload.email = email;
+    if (telefone !== (userProfile.telefone || '')) payload.telefone = telefone;
+
+    if (Object.keys(payload).length === 0) {
+      closeStoreSettings();
+      return; // nothing changed
+    }
+
+    saveBtn.textContent = 'Salvando…';
+    saveBtn.disabled = true;
+    feedback.textContent = '';
+
+    try {
+      const res = await ApiService.updateProfile(payload);
+      if (res.ok) {
+        // Live UI update
+        const updated = res.data.user;
+        userProfile = { ...userProfile, ...updated };
+
+        // Update sessionStorage user object
+        const stored = ApiService.getUser();
+        if (stored) {
+          Object.assign(stored, updated);
+          sessionStorage.setItem('user', JSON.stringify(stored));
+        }
+
+        // Update welcome message + navbar user name
+        setWelcomeMessage();
+        updateNavbarUserName();
+
+        // Refresh catalog card (slug may have changed)
+        showCatalogCard();
+
+        closeStoreSettings();
+      } else {
+        feedback.textContent = res.data?.error || res.data?.message || 'Erro ao salvar perfil.';
+        feedback.style.color = '#f97373';
+      }
+    } catch (err) {
+      feedback.textContent = 'Erro de conexão. Tente novamente.';
+      feedback.style.color = '#f97373';
+    } finally {
+      saveBtn.textContent = 'Salvar';
+      saveBtn.disabled = false;
     }
   }
 

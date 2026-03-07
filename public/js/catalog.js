@@ -29,6 +29,7 @@
   let SLUG       = extractSlug();
   let ALL_PRODUCTS = [];   // todos os produtos carregados
   let ACTIVE_CAT = 'all';  // categoria ativa
+  let STORE_PHONE = null;  // telefone do produtor (do banco)
 
   /* ── Locale storage cart ─────────────────────────────────────── */
   const cartKey = () => `catalog_cart_${SLUG}`;
@@ -138,6 +139,17 @@
   }
 
   /* ── Checkout via WhatsApp ───────────────────────────────────── */
+  function formatPhoneForWhatsApp(phone) {
+    if (!phone) return null;
+    // Remove tudo que não for dígito
+    const digits = phone.replace(/\D/g, '');
+    // Se já começa com 55 e tem 12-13 dígitos, use como está
+    if (digits.startsWith('55') && digits.length >= 12) return digits;
+    // Senão, adiciona o código do Brasil
+    if (digits.length >= 10) return `55${digits}`;
+    return null;
+  }
+
   function handleCheckout() {
     const items = getCart();
     if (items.length === 0) return;
@@ -156,7 +168,12 @@
       `*Total: ${total}*`,
     ].join('\n');
 
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    const phone = formatPhoneForWhatsApp(STORE_PHONE);
+    const waUrl = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+    window.open(waUrl, '_blank');
   }
 
   /* ── Toast ───────────────────────────────────────────────────── */
@@ -368,6 +385,11 @@
     try {
       const data = await fetchCatalog(SLUG);
       ALL_PRODUCTS = data.produtos || [];
+
+      // Captura o telefone do produtor para o checkout WhatsApp
+      if (data.loja && data.loja.telefone) {
+        STORE_PHONE = data.loja.telefone;
+      }
 
       renderStore(SLUG, data.loja || null);
       renderCategories(ALL_PRODUCTS);

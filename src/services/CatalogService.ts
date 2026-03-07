@@ -5,6 +5,7 @@ import { NotFoundError } from '../errors/AppError';
 export interface LojaPublica {
   nome_fantasia: string;
   categoria_producao: string;
+  telefone: string;
 }
 
 export interface PublicCatalogData {
@@ -40,6 +41,7 @@ export class CatalogService implements ICatalogService {
       loja: {
         nome_fantasia: user.nome_fantasia,
         categoria_producao: user.categoria_producao,
+        telefone: user.telefone,
       },
       produtos,
     };

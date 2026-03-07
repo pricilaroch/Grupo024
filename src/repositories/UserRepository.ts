@@ -127,4 +127,54 @@ export class UserRepository {
     );
     return (row?.count ?? 0) > 0;
   }
+
+  /**
+   * Verifica se um slug já está em uso por outro usuário (exclui o próprio).
+   */
+  public async existsBySlugExcludingUser(slug: string, userId: number): Promise<boolean> {
+    const db = await getDatabase();
+    const row = await db.get<{ count: number }>(
+      'SELECT COUNT(*) as count FROM users WHERE slug = ? AND id != ?',
+      [slug, userId]
+    );
+    return (row?.count ?? 0) > 0;
+  }
+
+  /**
+   * Atualiza campos editáveis do perfil (nome_fantasia, categoria_producao, slug).
+   */
+  public async updateProfile(
+    id: number,
+    fields: { nome_fantasia?: string; categoria_producao?: string; slug?: string; email?: string; telefone?: string }
+  ): Promise<void> {
+    const db = await getDatabase();
+    const sets: string[] = [];
+    const values: any[] = [];
+
+    if (fields.nome_fantasia !== undefined) {
+      sets.push('nome_fantasia = ?');
+      values.push(fields.nome_fantasia);
+    }
+    if (fields.categoria_producao !== undefined) {
+      sets.push('categoria_producao = ?');
+      values.push(fields.categoria_producao);
+    }
+    if (fields.slug !== undefined) {
+      sets.push('slug = ?');
+      values.push(fields.slug);
+    }
+    if (fields.email !== undefined) {
+      sets.push('email = ?');
+      values.push(fields.email);
+    }
+    if (fields.telefone !== undefined) {
+      sets.push('telefone = ?');
+      values.push(fields.telefone);
+    }
+
+    if (sets.length === 0) return;
+
+    values.push(id);
+    await db.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, values);
+  }
 }

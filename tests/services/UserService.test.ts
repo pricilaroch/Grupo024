@@ -23,7 +23,9 @@ function createMockRepo(): jest.Mocked<UserRepository> {
     updateMeta: jest.fn(),
     updateSlug: jest.fn(),
     existsBySlug: jest.fn(),
+    existsBySlugExcludingUser: jest.fn(),
     findBySlug: jest.fn(),
+    updateProfile: jest.fn(),
   } as unknown as jest.Mocked<UserRepository>;
 }
 
@@ -314,6 +316,113 @@ describe('UserService', () => {
       const result = await service.ensureSlug(user);
 
       expect(result.slug).toBe('doces-da-vovo-2');
+    });
+  });
+
+  // ----------- updateProfile -----------
+
+  describe('updateProfile', () => {
+    it('deve atualizar nome_fantasia e auto-gerar slug', async () => {
+      const user = makeUser({ id: 1, nome_fantasia: 'Fazenda da Maria', slug: 'fazenda-da-maria' });
+      repo.findById.mockResolvedValue(user);
+      repo.existsBySlug.mockResolvedValue(false);
+      repo.existsBySlugExcludingUser.mockResolvedValue(false);
+      repo.updateProfile.mockResolvedValue();
+
+      const result = await service.updateProfile(1, { nome_fantasia: 'Doces Artesanais' });
+
+      expect(repo.updateProfile).toHaveBeenCalledWith(1, {
+        nome_fantasia: 'Doces Artesanais',
+        slug: 'doces-artesanais',
+      });
+      expect(result.nome_fantasia).toBe('Doces Artesanais');
+      expect(result.slug).toBe('doces-artesanais');
+    });
+
+    it('deve aceitar slug explícito e validar unicidade', async () => {
+      const user = makeUser({ id: 1, slug: 'fazenda-da-maria' });
+      repo.findById.mockResolvedValue(user);
+      repo.existsBySlugExcludingUser.mockResolvedValue(false);
+      repo.updateProfile.mockResolvedValue();
+
+      const result = await service.updateProfile(1, { slug: 'meu-slug-custom' });
+
+      expect(repo.existsBySlugExcludingUser).toHaveBeenCalledWith('meu-slug-custom', 1);
+      expect(result.slug).toBe('meu-slug-custom');
+    });
+
+    it('deve lançar ConflictError se slug já está em uso por outro', async () => {
+      const user = makeUser({ id: 1 });
+      repo.findById.mockResolvedValue(user);
+      repo.existsBySlugExcludingUser.mockResolvedValue(true);
+
+      await expect(service.updateProfile(1, { slug: 'slug-ocupado' }))
+        .rejects.toThrow('Este slug já está em uso por outro usuário.');
+    });
+
+    it('deve atualizar apenas categoria_producao sem alterar slug', async () => {
+      const user = makeUser({ id: 1, slug: 'fazenda-da-maria', categoria_producao: 'Frutas' });
+      repo.findById.mockResolvedValue(user);
+      repo.updateProfile.mockResolvedValue();
+
+      const result = await service.updateProfile(1, { categoria_producao: 'Orgânicos' });
+
+      expect(repo.updateProfile).toHaveBeenCalledWith(1, { categoria_producao: 'Orgânicos' });
+      expect(result.categoria_producao).toBe('Orgânicos');
+      expect(result.slug).toBe('fazenda-da-maria'); // slug inalterado
+    });
+
+    it('deve lançar NotFoundError se o usuário não existe', async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.updateProfile(99, { nome_fantasia: 'X' }))
+        .rejects.toThrow(NotFoundError);
+    });
+
+    it('não deve alterar nada se dto estiver vazio', async () => {
+      const user = makeUser({ id: 1 });
+      repo.findById.mockResolvedValue(user);
+
+      const result = await service.updateProfile(1, {});
+
+      expect(repo.updateProfile).not.toHaveBeenCalled();
+      expect(result.id).toBe(1);
+    });
+
+    it('deve atualizar email e telefone', async () => {
+      const user = makeUser({ id: 1, email: 'old@test.com', telefone: '(34) 99999-0000' });
+      repo.findById.mockResolvedValue(user);
+      repo.updateProfile.mockResolvedValue();
+
+      const result = await service.updateProfile(1, {
+        email: 'new@test.com',
+        telefone: '(11) 98888-1111',
+      });
+
+      expect(repo.updateProfile).toHaveBeenCalledWith(1, {
+        email: 'new@test.com',
+        telefone: '(11) 98888-1111',
+      });
+      expect(result.email).toBe('new@test.com');
+      expect(result.telefone).toBe('(11) 98888-1111');
+    });
+
+    it('deve atualizar nome_fantasia junto com email sem alterar slug se nome não mudou', async () => {
+      const user = makeUser({ id: 1, nome_fantasia: 'Fazenda da Maria', slug: 'fazenda-da-maria', email: 'a@a.com' });
+      repo.findById.mockResolvedValue(user);
+      repo.updateProfile.mockResolvedValue();
+
+      const result = await service.updateProfile(1, {
+        nome_fantasia: 'Fazenda da Maria',
+        email: 'b@b.com',
+      });
+
+      // nome_fantasia is sent but unchanged → included in fields, slug NOT regenerated
+      expect(repo.updateProfile).toHaveBeenCalledWith(1, {
+        nome_fantasia: 'Fazenda da Maria',
+        email: 'b@b.com',
+      });
+      expect(result.email).toBe('b@b.com');
+      expect(result.slug).toBe('fazenda-da-maria');
     });
   });
 });

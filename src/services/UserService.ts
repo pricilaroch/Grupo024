@@ -13,6 +13,14 @@ export interface UpdateMetaDTO {
   meta_faturamento: number;
 }
 
+export interface UpdateProfileDTO {
+  nome_fantasia?: string;
+  categoria_producao?: string;
+  slug?: string;
+  email?: string;
+  telefone?: string;
+}
+
 export interface RegisterDTO {
   nome: string;
   cpf: string;
@@ -153,6 +161,67 @@ export class UserService {
     }
     await this.userRepository.updateMeta(userId, dto.meta_faturamento);
     user.meta_faturamento = dto.meta_faturamento;
+    return user;
+  }
+
+  /**
+   * Atualiza campos editáveis do perfil do usuário.
+   * Campos imutáveis (cpf, cnpj, email) são silenciosamente ignorados.
+   * Se o slug for fornecido, valida unicidade. Se nome_fantasia mudar e slug
+   * não for fornecido, auto-sugere um novo slug.
+   */
+  public async updateProfile(userId: number, dto: UpdateProfileDTO): Promise<User> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('Usuário não encontrado.');
+    }
+
+    const fields: { nome_fantasia?: string; categoria_producao?: string; slug?: string; email?: string; telefone?: string } = {};
+
+    if (dto.nome_fantasia !== undefined && dto.nome_fantasia.trim() !== '') {
+      fields.nome_fantasia = dto.nome_fantasia.trim();
+    }
+
+    if (dto.categoria_producao !== undefined && dto.categoria_producao.trim() !== '') {
+      fields.categoria_producao = dto.categoria_producao.trim();
+    }
+
+    if (dto.email !== undefined && dto.email.trim() !== '') {
+      fields.email = dto.email.trim();
+    }
+
+    if (dto.telefone !== undefined && dto.telefone.trim() !== '') {
+      fields.telefone = dto.telefone.trim();
+    }
+
+    // Handle slug: explicit slug takes precedence, otherwise auto-generate if name changed
+    if (dto.slug !== undefined && dto.slug.trim() !== '') {
+      const slugCandidate = this.slugify(dto.slug.trim());
+      if (!slugCandidate) {
+        throw new ValidationError('O slug informado é inválido.');
+      }
+      const taken = await this.userRepository.existsBySlugExcludingUser(slugCandidate, userId);
+      if (taken) {
+        throw new ConflictError('Este slug já está em uso por outro usuário.');
+      }
+      fields.slug = slugCandidate;
+    } else if (fields.nome_fantasia && fields.nome_fantasia !== user.nome_fantasia) {
+      // Auto-suggest slug from the new nome_fantasia
+      fields.slug = await this.createUniqueSlug(fields.nome_fantasia, userId);
+    }
+
+    if (Object.keys(fields).length === 0) {
+      return user; // nothing to update
+    }
+
+    await this.userRepository.updateProfile(userId, fields);
+
+    if (fields.nome_fantasia) user.nome_fantasia = fields.nome_fantasia;
+    if (fields.categoria_producao) user.categoria_producao = fields.categoria_producao;
+    if (fields.slug) user.slug = fields.slug;
+    if (fields.email) user.email = fields.email;
+    if (fields.telefone) user.telefone = fields.telefone;
+
     return user;
   }
 

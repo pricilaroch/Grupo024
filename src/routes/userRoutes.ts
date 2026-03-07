@@ -25,6 +25,11 @@ export function buildUserRoutes(controller: UserController) {
       controller.getMe(request, reply)
     );
 
+    // PATCH /users/me — atualiza perfil (nome_fantasia, categoria_producao, slug)
+    fastify.patch('/me', { preHandler: authenticate }, (request, reply) =>
+      controller.updateProfile(request, reply)
+    );
+
     // PATCH /users/me/meta — atualiza meta de faturamento
     fastify.patch('/me/meta', { preHandler: authenticate }, (request, reply) =>
       controller.updateMeta(request, reply)

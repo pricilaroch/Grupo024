@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { UserService, UpdateMetaDTO } from '../services/UserService';
+import { UserService, UpdateMetaDTO, UpdateProfileDTO } from '../services/UserService';
 import { registerSchema } from '../schemas/user.schema';
 import { ValidationError } from '../errors/AppError';
 import { ZodError } from 'zod';
@@ -7,6 +7,14 @@ import { z } from 'zod';
 
 const updateMetaSchema = z.object({
   meta_faturamento: z.coerce.number().nonnegative(),
+});
+
+const updateProfileSchema = z.object({
+  nome_fantasia: z.string().min(1).max(120).optional(),
+  categoria_producao: z.string().min(1).max(120).optional(),
+  slug: z.string().min(1).max(60).optional(),
+  email: z.string().email().max(255).optional(),
+  telefone: z.string().min(8).max(20).optional(),
 });
 
 export class UserController {
@@ -58,6 +66,26 @@ export class UserController {
     reply.status(200).send({
       message: 'Meta atualizada com sucesso.',
       meta_faturamento: user.meta_faturamento,
+    });
+  }
+
+  /**
+   * PATCH /users/me  (requer JWT + status aprovado)
+   * Atualiza campos editáveis do perfil: nome_fantasia, categoria_producao, slug.
+   * Campos imutáveis (cpf, cnpj, email) enviados no body são ignorados.
+   */
+  public async updateProfile(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> {
+    const { id } = request.user as { id: number };
+    // Strip immutable fields (cpf, cnpj) the client may have sent
+    const { cpf, cnpj, ...rest } = request.body as Record<string, unknown>;
+    const dto = updateProfileSchema.parse(rest) as UpdateProfileDTO;
+    const user = await this.userService.updateProfile(id, dto);
+    reply.status(200).send({
+      message: 'Perfil atualizado com sucesso.',
+      user: user.toPublicJSON(),
     });
   }
 }

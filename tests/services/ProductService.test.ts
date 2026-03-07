@@ -242,7 +242,7 @@ describe('CatalogService', () => {
   });
 
   it('deve retornar os produtos ativos do produtor identificado pelo slug', async () => {
-    userRepo.findBySlug.mockResolvedValue({ id: 1, nome: 'Vovó Doces', nome_fantasia: 'Doces da Vovó', categoria_producao: 'Doces' } as any);
+    userRepo.findBySlug.mockResolvedValue({ id: 1, nome: 'Vovó Doces', nome_fantasia: 'Doces da Vovó', categoria_producao: 'Doces', telefone: '(34) 99999-0000' } as any);
     repo.findActiveByUserId.mockResolvedValue(activeProducts);
 
     const result = await catalogService.getCatalogBySlug('doces-da-vovo');
@@ -253,10 +253,11 @@ describe('CatalogService', () => {
     expect(result.produtos).toEqual(activeProducts);
     expect(result.loja.nome_fantasia).toBe('Doces da Vovó');
     expect(result.loja.categoria_producao).toBe('Doces');
+    expect(result.loja.telefone).toBe('(34) 99999-0000');
   });
 
   it('(segurança) preco_custo deve ser undefined em todos os produtos retornados', async () => {
-    userRepo.findBySlug.mockResolvedValue({ id: 1, nome: 'Vovó Doces', nome_fantasia: 'Doces da Vovó', categoria_producao: 'Doces' } as any);
+    userRepo.findBySlug.mockResolvedValue({ id: 1, nome: 'Vovó Doces', nome_fantasia: 'Doces da Vovó', categoria_producao: 'Doces', telefone: '(34) 99999-0000' } as any);
     repo.findActiveByUserId.mockResolvedValue(activeProducts);
 
     const result = await catalogService.getCatalogBySlug('doces-da-vovo');
