@@ -1,5 +1,6 @@
 import Fastify, { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
 import fastifyStatic from '@fastify/static';
+import fastifyCors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import path from 'path';
 import { ZodError } from 'zod';
@@ -58,6 +59,10 @@ async function main(): Promise<void> {
 
   await fastify.register(fastifyJwt, {
     secret: config.jwtSecret,
+  });
+
+  await fastify.register(fastifyCors, {
+    origin: '*' // Permitir todas as origens (ajuste conforme necessário)
   });
 
   // ─── Error Handler centralizado ────────────────────────

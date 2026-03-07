@@ -301,11 +301,6 @@ body {
   max-width: 1140px;
 }
 
-
-.container-wide {
-  max-width: 820px;
-}
-
 /* ===========================
    Header
    =========================== */
@@ -424,8 +419,8 @@ body {
   right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
-  height: 34px;
-  width: 34px;
+  height: 44px;
+  width: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1604,7 +1599,7 @@ body {
   flex: 1;
   border-radius: 0;
   font-size: 0.75rem;
-  min-height: 40px;
+  min-height: 44px;
   gap: 0.25rem;
 }
 
@@ -1615,7 +1610,7 @@ body {
 .btn-sm {
   font-size: 0.8125rem;
   padding: 0.375rem 0.75rem;
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .btn-ghost-danger {

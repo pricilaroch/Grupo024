@@ -207,14 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
         : 0;
 
       return '<tr>' +
-        '<td class="td-mono">' + sale.id + '</td>' +
-        '<td>' + escapeHtml(clientName) + '</td>' +
-        '<td>' + dateStr + '</td>' +
-        '<td>' + escapeHtml(desc) + ' ' + originBadge + '</td>' +
-        '<td>' + payBadge + '</td>' +
-        '<td class="td-right td-mono">' + formatCurrency(sale.valor_total) + '</td>' +
-        '<td class="td-right td-mono" style="color: var(--success)">' + formatCurrency(sale.valor_lucro) + ' <small style="color: var(--muted-foreground); font-weight:400">' + profitPct + '%</small></td>' +
-        '<td><div class="row-actions">' +
+        '<td class="td-mono" data-label="#">' + sale.id + '</td>' +
+        '<td data-label="Cliente">' + escapeHtml(clientName) + '</td>' +
+        '<td data-label="Data">' + dateStr + '</td>' +
+        '<td data-label="Descri\u00e7\u00e3o">' + escapeHtml(desc) + ' ' + originBadge + '</td>' +
+        '<td data-label="Pagamento">' + payBadge + '</td>' +
+        '<td class="td-right td-mono" data-label="Total">' + formatCurrency(sale.valor_total) + '</td>' +
+        '<td class="td-right td-mono" data-label="Lucro" style="color: var(--success)">' + formatCurrency(sale.valor_lucro) + ' <small style="color: var(--muted-foreground); font-weight:400">' + profitPct + '%</small></td>' +
+        '<td data-label="A\u00e7\u00f5es"><div class="row-actions">' +
           '<button class="btn-row btn-row--edit" title="Editar" data-edit="' + sale.id + '">&#9998;</button>' +
           '<button class="btn-row btn-row--delete" title="Excluir" data-delete="' + sale.id + '">&#128465;</button>' +
         '</div></td>' +
@@ -271,13 +271,13 @@ document.addEventListener('DOMContentLoaded', () => {
         : '';
 
       return '<tr>' +
-        '<td class="td-mono">' + exp.id + '</td>' +
-        '<td>' + categLabel + '</td>' +
-        '<td>' + escapeHtml(desc) + '</td>' +
-        '<td>' + dueDate + '</td>' +
-        '<td>' + statusBadge + '</td>' +
-        '<td class="td-right td-mono">' + formatCurrency(exp.valor) + '</td>' +
-        '<td><div class="row-actions">' +
+        '<td class="td-mono" data-label="#">' + exp.id + '</td>' +
+        '<td data-label="Categoria">' + categLabel + '</td>' +
+        '<td data-label="Descri\u00e7\u00e3o">' + escapeHtml(desc) + '</td>' +
+        '<td data-label="Vencimento">' + dueDate + '</td>' +
+        '<td data-label="Status">' + statusBadge + '</td>' +
+        '<td class="td-right td-mono" data-label="Valor">' + formatCurrency(exp.valor) + '</td>' +
+        '<td data-label="A\u00e7\u00f5es"><div class="row-actions">' +
           payBtn +
           '<button class="btn-row btn-row--edit" title="Editar" data-exp-edit="' + exp.id + '">&#9998;</button>' +
           '<button class="btn-row btn-row--delete" title="Excluir" data-exp-delete="' + exp.id + '">&#128465;</button>' +
@@ -327,10 +327,10 @@ document.addEventListener('DOMContentLoaded', () => {
       var prefix = m.tipo === 'entrada' ? '+ ' : '- ';
 
       return '<tr>' +
-        '<td>' + formatDate(m.data) + '</td>' +
-        '<td>' + tipoBadge + '</td>' +
-        '<td>' + escapeHtml(m.descricao) + '</td>' +
-        '<td class="td-right td-mono" style="' + valorClass + '">' + prefix + formatCurrency(m.valor) + '</td>' +
+        '<td data-label="Data">' + formatDate(m.data) + '</td>' +
+        '<td data-label="Tipo">' + tipoBadge + '</td>' +
+        '<td data-label="Descri\u00e7\u00e3o">' + escapeHtml(m.descricao) + '</td>' +
+        '<td class="td-right td-mono" data-label="Valor" style="' + valorClass + '">' + prefix + formatCurrency(m.valor) + '</td>' +
       '</tr>';
     }).join('');
   }
@@ -605,6 +605,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Pay Expense (instantly refreshes balance) ──────────
 
   async function handlePayExpense(id) {
+    // Proteção anti-double-click: desabilita o botão durante a requisição
+    var payBtn = document.querySelector('[data-exp-pay="' + id + '"]');
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.style.opacity = '0.5';
+    }
     try {
       var res = await ApiService.payExpense(id);
       if (res.ok) {
@@ -615,6 +621,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       alert('Erro de conexão.');
+    } finally {
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.style.opacity = '';
+      }
     }
   }
 

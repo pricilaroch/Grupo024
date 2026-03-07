@@ -318,7 +318,7 @@
   font-family: var(--font-sans);
   color: var(--foreground);
   background-color: var(--background);
-  min-height: 38px;
+  min-height: 44px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }

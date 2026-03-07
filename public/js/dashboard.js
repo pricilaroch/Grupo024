@@ -302,16 +302,12 @@ document.addEventListener('DOMContentLoaded', () => {
       count = filtered.length;
       modeLabel = 'vendas';
     } else {
-      // Previsão: usar médias mensais dos pedidos entregues (excluindo já pagos)
-      // por padrão usamos média dos últimos 3 meses (ajustável)
+      // Previsão: média mensal baseada APENAS em pedidos entregues ainda não pagos
+      // Não inclui allSales para evitar contagem dupla de receita
       const FORECAST_MONTHS = 3;
       const delivered = allOrders.filter(o => o.status === 'entregue' && o.status_pagamento !== 'pago');
-      // Combine histórico de orders entregues com vendas reais (allSales)
-      // Mapeamos ambos para um formato comum e calculamos médias dos últimos meses
       const mappedOrders = delivered.map(o => ({ updated_at: o.updated_at, valor_total: o.valor_total, valor_lucro: o.valor_lucro_total }));
-      const mappedSales = allSales.map(s => ({ updated_at: s.data_venda, valor_total: s.valor_total, valor_lucro: s.valor_lucro }));
-      const history = mappedOrders.concat(mappedSales);
-      const averages = computeMonthlyAverages(history, 'updated_at', 'valor_total', 'valor_lucro', FORECAST_MONTHS);
+      const averages = computeMonthlyAverages(mappedOrders, 'updated_at', 'valor_total', 'valor_lucro', FORECAST_MONTHS);
 
       totalRevenue = averages.avgRevenue;
       totalProfit = averages.avgProfit;
@@ -322,8 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const avgTicket = count ? totalRevenue / count : 0;
     const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
-    const paidCount = allOrders.filter(o => o.status_pagamento === 'pago').length;
-    const totalCount = allOrders.filter(o => o.status !== 'cancelado').length;
+    // Filtrar métricas de pagamento pelo mesmo dateRange dos outros cartões
+    const dateFilteredOrders = filterByDateRange(allOrders, 'updated_at').filter(o => o.status !== 'cancelado');
+    const paidCount = dateFilteredOrders.filter(o => o.status_pagamento === 'pago').length;
+    const totalCount = dateFilteredOrders.length;
 
     metricRevenue.textContent = formatCurrency(totalRevenue);
     // hints should mention if we're showing a real total or a forecast average
@@ -333,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : 'sem dados';
     } else {
       metricRevenueHint.textContent = count
-        ? `${modeLabel} — ${count} ${financeMode === 'realizado' ? 'venda' : 'pedido'}`
+        ? `${modeLabel} — ${count} pedido${count !== 1 ? 's' : ''}`
         : 'sem dados';
     }
 
@@ -349,8 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
     metricTicket.textContent = formatCurrency(avgTicket);
     metricTicketHint.textContent = count
       ? (financeMode === 'realizado'
-          ? `por ${financeMode === 'realizado' ? 'venda' : 'pedido'}`
-          : `média por ${financeMode === 'realizado' ? 'venda' : 'pedido'}`)
+          ? 'por venda'
+          : 'média por pedido')
       : 'sem dados';
 
     metricPaid.textContent = `${paidCount} / ${totalCount}`;
