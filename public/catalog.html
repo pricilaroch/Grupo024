@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" id="metaDescription" content="__OG_DESC__">
+  <title id="pageTitle">__OG_TITLE__</title>
+
+  <!-- OpenGraph / WhatsApp Card -->
+  <meta property="og:type"        content="website">
+  <meta property="og:site_name"   content="Vitrine Digital">
+  <meta property="og:title"       content="__OG_TITLE__">
+  <meta property="og:description" content="__OG_DESC__">
+  <meta property="og:image"       content="__OG_IMAGE__">
+  <meta property="og:url"         content="https://seudominio.com/catalog/__OG_SLUG__">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="__OG_TITLE__">
+  <meta name="twitter:description" content="__OG_DESC__">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/catalog.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════
+       HEADER — Perfil da Loja
+       ═══════════════════════════ -->
+  <header class="store-header" id="storeHeader">
+    <!-- Skeleton shown while loading -->
+    <div class="store-header-inner">
+      <div class="store-avatar" id="storeAvatar" aria-hidden="true">
+        <span id="storeAvatarLetter">?</span>
+      </div>
+      <div class="store-info">
+        <h1 class="store-name skeleton-line" id="storeName">...</h1>
+        <p class="store-category skeleton-line skeleton-line--sm" id="storeCategory"></p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════
+       CATEGORY FILTER PILLS
+       ═══════════════════════════ -->
+  <nav class="category-nav" id="categoryNav" aria-label="Filtrar por categoria">
+    <div class="category-pills" id="categoryPills" role="list">
+      <!-- injected by JS -->
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════
+       PRODUCT GRID
+       ═══════════════════════════ -->
+  <main class="catalog-main" id="catalogMain">
+
+    <!-- Skeleton loader -->
+    <div id="skeletonGrid" class="product-grid" aria-hidden="true">
+      <div class="product-card product-card--skeleton">
+        <div class="skeleton-img"></div>
+        <div class="product-card-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+          <div class="skeleton-price"></div>
+        </div>
+      </div>
+      <div class="product-card product-card--skeleton">
+        <div class="skeleton-img"></div>
+        <div class="product-card-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+          <div class="skeleton-price"></div>
+        </div>
+      </div>
+      <div class="product-card product-card--skeleton">
+        <div class="skeleton-img"></div>
+        <div class="product-card-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+          <div class="skeleton-price"></div>
+        </div>
+      </div>
+      <div class="product-card product-card--skeleton">
+        <div class="skeleton-img"></div>
+        <div class="product-card-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line skeleton-line--sm"></div>
+          <div class="skeleton-price"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real products injected here -->
+    <div id="productGrid" class="product-grid" style="display:none;"></div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="catalog-empty" style="display:none;" aria-live="polite">
+      <div class="catalog-empty-icon" aria-hidden="true">🛍️</div>
+      <h2>Nenhum produto disponível</h2>
+      <p>Esta vitrine ainda não possui produtos cadastrados.</p>
+    </div>
+
+    <!-- Not found state -->
+    <div id="notFoundState" class="catalog-empty catalog-empty--error" style="display:none;" aria-live="assertive">
+      <div class="catalog-empty-icon" aria-hidden="true">🔍</div>
+      <h2>Vitrine não encontrada</h2>
+      <p id="notFoundMsg">O endereço solicitado não existe ou está inativo.</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="errorState" class="catalog-empty catalog-empty--error" style="display:none;" aria-live="assertive">
+      <div class="catalog-empty-icon" aria-hidden="true">⚠️</div>
+      <h2>Erro ao carregar a vitrine</h2>
+      <p>Verifique sua conexão e tente novamente.</p>
+      <button id="btnRetry" class="btn-retry">Tentar novamente</button>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════════════════
+       CART FAB
+       ═══════════════════════════ -->
+  <button
+    id="cartFab"
+    class="cart-fab"
+    aria-label="Ver carrinho"
+    style="display:none;"
+  >
+    <span class="cart-fab-icon" aria-hidden="true">🛒</span>
+    <span class="cart-fab-badge" id="cartBadge">0</span>
+  </button>
+
+  <!-- ═══════════════════════════
+       CART DRAWER (bottom sheet)
+       ═══════════════════════════ -->
+  <div id="cartOverlay" class="cart-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Carrinho">
+    <div class="cart-drawer" id="cartDrawer">
+      <div class="cart-drawer-header">
+        <h2 class="cart-drawer-title">🛒 Carrinho</h2>
+        <button id="btnCloseCart" class="cart-close-btn" aria-label="Fechar carrinho">&times;</button>
+      </div>
+      <div class="cart-drawer-body" id="cartBody">
+        <!-- items injected by JS -->
+      </div>
+      <div class="cart-drawer-footer" id="cartFooter" style="display:none;">
+        <div class="cart-total-row">
+          <span>Total</span>
+          <span class="cart-total-value" id="cartTotal">R$ 0,00</span>
+        </div>
+        <button id="btnCheckout" class="btn-checkout">
+          Solicitar via WhatsApp 💬
+        </button>
+        <button id="btnClearCart" class="btn-clear-cart">Limpar carrinho</button>
+      </div>
+      <div class="cart-drawer-empty" id="cartEmpty">
+        <span aria-hidden="true">🛍️</span>
+        <p>Seu carrinho está vazio.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       TOAST NOTIFICATION
+       ═══════════════════════════ -->
+  <div id="toast" class="toast" role="status" aria-live="polite" style="display:none;"></div>
+
+  <script src="/js/catalog.js"></script>
+</body>
+</html>

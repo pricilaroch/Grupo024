@@ -1,6 +1,8 @@
 import { ProductService } from '../../src/services/ProductService';
-import { IProductRepository, ProductData, ProductDTO, PublicProduct } from '../../src/models/Product';
+import { CatalogService } from '../../src/services/CatalogService';
+import { IProductRepository, ProductData, ProductDTO, PublicProduct, CatalogProduct } from '../../src/models/Product';
 import { NotFoundError } from '../../src/errors/AppError';
+import { UserRepository } from '../../src/repositories/UserRepository';
 
 // -----------  Mock do ProductRepository  -----------
 
@@ -10,6 +12,7 @@ function createMockRepo(): jest.Mocked<IProductRepository> {
     findById: jest.fn(),
     findByUserId: jest.fn(),
     findAll: jest.fn(),
+    findActiveByUserId: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   };
@@ -216,3 +219,58 @@ describe('ProductService', () => {
     });
   });
 });
+
+// =============================================
+//  CatalogService — testes de vitrine pública
+// =============================================
+
+describe('CatalogService', () => {
+  let catalogService: CatalogService;
+  let repo: jest.Mocked<IProductRepository>;
+  let userRepo: jest.Mocked<Pick<UserRepository, 'findBySlug'>>;
+
+  const activeProducts: CatalogProduct[] = [
+    { id: 1, nome: 'Bolo de Chocolate', descricao: 'Artesanal', preco_venda: 45, imagem_url: undefined, categoria: 'Doces' },
+    { id: 2, nome: 'Brigadeiro', descricao: undefined, preco_venda: 5, imagem_url: undefined, categoria: 'Doces' },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    repo = createMockRepo();
+    userRepo = { findBySlug: jest.fn() };
+    catalogService = new CatalogService(userRepo as unknown as UserRepository, repo);
+  });
+
+  it('deve retornar os produtos ativos do produtor identificado pelo slug', async () => {
+    userRepo.findBySlug.mockResolvedValue({ id: 1, nome: 'Vovó Doces', nome_fantasia: 'Doces da Vovó', categoria_producao: 'Doces' } as any);
+    repo.findActiveByUserId.mockResolvedValue(activeProducts);
+
+    const result = await catalogService.getCatalogBySlug('doces-da-vovo');
+
+    expect(userRepo.findBySlug).toHaveBeenCalledWith('doces-da-vovo');
+    expect(repo.findActiveByUserId).toHaveBeenCalledWith(1);
+    expect(result.produtos).toHaveLength(2);
+    expect(result.produtos).toEqual(activeProducts);
+    expect(result.loja.nome_fantasia).toBe('Doces da Vovó');
+    expect(result.loja.categoria_producao).toBe('Doces');
+  });
+
+  it('(segurança) preco_custo deve ser undefined em todos os produtos retornados', async () => {
+    userRepo.findBySlug.mockResolvedValue({ id: 1, nome: 'Vovó Doces', nome_fantasia: 'Doces da Vovó', categoria_producao: 'Doces' } as any);
+    repo.findActiveByUserId.mockResolvedValue(activeProducts);
+
+    const result = await catalogService.getCatalogBySlug('doces-da-vovo');
+
+    result.produtos.forEach((produto) => {
+      expect((produto as any).preco_custo).toBeUndefined();
+    });
+  });
+
+  it('deve lançar NotFoundError quando o slug não existe', async () => {
+    userRepo.findBySlug.mockResolvedValue(null);
+
+    await expect(catalogService.getCatalogBySlug('slug-inexistente'))
+      .rejects.toThrow(NotFoundError);
+  });
+});
+

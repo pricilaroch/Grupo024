@@ -13,6 +13,7 @@ export class AuthController {
   /**
    * POST /login
    * Autentica o usuário e retorna um JWT + dados públicos.
+   * Garante que o usuário tenha um slug ao fazer login pela primeira vez.
    */
   public async login(
     request: FastifyRequest,
@@ -20,7 +21,12 @@ export class AuthController {
   ): Promise<void> {
     const { cpf, senha } = loginSchema.parse(request.body);
 
-    const user = await this.userService.authenticate(cpf, senha);
+    let user = await this.userService.authenticate(cpf, senha);
+
+    // Task 4: garante que usuários sem slug recebam um automaticamente
+    if (!user.slug) {
+      user = await this.userService.ensureSlug(user);
+    }
 
     const token = (request.server as import('fastify').FastifyInstance).jwt.sign(
       { id: user.id!, status: user.status, role: user.role },

@@ -43,11 +43,24 @@ export interface PublicProduct {
     categoria?: string;
 }
 
+/**
+ * Produto seguro para exposição pública: sem preco_custo, sem dados internos.
+ */
+export interface CatalogProduct {
+    id: number;
+    nome: string;
+    descricao?: string;
+    preco_venda: number;
+    imagem_url?: string;
+    categoria?: string;
+}
+
 export interface IProductRepository {
     create(product: ProductDTO, user_id: number): Promise<ProductData>;
     findById(id: number): Promise<ProductData | null>;
     findByUserId(user_id: number): Promise<ProductData[]>;
     findAll(): Promise<PublicProduct[]>;
+    findActiveByUserId(user_id: number): Promise<CatalogProduct[]>;
     update(id: number, product: ProductDTO): Promise<ProductData | null>;
     delete(id: number): Promise<boolean>;
 }

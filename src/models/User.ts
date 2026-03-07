@@ -14,6 +14,8 @@ export interface UserData {
   status?: string;
   role?: string;
   motivo_reprovacao?: string;
+  slug?: string;
+  meta_faturamento?: number;
   created_at?: string;
 }
 
@@ -51,6 +53,8 @@ export class User {
   public status: string;
   public role: string;
   public motivo_reprovacao: string;
+  public slug?: string;
+  public meta_faturamento: number;
   public created_at?: string;
 
   constructor(data: UserData) {
@@ -69,10 +73,12 @@ export class User {
     this.status = data.status ?? 'pendente';
     this.role = data.role ?? 'produtor';
     this.motivo_reprovacao = data.motivo_reprovacao ?? '';
+    this.slug = data.slug;
+    this.meta_faturamento = data.meta_faturamento ?? 0;
     this.created_at = data.created_at;
   }
 
-  public toPublicJSON(): PublicUser {
+  public toPublicJSON(): PublicUser & { slug?: string; meta_faturamento: number } {
     return {
       id: this.id,
       nome: this.nome,
@@ -89,6 +95,8 @@ export class User {
       role: this.role,
       motivo_reprovacao: this.motivo_reprovacao,
       created_at: this.created_at,
+      slug: this.slug,
+      meta_faturamento: this.meta_faturamento,
     };
   }
 }

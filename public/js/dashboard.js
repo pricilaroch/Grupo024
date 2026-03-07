@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let goalData  = null;    // from GET /analytics/goal
   let balanceData = null;  // from GET /analytics/balance
   let followUpData = null; // from GET /sales/follow-up
+  let userProfile = null;  // from GET /users/me
   let clients = [];
   let clientsMap = {};
   let productsMap = {};   // id → product (for materials summary)
@@ -26,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeTab = 'production'; // 'production' or 'history'
   let currentDetailOrderId = null;
 
-  // Goal meta (persisted in localStorage)
+  // Goal meta — primary source is DB (meta_faturamento), fallback localStorage
   const META_KEY = 'dashboard_meta_mensal';
   let metaMensal = parseFloat(localStorage.getItem(META_KEY)) || 0;
 
@@ -150,7 +151,20 @@ document.addEventListener('DOMContentLoaded', () => {
         prods.forEach(p => { productsMap[p.id] = p; });
       }
 
-      // Fetch goal from server (meta stored in localStorage)
+      // Fetch user profile from DB (slug + meta_faturamento)
+      try {
+        const meRes = await ApiService.getMe();
+        if (meRes.ok) {
+          userProfile = meRes.data;
+          // DB value takes precedence over localStorage
+          if (typeof userProfile.meta_faturamento === 'number') {
+            metaMensal = userProfile.meta_faturamento;
+            localStorage.setItem(META_KEY, metaMensal);
+          }
+        }
+      } catch (_) { /* ignore — use cached localStorage value */ }
+
+      // Fetch goal from server
       try {
         const goalRes = await ApiService.getGoalSummary(metaMensal);
         if (goalRes.ok) goalData = goalRes.data;
@@ -1226,21 +1240,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Meta edit button
-    document.getElementById('btnEditMeta').addEventListener('click', async () => {
-      const input = prompt('Defina sua Meta Mensal (R$):', metaMensal || '');
-      if (input === null) return;
-      const val = parseFloat(input.replace(',', '.'));
-      if (!isNaN(val) && val >= 0) {
-        metaMensal = val;
-        localStorage.setItem(META_KEY, val);
-        // Re-fetch goal from server with new meta value
-        try {
-          const goalRes = await ApiService.getGoalSummary(metaMensal);
-          if (goalRes.ok) goalData = goalRes.data;
-        } catch (_) { /* ignore */ }
-        renderGoalAndCaixinha();
-      }
+    // Meta edit button — opens proper modal
+    document.getElementById('btnEditMeta').addEventListener('click', () => {
+      openEditMetaModal();
+    });
+
+    // Edit meta form submit
+    document.getElementById('editMetaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveEditMeta();
+    });
+    document.getElementById('btnCancelEditMeta').addEventListener('click', closeEditMetaModal);
+    document.getElementById('btnCloseEditMeta').addEventListener('click', closeEditMetaModal);
+
+    // Meu Catálogo público button
+    document.getElementById('btnMyCatalog').addEventListener('click', openCatalogModal);
+    document.getElementById('btnCloseCatalog').addEventListener('click', closeCatalogModal);
+    document.getElementById('btnCopyCatalogLink').addEventListener('click', copyCatalogLink);
+
+    // Close catalog modal by overlay click
+    document.getElementById('catalogModal').addEventListener('click', (e) => {
+      if (e.target.id === 'catalogModal') closeCatalogModal();
+    });
+    document.getElementById('editMetaModal').addEventListener('click', (e) => {
+      if (e.target.id === 'editMetaModal') closeEditMetaModal();
     });
 
     // Temporal filters
@@ -1406,4 +1429,134 @@ document.addEventListener('DOMContentLoaded', () => {
     d.setHours(0, 0, 0, 0);
     return d;
   }
+
+  // ══════════════════════════════════════════════════════
+  //  CATALOG MODAL — Meu Catálogo Público
+  // ══════════════════════════════════════════════════════
+
+  function getCatalogUrl() {
+    const slug = userProfile && userProfile.slug;
+    if (!slug) return null;
+    return `${window.location.origin}/catalog/${slug}`;
+  }
+
+  function openCatalogModal() {
+    const modal  = document.getElementById('catalogModal');
+    const input  = document.getElementById('catalogLinkInput');
+    const qrImg  = document.getElementById('catalogQrImg');
+    const openBtn = document.getElementById('btnOpenCatalog');
+    if (!modal) return;
+
+    const url = getCatalogUrl();
+    if (!url) {
+      alert('Seu perfil não possui um catálogo configurado. Aguarde o sistema gerar seu link.');
+      return;
+    }
+
+    input.value = url;
+    if (openBtn) openBtn.href = url;
+
+    // QR Code via QuickChart.io (no api key needed, free public API)
+    if (qrImg) {
+      qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=200&margin=2`;
+      qrImg.alt = `QR Code da vitrine ${userProfile.slug}`;
+    }
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCatalogModal() {
+    const modal = document.getElementById('catalogModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function copyCatalogLink() {
+    const url = getCatalogUrl();
+    if (!url) return;
+    const btn = document.getElementById('btnCopyCatalogLink');
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(url);
+      copied = true;
+    } catch {
+      // fallback: select + execCommand (HTTP / older browsers)
+      try {
+        const input = document.getElementById('catalogLinkInput');
+        input.select();
+        copied = document.execCommand('copy');
+      } catch { /* nothing more to do */ }
+    }
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = copied ? '&#10003; Copiado!' : '&#10005; Falhou';
+      btn.disabled = true;
+      setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  EDIT META MODAL — Meta de Faturamento
+  // ══════════════════════════════════════════════════════
+
+  function openEditMetaModal() {
+    const modal = document.getElementById('editMetaModal');
+    const input = document.getElementById('editMetaInput');
+    if (!modal || !input) return;
+    input.value = metaMensal > 0 ? metaMensal : '';
+    document.getElementById('editMetaFeedback').textContent = '';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => input.focus(), 50);
+  }
+
+  function closeEditMetaModal() {
+    const modal = document.getElementById('editMetaModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function saveEditMeta() {
+    const input    = document.getElementById('editMetaInput');
+    const feedback = document.getElementById('editMetaFeedback');
+    const saveBtn  = document.getElementById('btnSaveEditMeta');
+    const val = parseFloat(String(input.value).replace(',', '.'));
+
+    if (isNaN(val) || val < 0) {
+      feedback.textContent = 'Digite um valor válido (≥ 0).';
+      feedback.style.color = '#f97373';
+      return;
+    }
+
+    saveBtn.textContent = 'Salvando…';
+    saveBtn.disabled = true;
+    feedback.textContent = '';
+
+    try {
+      const res = await ApiService.updateMeta(val);
+      if (res.ok) {
+        metaMensal = val;
+        localStorage.setItem(META_KEY, val);
+        if (userProfile) userProfile.meta_faturamento = val;
+        // Re-fetch goal summary with updated meta
+        try {
+          const goalRes = await ApiService.getGoalSummary(metaMensal);
+          if (goalRes.ok) goalData = goalRes.data;
+        } catch (_) { /* ignore */ }
+        renderGoalAndCaixinha();
+        closeEditMetaModal();
+      } else {
+        feedback.textContent = res.data?.error || 'Erro ao salvar meta.';
+        feedback.style.color = '#f97373';
+      }
+    } catch (err) {
+      feedback.textContent = 'Erro de conexão. Tente novamente.';
+      feedback.style.color = '#f97373';
+    } finally {
+      saveBtn.textContent = 'Salvar';
+      saveBtn.disabled = false;
+    }
+  }
+
 });

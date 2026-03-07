@@ -18,9 +18,16 @@
 
       <!-- ═══════════ Welcome Banner ═══════════ -->
       <div class="dashboard-welcome">
-        <h1 id="welcomeMsg">Bem-vindo de volta!</h1>
-        <p>Acompanhe seus pedidos e resultados em tempo real.</p>
-        <span class="badge">Conta Ativa</span>
+        <div class="welcome-top">
+          <div>
+            <h1 id="welcomeMsg">Bem-vindo de volta!</h1>
+            <p>Acompanhe seus pedidos e resultados em tempo real.</p>
+            <span class="badge">Conta Ativa</span>
+          </div>
+          <button id="btnMyCatalog" class="btn btn-sm btn-catalog" title="Ver minha vitrine pública">
+            &#128279; Meu Catálogo
+          </button>
+        </div>
       </div>
 
       <!-- ═══════════ Goal Progress + Caixinha ═══════════ -->
@@ -346,5 +353,52 @@
   <script src="/js/services/api.js"></script>
   <script src="/js/services/guard.js"></script>
   <script src="/js/dashboard.js"></script>
+
+  <!-- ═════════ Modal: Meu Catálogo Público ══════════ -->
+  <div id="catalogModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="catalogModalTitle">
+    <div class="modal modal-catalog">
+      <div class="modal-detail-header">
+        <h3 id="catalogModalTitle">&#128279; Meu Catálogo Público</h3>
+        <button id="btnCloseCatalog" class="btn-icon" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-catalog-body">
+        <p class="modal-catalog-hint">Compartilhe este link com seus clientes:</p>
+        <div class="modal-catalog-link-row">
+          <input id="catalogLinkInput" class="form-input catalog-link-input" type="text" readonly>
+          <button id="btnCopyCatalogLink" class="btn btn-sm btn-secondary btn-copy" title="Copiar link">
+            &#128203; Copiar
+          </button>
+        </div>
+        <div class="modal-catalog-qr">
+          <p class="modal-catalog-hint">QR Code para imprimir:</p>
+          <img id="catalogQrImg" src="" alt="QR Code da vitrine" class="catalog-qr-img" loading="lazy">
+        </div>
+        <a id="btnOpenCatalog" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-primary" style="width:100%;justify-content:center;">
+          &#127758; Abrir Vitrine
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════ Modal: Editar Meta de Faturamento ═════════ -->
+  <div id="editMetaModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="editMetaModalTitle">
+    <div class="modal modal-edit">
+      <div class="modal-detail-header">
+        <h3 id="editMetaModalTitle">&#127919; Editar Meta Mensal</h3>
+        <button id="btnCloseEditMeta" class="btn-icon" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="editMetaForm">
+        <div class="form-group" style="padding:1rem 0 0;">
+          <label for="editMetaInput" class="form-label">Meta de Faturamento Mensal (R$)</label>
+          <input id="editMetaInput" type="number" class="form-input" min="0" step="0.01" placeholder="Ex: 2000.00">
+        </div>
+        <div id="editMetaFeedback" class="pdv-feedback"></div>
+        <div class="modal-actions">
+          <button type="button" id="btnCancelEditMeta" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btnSaveEditMeta" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

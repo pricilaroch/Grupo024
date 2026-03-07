@@ -612,6 +612,39 @@ const ApiService = {
         return user ? JSON.parse(user) : null;
     },
 
+    async getMe() {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/users/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao buscar perfil:', error);
+            throw error;
+        }
+    },
+
+    async updateMeta(metaFaturamento) {
+        const token = sessionStorage.getItem('token');
+        try {
+            const response = await fetch(`${this.BASE_URL}/users/me/meta`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ meta_faturamento: metaFaturamento })
+            });
+            const result = await response.json();
+            return { ok: response.ok, data: result };
+        } catch (error) {
+            console.error('Erro ao atualizar meta:', error);
+            throw error;
+        }
+    },
+
     logout() {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');

@@ -17,6 +17,19 @@ export class UserRepository {
   }
 
   /**
+   * Busca um usuário pelo slug (rota pública de vitrine).
+   */
+  public async findBySlug(slug: string): Promise<User | null> {
+    const db = await getDatabase();
+    const row = await db.get<UserData>(
+      'SELECT * FROM users WHERE slug = ? AND status = ?',
+      [slug, 'aprovado']
+    );
+    if (!row) return null;
+    return new User(row);
+  }
+
+  /**
    * Insere um novo usuário no banco de dados.
    */
   public async create(user: User): Promise<User> {
@@ -79,5 +92,39 @@ export class UserRepository {
       'UPDATE users SET status = ?, motivo_reprovacao = ? WHERE id = ?',
       [status, motivoReprovacao, id]
     );
+  }
+
+  /**
+   * Atualiza a meta de faturamento mensal de um usuário.
+   */
+  public async updateMeta(id: number, meta: number): Promise<void> {
+    const db = await getDatabase();
+    await db.run(
+      'UPDATE users SET meta_faturamento = ? WHERE id = ?',
+      [meta, id]
+    );
+  }
+
+  /**
+   * Atualiza o slug de um usuário.
+   */
+  public async updateSlug(id: number, slug: string): Promise<void> {
+    const db = await getDatabase();
+    await db.run(
+      'UPDATE users SET slug = ? WHERE id = ?',
+      [slug, id]
+    );
+  }
+
+  /**
+   * Verifica se um slug já está em uso (independentemente do status).
+   */
+  public async existsBySlug(slug: string): Promise<boolean> {
+    const db = await getDatabase();
+    const row = await db.get<{ count: number }>(
+      'SELECT COUNT(*) as count FROM users WHERE slug = ?',
+      [slug]
+    );
+    return (row?.count ?? 0) > 0;
   }
 }

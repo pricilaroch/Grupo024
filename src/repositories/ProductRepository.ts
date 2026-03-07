@@ -1,4 +1,4 @@
-import { IProductRepository, ProductData, ProductDTO, PublicProduct } from "../models/Product";
+import { IProductRepository, ProductData, ProductDTO, PublicProduct, CatalogProduct } from "../models/Product";
 import { Database } from 'sqlite';
 
 
@@ -98,6 +98,17 @@ export class ProductRepository implements  IProductRepository{
         );
 
         return products;
+    }
+
+    async findActiveByUserId(user_id: number): Promise<CatalogProduct[]> {
+        const rows = await this.db.all<CatalogProduct[]>(
+            `SELECT id, nome, descricao, preco_venda, imagem_url, categoria
+             FROM products
+             WHERE user_id = ? AND ativo = 1
+             ORDER BY nome ASC`,
+            user_id
+        );
+        return rows;
     }
 
     async update(id: number, product: ProductDTO): Promise<ProductData | null> {

@@ -20,6 +20,10 @@ function createMockRepo(): jest.Mocked<UserRepository> {
     findPending: jest.fn(),
     findById: jest.fn(),
     updateStatus: jest.fn(),
+    updateMeta: jest.fn(),
+    updateSlug: jest.fn(),
+    existsBySlug: jest.fn(),
+    findBySlug: jest.fn(),
   } as unknown as jest.Mocked<UserRepository>;
 }
 
@@ -232,6 +236,84 @@ describe('UserService', () => {
       await expect(
         service.updateUserStatus(1, 'reprovado', '   ')
       ).rejects.toThrow(ValidationError);
+    });
+  });
+
+  // ----------- getMe -----------
+
+  describe('getMe', () => {
+    it('deve retornar o usuário por ID', async () => {
+      const user = makeUser({ id: 3, status: 'aprovado' });
+      repo.findById.mockResolvedValue(user);
+
+      const result = await service.getMe(3);
+
+      expect(repo.findById).toHaveBeenCalledWith(3);
+      expect(result.id).toBe(3);
+    });
+
+    it('deve lançar NotFoundError se o usuário não existe', async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.getMe(999)).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  // ----------- updateMeta -----------
+
+  describe('updateMeta', () => {
+    it('deve atualizar a meta de faturamento', async () => {
+      const user = makeUser({ id: 1, meta_faturamento: 0 });
+      repo.findById.mockResolvedValue(user);
+      repo.updateMeta.mockResolvedValue();
+
+      const result = await service.updateMeta(1, { meta_faturamento: 2000 });
+
+      expect(repo.updateMeta).toHaveBeenCalledWith(1, 2000);
+      expect(result.meta_faturamento).toBe(2000);
+    });
+
+    it('deve lançar ValidationError para meta negativa', async () => {
+      repo.findById.mockResolvedValue(makeUser({ id: 1 }));
+      await expect(service.updateMeta(1, { meta_faturamento: -1 }))
+        .rejects.toThrow(ValidationError);
+    });
+
+    it('deve lançar NotFoundError se usuário não existe', async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.updateMeta(99, { meta_faturamento: 500 }))
+        .rejects.toThrow(NotFoundError);
+    });
+  });
+
+  // ----------- ensureSlug -----------
+
+  describe('ensureSlug', () => {
+    it('não deve alterar o slug se o usuário já tem um', async () => {
+      const user = makeUser({ id: 1, slug: 'bolo-da-maria' });
+      const result = await service.ensureSlug(user);
+      expect(result.slug).toBe('bolo-da-maria');
+      expect(repo.updateSlug).not.toHaveBeenCalled();
+    });
+
+    it('deve gerar e persistir um slug a partir do nome_fantasia', async () => {
+      const user = makeUser({ id: 1, nome_fantasia: 'Doces da Vovó', slug: undefined });
+      repo.existsBySlug.mockResolvedValue(false);
+      repo.updateSlug.mockResolvedValue();
+
+      const result = await service.ensureSlug(user);
+
+      expect(result.slug).toBe('doces-da-vovo');
+      expect(repo.updateSlug).toHaveBeenCalledWith(1, 'doces-da-vovo');
+    });
+
+    it('deve adicionar sufixo numérico se o slug base já existe', async () => {
+      const user = makeUser({ id: 2, nome_fantasia: 'Doces da Vovó', slug: undefined });
+      repo.existsBySlug.mockImplementation(async (slug) => slug === 'doces-da-vovo');
+      repo.updateSlug.mockResolvedValue();
+
+      const result = await service.ensureSlug(user);
+
+      expect(result.slug).toBe('doces-da-vovo-2');
     });
   });
 });

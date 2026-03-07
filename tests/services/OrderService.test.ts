@@ -27,6 +27,7 @@ function createMockProductRepo(): jest.Mocked<IProductRepository> {
     findById: jest.fn(),
     findByUserId: jest.fn(),
     findAll: jest.fn(),
+    findActiveByUserId: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   };

@@ -3,6 +3,7 @@ import fastifyStatic from '@fastify/static';
 import fastifyCors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import path from 'path';
+import fs from 'fs/promises';
 import { ZodError } from 'zod';
 
 import { config } from './config';
@@ -47,6 +48,19 @@ import { buildOrderRoutes } from './routes/orderRoutes';
 import { buildSaleRoutes } from './routes/saleRoutes';
 import { buildExpenseRoutes } from './routes/expenseRoutes';
 import { buildAnalyticsRoutes } from './routes/analyticsRoutes';
+import { CatalogService } from './services/CatalogService';
+import { CatalogController } from './controllers/CatalogController';
+import { buildCatalogRoutes } from './routes/catalogRoutes';
+
+/** Escapes HTML special chars to prevent broken meta tags / XSS via store names. */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 async function main(): Promise<void> {
   const fastify = Fastify({ logger: true });
@@ -62,7 +76,10 @@ async function main(): Promise<void> {
   });
 
   await fastify.register(fastifyCors, {
-    origin: '*' // Permitir todas as origens (ajuste conforme necessário)
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Length'],
   });
 
   // ─── Error Handler centralizado ────────────────────────
@@ -117,6 +134,9 @@ async function main(): Promise<void> {
   const expenseController = new ExpenseController(expenseService);
   const analyticsController = new AnalyticsController(analyticsService);
 
+  const catalogService    = new CatalogService(userRepository, productRepository);
+  const catalogController = new CatalogController(catalogService);
+
   // ─── Rotas ─────────────────────────────────────────────
   await fastify.register(buildUserRoutes(userController), { prefix: '/users' });
   await fastify.register(buildAuthRoutes(authController));
@@ -127,6 +147,33 @@ async function main(): Promise<void> {
   await fastify.register(buildSaleRoutes(saleController),      { prefix: '/sales' });
   await fastify.register(buildExpenseRoutes(expenseController), { prefix: '/expenses' });
   await fastify.register(buildAnalyticsRoutes(analyticsController), { prefix: '/analytics' });
+  await fastify.register(buildCatalogRoutes(catalogController), { prefix: '/public/catalog' });
+
+  // ─── Vitrine pública HTML (com OG tags dinâmicas) ─────
+  fastify.get('/catalog/:slug', async (request, reply) => {
+    const { slug } = request.params as { slug: string };
+    let ogTitle = 'Vitrine Digital';
+    let ogDesc  = 'Confira o catálogo desta loja e faça seu pedido.';
+    let ogImage = '';
+
+    try {
+      const user = await userRepository.findBySlug(slug);
+      if (user) {
+        ogTitle = `${escapeHtml(user.nome_fantasia)} — Vitrine Digital`;
+        ogDesc  = `Catálogo de ${escapeHtml(user.nome_fantasia)}. Categoria: ${escapeHtml(user.categoria_producao)}. Veja os produtos disponíveis e faça seu pedido!`;
+      }
+    } catch (_) { /* ignora erros de DB na rota de HTML */ }
+
+    const filePath = path.join(__dirname, '..', 'public', 'catalog.html');
+    let html = await fs.readFile(filePath, 'utf-8');
+    html = html
+      .replace(/__OG_TITLE__/g,   ogTitle)
+      .replace(/__OG_DESC__/g,    ogDesc)
+      .replace(/__OG_IMAGE__/g,   ogImage)
+      .replace(/__OG_SLUG__/g,    encodeURIComponent(slug));
+
+    return reply.type('text/html').send(html);
+  });
 
   // ─── Start ─────────────────────────────────────────────
   await fastify.listen({ port: config.port, host: '0.0.0.0' });

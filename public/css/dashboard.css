@@ -1757,3 +1757,100 @@
     z-index: auto;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   WELCOME TOP — catálogo + saudação
+   ══════════════════════════════════════════════════════════ */
+
+.welcome-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-catalog {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  min-height: 40px;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.btn-catalog:hover  { background: rgba(255,255,255,0.28); }
+.btn-catalog:active { transform: scale(0.96); }
+
+/* ══════════════════════════════════════════════════════════
+   MODAL — Meu Catálogo Público
+   ══════════════════════════════════════════════════════════ */
+
+.modal-catalog {
+  max-width: 420px;
+  width: 100%;
+}
+
+.modal-catalog-body {
+  padding: 1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.modal-catalog-hint {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground, #9ca3af);
+  margin: 0;
+}
+
+.modal-catalog-link-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.catalog-link-input {
+  flex: 1;
+  font-size: 0.8125rem;
+  cursor: text;
+  background: var(--muted, #0d1526) !important;
+  color: var(--foreground, #f9fafb) !important;
+  border-color: var(--border, #1f2937) !important;
+  min-width: 0;
+}
+
+.btn-copy {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.modal-catalog-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.catalog-qr-img {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  padding: 4px;
+  object-fit: contain;
+}
+

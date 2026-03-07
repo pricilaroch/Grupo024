@@ -9,6 +9,10 @@ import {
   ValidationError,
 } from '../errors/AppError';
 
+export interface UpdateMetaDTO {
+  meta_faturamento: number;
+}
+
 export interface RegisterDTO {
   nome: string;
   cpf: string;
@@ -123,5 +127,92 @@ export class UserService {
     }
 
     return user;
+  }
+
+  /**
+   * Retorna o perfil completo de um usuário pelo seu ID (rota /users/me).
+   */
+  public async getMe(id: number): Promise<User> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundError('Usuário não encontrado.');
+    }
+    return user;
+  }
+
+  /**
+   * Atualiza a meta de faturamento mensal do usuário.
+   */
+  public async updateMeta(userId: number, dto: UpdateMetaDTO): Promise<User> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('Usuário não encontrado.');
+    }
+    if (dto.meta_faturamento < 0) {
+      throw new ValidationError('A meta de faturamento não pode ser negativa.');
+    }
+    await this.userRepository.updateMeta(userId, dto.meta_faturamento);
+    user.meta_faturamento = dto.meta_faturamento;
+    return user;
+  }
+
+  /**
+   * Garante que o usuário tenha um slug. Se não tiver, gera automaticamente
+   * a partir do nome_fantasia e persiste no banco.
+   */
+  public async ensureSlug(user: User): Promise<User> {
+    if (user.slug) return user; // já tem slug, nada a fazer
+
+    // Optimistic approach: generate a candidate and attempt to persist.
+    // On UNIQUE constraint violation (rare race condition), retry with a
+    // numeric suffix until a free slot is found.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const slug = await this.createUniqueSlug(user.nome_fantasia, user.id!);
+      try {
+        await this.userRepository.updateSlug(user.id!, slug);
+        user.slug = slug;
+        return user;
+      } catch (err: any) {
+        const isUniqueViolation =
+          err?.code === 'SQLITE_CONSTRAINT' ||
+          String(err?.message).includes('UNIQUE') ||
+          String(err?.message).includes('unique');
+        if (!isUniqueViolation || attempt === 4) throw err;
+        // else: collision happened between existsBySlug and updateSlug → retry
+      }
+    }
+    return user; // unreachable, but TypeScript demands it
+  }
+
+  /**
+   * Gera um slug único a partir de um texto base.
+   * Normaliza, remove acentos e caracteres especiais, substitui espaços por hífens.
+   */
+  private slugify(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')  // remove diacríticos
+      .replace(/[^a-z0-9\s-]/g, '')      // remove non-alpha
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .substring(0, 50);
+  }
+
+  private async createUniqueSlug(base: string, userId: number): Promise<string> {
+    const baseSlug = this.slugify(base) || `loja-${userId}`;
+    // Tenta o base diretamente
+    if (!(await this.userRepository.existsBySlug(baseSlug))) {
+      return baseSlug;
+    }
+    // Adiciona sufixo numérico até encontrar disponível
+    for (let i = 2; i <= 999; i++) {
+      const candidate = `${baseSlug}-${i}`;
+      if (!(await this.userRepository.existsBySlug(candidate))) {
+        return candidate;
+      }
+    }
+    return `${baseSlug}-${userId}`; // fallback absoluto
   }
 }
